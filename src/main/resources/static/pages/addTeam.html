@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <title>Create Instagram pictures</title>
+    <meta charset="utf-8">
+</head>
+
+<body>
+<div class="main-page">
+    <h1>Instagram-Beitrag erstellen</h1>
+    <h2>Neues Team hinzufügen</h2>
+    <br>
+    <label for="clubName">Klubname</label>
+    <input id="clubName" name="clubName" type="text">
+    <br>
+    <input accept="image/*" id="clubPic" name="fileName" onchange="createNewTeam(this, 'picture')" type="file">
+    <br>
+    <div>
+        <img alt="Team logo" id="picture" src="#">
+    </div>
+    <canvas>
+
+    </canvas>
+    <button onclick="createNewTeam()">Absenden</button>
+</div>
+<script>
+    function createNewTeam() {
+        let file = document.getElementById('clubPic').files[0];
+
+        let reader = new FileReader();
+
+        reader.readAsDataURL(file);
+        reader.onload = function () {
+            let img = document.getElementById(target);
+            img.src = reader.result;
+        }
+    }
+</script>
+</body>
+
+</html>

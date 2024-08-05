@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script type="text/javascript" src="../js/InstagramUpload.js"></script>
+</head>
+<body>
+    <input type="button" onclick="login()" value="Login">
+    <input type="button" onclick="getMedia()" value="GetMedia">
+    <input type="button" onclick="postMedia()" value="PostMedia">
+    <br>
+    <input type="button" onclick="createElementContainer()" value="Container erstellen">
+    <input type="button" onclick="postCarousel()" value="Carousel erstellen">
+</body>
+<script>
+    window.fbAsyncInit = function () {
+        FB.init({
+            appId: '276749995452523',
+            xfbml: true,
+            version: 'v19.0'
+        });
+    }
+</script>
+<script async defer crossorigin="anonymous" src = "https://connect.facebook.net/en_US/sdk.js"></script>
+</html>

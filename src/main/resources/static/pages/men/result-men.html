@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Instagram pictures</title>
+    <link rel = "stylesheet" href = "https://cdnjs.cloudflare.com/ajax/libs/jquery-jcrop/0.9.15/css/jquery.Jcrop.min.css" />
+    <script src = "https://code.jquery.com/jquery-3.6.0.min.js"> </script>
+    <script src = "https://cdnjs.cloudflare.com/ajax/libs/jquery-jcrop/0.9.15/js/jquery.Jcrop.min.js"> </script>
+
+    <script src="../../js/sendData.js" type="text/javascript"></script>
+    <script src="../../js/setupPages.js" type="text/javascript"></script>
+    <script type="text/javascript" src="../../js/InstagramUpload.js"></script>
+    <link href="../../style.css" rel="stylesheet">
+</head>
+<body onload="loadMenMatches('result')">
+<div class="topbar">
+    <ul>
+        <li><a href="../../index.html">Home</a></li>
+        <li><a href="league-men.html">Ligaspiel Herren</a></li>
+        <li><a href="cup-men.html">Pokalspiel Herren</a></li>
+        <li><a href="friend-men.html">Testspiel Herren</a></li>
+        <li><a href="kickoff-men.html">Anstoss Herren</a></li>
+        <li><a>Ergebnis Herren</a></li>
+        <li><a href="../youth/match-youth.html">Spieltag Kids</a></li>
+        <li><a href="../youth/result-youth.html">Ergebnis Kids</a></li>
+    </ul>
+</div>
+<div class="main-page">
+    <h1>Instagram-Beitrag erstellen</h1>
+    <h2>Ergebnis Herren</h2>
+    <br>
+    <label for="matches"></label>
+    <select id="matches" name="matches">
+    </select>
+    <br>
+    <label for="matchResult">Ergebnis:</label>
+    <input type="text" id="matchResult" name="matchResult" onkeyup="setCharCount()">
+    <br>
+    <label for="headline">Überschrift:</label>
+    <input type="text" id="headline" name="headline" onkeyup="setCharCount()">
+    <br>
+    <label for="report">Bericht:</label>
+    <textarea  id="report" name="report" onkeyup="setCharCount()"></textarea>
+    <br>
+    <label>Stimmen zum Spiel:</label>
+    <br>
+    <label for="reporterOpp">Gegner:</label>
+    <input type="text" id="reporterOpp" name="reporterOpp" onkeyup="setCharCount()">
+    <br>
+    <label for="reportOpp"></label><textarea id="reportOpp" name="reportOpp" onkeyup="setCharCount()"></textarea>
+    <br>
+    <label for="reporterOwn">Eigener:</label>
+    <input type="text" id="reporterOwn" name="reporterOwn" onkeyup="setCharCount()">
+    <br>
+    <label for="reportOwn"></label><textarea id="reportOwn" name="reportOwn" onkeyup="setCharCount()"></textarea>
+    <br>
+    <label for="future">Ausblick:</label>
+    <br>
+    <textarea id="future" name="future" onkeyup="setCharCount()"></textarea>
+    <br>
+    <label id="chars">Zeichen: 0/2200</label>
+    <br>
+    <input accept="image/*" type="file" id="inputFile" onchange="newPicture()">
+    <br>
+    <div id="showPic"></div>
+    <br>
+    <input type="button" value="Speichern" id="saveResized">
+    <input type="button" value="Senden" id="saveAll" onClick="savePictures()">
+</div>
+<div id="showReport"></div>
+<!--<script>-->
+<!--    window.fbAsyncInit = function () {-->
+<!--        FB.init({-->
+<!--            appId: '276749995452523',-->
+<!--            xfbml: true,-->
+<!--            version: 'v19.0'-->
+<!--        });-->
+<!--    }-->
+<!--</script>-->
+<!--<script async defer crossorigin="anonymous" src = "https://connect.facebook.net/en_US/sdk.js"></script>-->
+
+    <script type="text/javascript">
+        function savePictures() {
+            let sendingData = {
+                match: document.getElementById('matches').value,
+                result: document.getElementById('matchResult').value,
+                headline: document.getElementById('headline').value,
+                report: document.getElementById('report').value,
+                reporterOpp: document.getElementById('reporterOpp').value,
+                reportOpp: document.getElementById('reportOpp').value,
+                reporterOwn: document.getElementById('reporterOwn').value,
+                reportOwn : document.getElementById('reportOwn').value,
+                future: document.getElementById('future').value
+            }
+            fetch(window.location.origin + '/sendMenMatchResult', {
+                method: 'POST',
+                mode: 'cors',
+                cache: 'no-cache',
+                credentials: 'same-origin',
+                redirect: 'follow',
+                referrerPolicy: 'no-referrer',
+                body: JSON.stringify(sendingData),
+            })
+                .then(response => response.json())
+                // .then(data => createElementContainer(data))
+                .then(data => {
+                    // console.log(data.fileDir);
+                    let repDiv = document.getElementById('showReport');
+                    repDiv.innerText = data.caption;
+                    window.open(window.location.origin + '/zip-download/' + data.fileDir);
+                })
+                .catch((error) => {
+                    console.error('Error: ', error);
+                });
+        }
+    function newPicture() {
+        let sp = document.getElementById('showPic');
+        while (sp.lastElementChild){
+            sp.removeChild(sp.lastElementChild);
+        }
+
+        let image = document.createElement('img');
+        image.id = 'crop-image';
+        image.src = URL.createObjectURL(event.target.files[0]);
+        image.style.display = 'block';
+        image.style.maxWidth = '600px';
+        image.style.maxHeight = '600px';
+
+        let newW,newH;
+        sp.appendChild(image);
+        image.onload = function () {
+            newW = image.width;
+            newH = image.height;
+        }
+
+        // noinspection JSUnresolvedReference
+        $('#crop-image').Jcrop({
+            aspectRatio: 1,
+            onSelect: function (coOrdinates) {
+                coOrdinates.x = coOrdinates.x * (image.naturalWidth / newW);
+                coOrdinates.y = coOrdinates.y * (image.naturalHeight / newH);
+                coOrdinates.w = coOrdinates.w * (image.naturalWidth / newW);
+                coOrdinates.h = coOrdinates.h * (image.naturalHeight / newH);
+                document.getElementById('saveResized').onclick = function () {
+                    let formData = new FormData();
+                    formData.append("coords", JSON.stringify(coOrdinates));
+                    formData.append("file", document.getElementById('inputFile').files[0]);
+                    fetch(window.location.origin + '/sendMenMatchPicture', {
+                        method: 'POST',
+                        mode: 'cors',
+                        cache: 'no-cache',
+                        credentials: 'same-origin',
+                        redirect: 'follow',
+                        referrerPolicy: 'no-referrer',
+                        body: formData,
+                    })
+                        .then(() => {
+                            console.log('Success!');
+			    alert("Bild gespeichert!");
+                        })
+                        .catch((error) => {
+                            console.error('Error: ', error);
+			    alert("Fehler! Bitte erneut probieren!");
+                        });
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>
