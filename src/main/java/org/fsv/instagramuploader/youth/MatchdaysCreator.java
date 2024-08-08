@@ -1,4 +1,4 @@
-package org.fsv.instagramuploader.youth.pictureCreator;
+package org.fsv.instagramuploader.youth;
 
 import org.fsv.instagramuploader.ClubSelector;
 import org.fsv.instagramuploader.FontClass;

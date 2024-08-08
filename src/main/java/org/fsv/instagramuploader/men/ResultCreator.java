@@ -1,4 +1,4 @@
-package org.fsv.instagramuploader.men.pictureCreator;
+package org.fsv.instagramuploader.men;
 
 import org.fsv.instagramuploader.ClubSelector;
 import org.fsv.instagramuploader.Helper;
@@ -43,7 +43,7 @@ public class ResultCreator {
 		} else {
 			matchResult = oppName + " : FSV Treuen (" + match.get("result") + ")\n\n";
 		}
-		
+		/**
 		String oppRep = "";
 		if (!match.get("reporterOpp").equals("") && !match.get("reportOpp").equals("")){
 			oppRep = match.get("reporterOpp") + " (" + oppName + "):\n" + match.get("reportOpp") + "\n";
@@ -56,7 +56,9 @@ public class ResultCreator {
 		
 		String fullReport = matchResult + match.get("headline") + "\uD83D\uDD34⚪ \n\n \uD83D\uDCF8: @arminvogtland @netti_1909 \n\n"
 										+ match.get("report") + "\n\nStimmen zum Spiel:\n" + oppRep + ownRep + "\n" +match.get("future");
-		
+			**/
+		String fullReport = matchResult + match.get("headline") + "\uD83D\uDD34⚪ \n\n \uD83D\uDCF8: @arminvogtland @netti_1909 \n\n"
+										+ match.get("report") + "\n\n" +match.get("future");
 		String saveName = getClub.getClubDetails(mOpp).saveClubName();
 		int imgCount = 0;
 		String dir = date + "_" + mType + "_" + saveName;

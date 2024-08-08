@@ -34,14 +34,16 @@
     </select>
     <br>
     <label for="matchResult">Ergebnis:</label>
-    <input type="text" id="matchResult" name="matchResult" onkeyup="setCharCount()">
+    <input type="text" class="result" id="matchResult" name="matchResult" onkeyup="setCharCount()">
     <br>
     <label for="headline">Überschrift:</label>
     <input type="text" id="headline" name="headline" onkeyup="setCharCount()">
     <br>
     <label for="report">Bericht:</label>
-    <textarea  id="report" name="report" onkeyup="setCharCount()"></textarea>
     <br>
+    <textarea  id="report" class="resReport" name="report" onkeyup="setCharCount()"></textarea>
+    <br>
+    <!--
     <label>Stimmen zum Spiel:</label>
     <br>
     <label for="reporterOpp">Gegner:</label>
@@ -54,9 +56,10 @@
     <br>
     <label for="reportOwn"></label><textarea id="reportOwn" name="reportOwn" onkeyup="setCharCount()"></textarea>
     <br>
+    -->
     <label for="future">Ausblick:</label>
     <br>
-    <textarea id="future" name="future" onkeyup="setCharCount()"></textarea>
+    <textarea id="future" class="resFuture" name="future" onkeyup="setCharCount()"></textarea>
     <br>
     <label id="chars">Zeichen: 0/2200</label>
     <br>
@@ -68,17 +71,6 @@
     <input type="button" value="Senden" id="saveAll" onClick="savePictures()">
 </div>
 <div id="showReport"></div>
-<!--<script>-->
-<!--    window.fbAsyncInit = function () {-->
-<!--        FB.init({-->
-<!--            appId: '276749995452523',-->
-<!--            xfbml: true,-->
-<!--            version: 'v19.0'-->
-<!--        });-->
-<!--    }-->
-<!--</script>-->
-<!--<script async defer crossorigin="anonymous" src = "https://connect.facebook.net/en_US/sdk.js"></script>-->
-
     <script type="text/javascript">
         function savePictures() {
             let sendingData = {
@@ -86,10 +78,12 @@
                 result: document.getElementById('matchResult').value,
                 headline: document.getElementById('headline').value,
                 report: document.getElementById('report').value,
+                /**
                 reporterOpp: document.getElementById('reporterOpp').value,
                 reportOpp: document.getElementById('reportOpp').value,
                 reporterOwn: document.getElementById('reporterOwn').value,
                 reportOwn : document.getElementById('reportOwn').value,
+                 **/
                 future: document.getElementById('future').value
             }
             fetch(window.location.origin + '/sendMenMatchResult', {
