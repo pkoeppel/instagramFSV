@@ -34,3 +34,4 @@ build/
 .vscode/
 /save/
 /buffer/
+/src/main/resources/save/
