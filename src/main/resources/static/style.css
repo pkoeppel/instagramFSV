@@ -70,7 +70,6 @@ input {
     margin-top: 5px;
     font-size: 10px;
     padding: 2px 0;
-    width: 300px;
 }
 
 select {
@@ -145,4 +144,8 @@ option {
 .resFuture{
     width: 100%;
     height: 100px;
+}
+
+.resHeadline{
+    width: 300px;
 }
