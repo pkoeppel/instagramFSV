@@ -4,13 +4,11 @@ import org.fsv.instagramuploader.ClubSelector;
 import org.fsv.instagramuploader.FontClass;
 import org.fsv.instagramuploader.Helper;
 import org.fsv.instagramuploader.model.ClubModel;
-import org.fsv.instagramuploader.model.GameModel;
+import org.fsv.instagramuploader.model.MatchModel;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
@@ -24,132 +22,154 @@ import java.io.IOException;
 
 @Component("mc")
 public class MatchdayCreator {
- Logger logger = LoggerFactory.getLogger(MatchdayCreator.class);
- private GameModel match;
- 
- public String createMatch(GameModel matchInfo) throws IOException, ParseException {
-	logger.info("Creating Matchday (Background = MatchdayTemp.jpg)");
-	match = matchInfo;
-	ClubSelector getClub = new ClubSelector();
-	ClubModel homeClub = getClub.getClubDetails(match.getHomeTeam());
-	ClubModel awayClub = getClub.getClubDetails(match.getAwayTeam());
 	
-	if (homeClub != null && awayClub != null) {
-	 //select template
-	 BufferedImage background = ImageIO.read(new File("src/main/resources/pictures/template/men/matchdayTemp.jpg"));
-	 int blockHeight = 0;
-	 String matchCase = matchInfo.getCompetition();
-	 String headline = "Testspiel";
-	 if (matchCase.contains("liga")) {
-		logger.info("League match (Sponsor = Sparkasse)");
-		headline = "Spieltag " + match.getMatchDay() + "\n" + "Vogtlandliga";
-		Helper.pictureOnPicture(background, ImageIO.read(new File("src/main/resources/pictures/sponsor/Sparkasse_Vogtland.png")), "sponsor-men", 0);
-		blockHeight = 1045;
-	 }
-	 if (matchCase.contains("pokal")) {
-		logger.info("Cup match (Sponsor = Sternquell)");
-		headline = match.getMatchDay();
-		if (Helper.isNumeric(match.getMatchDay())) {
-		 headline += ". Pokalrunde";
+	private static Helper h;
+	private static FileWriter fw;
+	private MatchModel match;
+	
+	private static boolean isNumeric(String str) {
+		try {
+			Double.parseDouble(str);
+			return true;
+		} catch (NumberFormatException e) {
+			return false;
 		}
-		Helper.pictureOnPicture(background, ImageIO.read(new File("src/main/resources/pictures/sponsor/Sternquell.png")), "sponsor-men", 0);
-		Helper.writeOnPicture(background, "Sternquell Vogtlandpokal", "headline2-men", FontClass.headMen3, Color.WHITE, 345);
-		blockHeight = 1075;
-	 }
-	 if (matchCase.contains("freundschaft")) {
-		logger.info("Friend match");
-		blockHeight = 1075;
-	 }
-	 Helper.writeOnPicture(background, headline, "headline2-men", FontClass.headMen2, Color.WHITE, 160);
-	 
-	 buildBlocks(background, blockHeight, homeClub, awayClub);
-	 
-	 writeTempTxt(matchInfo);
-	 
-	 String opponent;
-	 if (match.getHomeGame()) {
-		opponent = awayClub.saveClubName();
-	 } else {
-		opponent = homeClub.saveClubName();
-	 }
-	 logger.info("Picture finished!");
-	 String savePath = match.getSaveGameDate() + "_" + match.getCompetition() + "_" + opponent;
-	 Helper.savePicture(background, "src/main/resources/save/" + savePath, "Matchday");
-	 logger.info("Save picture finished (Path: +" + savePath + ")!");
-	 return savePath;
-	}
-	return null;
- }
- 
- private int isOwnClub(ClubModel club) {
-	if (club.clubName().equals("FSV Treuen")) {
-	 return 0;
-	}
-	return 60;
- }
- 
- private void buildBlocks(BufferedImage background, Integer startBox, ClubModel homeClub, ClubModel awayClub) {
-	
-	String gamePlace = "Sportplatz " + homeClub.clubPlace();
-	Helper.pictureOnPicture(background, homeClub.clubLogo(), "logo-left-men", isOwnClub(homeClub));
-	Helper.pictureOnPicture(background, awayClub.clubLogo(), "logo-right-men", isOwnClub(awayClub));
-	
-	match.setHomeGame(homeClub.clubName().equals("FSV Treuen"));
-	
-	if (match.getChangeName() != null) {
-	 if (homeClub.clubName().equals("FSV Treuen"))
-		match.setAwayTeam(match.getChangeName());
-	 else
-		match.setHomeTeam(match.getChangeName());
 	}
 	
-	if (match.getHomeStats() == null || match.getAwayStats() == null) {
-	 match.setHomeStats("");
-	 match.setAwayStats("");
+	public String createMatch(MatchModel matchInfo) throws IOException, ParseException {
+		match = matchInfo;
+		//select template
+		BufferedImage image = ImageIO.read(new File("src/main/resources/pictures/template/men/matchdayTemp.jpg"));
+		h = new Helper(image);
+		int headCase, blockHeight, sponsorCase;
+		String matchCase = matchInfo.matchType();
+		switch (matchCase) {
+			case "leagueMatch":
+				headCase = 1;
+				blockHeight = 1045;
+				sponsorCase = 1;
+				break;
+			case "cupMatch":
+				headCase = 2;
+				blockHeight = 1075;
+				sponsorCase = 2;
+				//Zeile muss seperat geschrieben werden, da sie einen andere Schriftgröße hat
+				h.writeOnPicture("Sternquell Vogtlandpokal", "headline2-men", FontClass.headMen3, Color.WHITE, 345);
+				break;
+			case "friendMatch":
+				headCase = 3;
+				blockHeight = 1075;
+				sponsorCase = 0;
+				break;
+			default:
+				headCase = 0;
+				blockHeight = 0;
+				sponsorCase = 0;
+				break;
+		}
+		buildHeadline(headCase);
+		buildBlocks(blockHeight);
+		buildSponsor(sponsorCase);
+		writeTempTxt(matchInfo, "kickoff");
+		writeTempTxt(matchInfo, "result");
+		fw.close();
+		ClubSelector getClub = new ClubSelector();
+		String saveName = getClub.getClubDetails(match.opponent()).saveClubName();
+		String savePath = match.getSaveMatchDate() + "_" + match.getMatchType() + "_" + saveName;
+		h.savePicture("src/main/resources/save/" + savePath, image, "Matchday");
+		return savePath;
 	}
 	
-	Helper.writeOnPicture(background, match.getHomeTeam() + match.getHomeStats(), "homeclub-men", FontClass.clubMen, Color.BLACK, startBox);
-	Helper.writeOnPicture(background, match.getAwayTeam() + match.getAwayStats(), "awayclub-men", FontClass.clubMen, Color.BLACK, startBox);
-	
-	String bottomBox = match.getPrintDate() + " | " + match.getGameTime() + " Uhr" + "\n" + Helper.wrapString(gamePlace, 30);
-	Helper.writeOnPicture(background, bottomBox, "bottom-men", FontClass.bottomMen, Color.BLACK, 1278);
- }
- 
- private void writeTempTxt(GameModel m) throws IOException {
-	logger.info("Writing match to men-games.json");
-	JSONParser jp = new JSONParser();
-	JSONArray ja = new JSONArray();
-	try {
-	 ja = (JSONArray) jp.parse(new FileReader("src/main/resources/templates/men-games.json"));
-	 
-	 String opponent = m.getHomeTeam();
-	 
-	 if (m.getHomeTeam().equals("FSV Treuen")) {
-		opponent = m.getAwayTeam();
-	 }
-	 
-	 String oppTeamName = opponent;
-	 
-	 if (m.getChangeName() != null) {
-		oppTeamName = m.getChangeName();
-	 }
-	 
-	 JSONObject gameDetails = new JSONObject();
-	 gameDetails.put("matchType", m.getCompetition());
-	 gameDetails.put("opponent", opponent);
-	 gameDetails.put("matchDate", m.getSaveGameDate());
-	 
-	 gameDetails.put("homeGame", m.getHomeGame());
-	 gameDetails.put("oppTeamName", oppTeamName);
-	 
-	 Helper.saveTempTxt(ja, gameDetails);
-	} catch (ParseException ignored) {
+	private void buildSponsor(Integer i) throws IOException {
+		BufferedImage sponsor = switch (i) {
+			case 1 -> ImageIO.read(new File("src/main/resources/pictures/sponsor/Sparkasse_Vogtland.png"));
+			case 2 -> ImageIO.read(new File("src/main/resources/pictures/sponsor/Sternquell.png"));
+			default -> null;
+		};
+		h.pictureOnPicture(sponsor, "sponsor-men", 0);
 	}
 	
+	private void buildHeadline(Integer opt) {
+		String headline;
+		switch (opt) {
+			case 1:
+				headline = "Spieltag " + match.matchDay() + "\n" + "Vogtlandliga";
+				break;
+			case 2:
+				headline = match.matchDay();
+				if (isNumeric(match.matchDay())) {
+					headline += ". Pokalrunde";
+				}
+				break;
+			case 3:
+				headline = "Testspiel";
+				break;
+			default:
+				headline = "";
+				break;
+		}
+		h.writeOnPicture(headline, "headline2-men", FontClass.headMen2, Color.WHITE, 160);
+	}
 	
-	FileWriter fw = new FileWriter("src/main/resources/templates/men-games.json");
-	fw.write(ja.toJSONString());
-	fw.flush();
-	fw.close();
- }
+	private void buildBlocks(Integer startBox) throws IOException, ParseException {
+		ClubSelector getClub = new ClubSelector();
+		ClubModel ownClub = getClub.getClubDetails("FSV Treuen");
+		ClubModel oppClub = getClub.getClubDetails(match.opponent());
+		
+		String homeTeam, guestTeam;
+		String gamePlace = "Sportplatz ";
+		
+		String oppTeamName = match.opponent();
+		if (!match.oppName().isEmpty()){
+			oppTeamName = match.oppName();
+		}
+		
+		if (Boolean.parseBoolean(match.homeGame())) {
+			gamePlace += "Treuen";
+			homeTeam = ownClub.clubName() + match.ownStats();
+			guestTeam = oppTeamName + match.oppStats();
+			h.pictureOnPicture(ownClub.clubLogo(), "logo-left-men", 0);
+			h.pictureOnPicture(oppClub.clubLogo(), "logo-right-men", 60);
+		} else {
+			gamePlace += oppClub.clubPlace();
+			homeTeam = oppTeamName + match.oppStats();
+			guestTeam = ownClub.clubName() + match.ownStats();
+			h.pictureOnPicture(ownClub.clubLogo(), "logo-right-men", 0);
+			h.pictureOnPicture(oppClub.clubLogo(), "logo-left-men", 60);
+		}
+		
+		h.writeOnPicture(homeTeam, "homeclub-men", FontClass.clubMen, Color.BLACK, startBox);
+		h.writeOnPicture(guestTeam, "awayclub-men", FontClass.clubMen, Color.BLACK, startBox);
+		
+		String bottomBox = match.matchDate() + " | " + match.matchTime() + " Uhr" + "\n" + Helper.wrapString(gamePlace, 30);
+		h.writeOnPicture(bottomBox, "bottom-men", FontClass.bottomMen, Color.BLACK, 1278);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void writeTempTxt(MatchModel m, String part) throws IOException {
+		JSONParser jp = new JSONParser();
+		JSONArray ja = new JSONArray();
+		try {
+			ja = (JSONArray) jp.parse(new FileReader("src/main/resources/templates/men-games-" + part + ".json"));
+			
+			String oppTeamName = m.opponent();
+                	if (!m.oppName().isEmpty()){
+                        	oppTeamName = m.oppName();
+                	}
+			
+			JSONObject gameDetails = new JSONObject();
+			gameDetails.put("matchType", m.getMatchType());
+			gameDetails.put("opponent", m.opponent());
+			gameDetails.put("matchDate", m.matchDate());
+			gameDetails.put("homeGame",m.homeGame());
+			gameDetails.put("oppTeamName",oppTeamName);
+			h.saveTempTxt(ja, gameDetails);
+		} catch (ParseException ignored) {
+		}
+		
+		
+		fw = new FileWriter("src/main/resources/templates/men-games-" + part + ".json");
+		fw.write(ja.toJSONString());
+		fw.flush();
+	}
 }
