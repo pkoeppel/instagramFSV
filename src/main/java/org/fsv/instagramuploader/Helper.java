@@ -328,8 +328,8 @@ public class Helper {
  
  private static JSONArray parseGames(String html) throws IOException, ParseException, java.text.ParseException {
 	JSONObject matchdays = (JSONObject) new JSONParser().parse(new FileReader("src/main/resources/templates/data.json"));
-	Long leagueMatchday = (Long) matchdays.get("lastLeagueMatchday");
-	Long cupMatchday = (Long) matchdays.get("lastCupMatchday");
+	Integer leagueMatchday = Integer.valueOf((String) matchdays.get("lastLeagueMatchday"));
+	Integer cupMatchday = Integer.valueOf((String) matchdays.get("lastCupMatchday"));
 	
 	JSONArray result = new JSONArray();
 	String gamesRegex = "<tr class=\"row-headline visible-small\">.*?</tr>.*?<tr class=\"odd row-competition hidden-small\">.*?</tr>.*?<tr class=\"odd\">.*?</tr>";

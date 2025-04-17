@@ -221,8 +221,8 @@ public class Controller {
 	try{
 	 logger.info("Update matchdays info ...");
 	 JSONObject jo = new JSONObject();
-	 jo.put("leagueMatchday", leagueMatchday);
-	 jo.put("cupMatchday", cupMatchday);
+	 jo.put("lastLeagueMatchday", leagueMatchday);
+	 jo.put("lastCupMatchday", cupMatchday);
 	 FileWriter fw = new FileWriter("src/main/resources/templates/data.json");
 	 fw.write(jo.toJSONString());
 	 fw.flush();
