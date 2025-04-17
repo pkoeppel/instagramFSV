@@ -5,19 +5,18 @@
     <title>Create Instagram pictures</title>
     <meta charset="utf-8">
     <link href="../style.css" rel="stylesheet">
-    <script src="../js/helper.js" type="text/javascript"></script>
-    <script src="../js/getData.js" type="text/javascript"></script>
-    <script src="../js/postData.js" type="text/javascript"></script>
-    <script src="../js/deleteData.js" type="text/javascript"></script>
 </head>
 
 <body>
 <div class="topbar">
     <ul>
         <li><a href="../index.html">Home</a></li>
-        <li><a href="men/matchday-men.html">Spieltag Herren</a></li>
+        <li><a href="men/league-men.html">Ligaspiel Herren</a></li>
+        <li><a href="men/cup-men.html">Pokalspiel Herren</a></li>
+        <li><a href="men/friend-men.html">Testspiel Herren</a></li>
+        <li><a href="men/kickoff-men.html">Anstoss Herren</a></li>
         <li><a href="men/result-men.html">Ergebnis Herren</a></li>
-        <li><a href="youth/matchday-youth.html">Spieltag Kids</a></li>
+        <li><a href="youth/match-youth.html">Spieltag Kids</a></li>
         <li><a href="youth/result-youth.html">Ergebnis Kids</a></li>
     </ul>
 </div>
@@ -34,21 +33,40 @@
     <label for="clubInsta">Instagram Profil</label>
     <input id="clubInsta" name="clubInsta" type="text">
     <br>
-    Das Bild muss folgende Merkmale aufweisen:
-    <ul>
-        <li>Logo muss ausgeschnitten sein!</li>
-        <li>Die Auflösung muss 4,7600px/mm sein!</li>
-        <li>Logo muss im Format 400 x 400 sein!</li>
-        <li>Logo muss zentriert sein!</li>
-        <li>Dateityp muss .png sein!</li>
-    </ul>
+    <p>
+        Das Bild muss folgende Merkmale aufweisen:
+        <ul>
+            <li>Logo muss ausgeschnitten sein!</li>
+            <li>Logo muss im Format 400 x 400 sein!</li>
+            <li>Dateityp muss .png sein!</li>
+        </ul>
+    </p>
     <input accept="image/png" id="clubPic" name="fileName" type="file">
     <br>
-    <button onclick="postNewTeam()">Absenden</button>
+    <button onclick="uploadNewTeam()">Absenden</button>
 </div>
 <script>
-    window.onload = function () {
-        document.getElementById("clubName").value = localStorage.getItem("newTeamName");
+    function uploadNewTeam() {
+        //save file
+        let formData = new FormData();
+        formData.append("club", document.getElementById('clubName').value);
+        formData.append("place", document.getElementById('matchPlace').value);
+        formData.append("insta1", document.getElementById('clubInsta').value);
+        formData.append("insta2", "");
+        formData.append("file", document.getElementById('clubPic').files[0]);
+        fetch(window.location.origin + '/addNewTeam', {
+            method: 'POST',
+            mode: 'cors',
+            cache: 'no-cache',
+            credentials: 'same-origin',
+            redirect: 'follow',
+            referrerPolicy: 'no-referrer',
+            body: formData,
+        })
+            .then(response => response.text())
+            .catch((error) => {
+                console.error('Error: ', error);
+            });
     }
 </script>
 </body>
