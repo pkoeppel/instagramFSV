@@ -3,25 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>Create Instagram pictures</title>
-    <link rel = "stylesheet" href = "https://cdnjs.cloudflare.com/ajax/libs/jquery-jcrop/0.9.15/css/jquery.Jcrop.min.css" />
-    <script src = "https://code.jquery.com/jquery-3.6.0.min.js"> </script>
-    <script src = "https://cdnjs.cloudflare.com/ajax/libs/jquery-jcrop/0.9.15/js/jquery.Jcrop.min.js"> </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery-jcrop/0.9.15/css/jquery.Jcrop.min.css" rel="stylesheet"/>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-jcrop/0.9.15/js/jquery.Jcrop.min.js"></script>
 
-    <script src="../../js/sendData.js" type="text/javascript"></script>
-    <script src="../../js/setupPages.js" type="text/javascript"></script>
-    <script type="text/javascript" src="../../js/InstagramUpload.js"></script>
+    <script src="../../js/getData.js" type="text/javascript"></script>
+    <script src="../../js/postData.js" type="text/javascript"></script>
+    <script src="../../js/deleteData.js" type="text/javascript"></script>
+    <script src="../../js/helper.js" type="text/javascript"></script>
     <link href="../../style.css" rel="stylesheet">
 </head>
-<body onload="loadMenMatches('result')">
+<body onload="getMenMatches()">
 <div class="topbar">
     <ul>
         <li><a href="../../index.html">Home</a></li>
-        <li><a href="league-men.html">Ligaspiel Herren</a></li>
-        <li><a href="cup-men.html">Pokalspiel Herren</a></li>
-        <li><a href="friend-men.html">Testspiel Herren</a></li>
-        <li><a href="kickoff-men.html">Anstoss Herren</a></li>
+        <li><a href="matchday-men.html">Spieltag Herren</a></li>
         <li><a>Ergebnis Herren</a></li>
-        <li><a href="../youth/match-youth.html">Spieltag Kids</a></li>
+        <li><a href="../youth/matchday-youth.html">Spieltag Kids</a></li>
         <li><a href="../youth/result-youth.html">Ergebnis Kids</a></li>
     </ul>
 </div>
@@ -32,16 +30,17 @@
     <label for="matches"></label>
     <select id="matches" name="matches">
     </select>
+    <input id="deleteEntry" onclick="deleteMatchEntry('men')" type="button" value="Eintrag löschen">
     <br>
     <label for="matchResult">Ergebnis:</label>
-    <input type="text" class="result" id="matchResult" name="matchResult" onkeyup="setCharCount()">
+    <input class="result" id="matchResult" name="matchResult" onkeyup="setCharCount()" type="text">
     <br>
     <label for="headline">Überschrift:</label>
-    <input type="text" class="resHeadline" id="headline" name="headline" onkeyup="setCharCount()">
+    <input class="resHeadline" id="headline" name="headline" onkeyup="setCharCount()" type="text">
     <br>
     <label for="report">Bericht:</label>
     <br>
-    <textarea  id="report" class="resReport" name="report" onkeyup="setCharCount()"></textarea>
+    <textarea class="resReport" id="report" name="report" onkeyup="setCharCount()"></textarea>
     <br>
     <!--
     <label>Stimmen zum Spiel:</label>
@@ -59,54 +58,19 @@
     -->
     <label for="future">Ausblick:</label>
     <br>
-    <textarea id="future" class="resFuture" name="future" onkeyup="setCharCount()"></textarea>
+    <textarea class="resFuture" id="future" name="future" onkeyup="setCharCount()"></textarea>
     <br>
     <label id="chars">Zeichen: 0/2200</label>
     <br>
-    <input accept="image/*" type="file" id="inputFile" onchange="newPicture()">
+    <input accept="image/*" id="inputFile" onchange="newPicture()" type="file">
     <br>
     <div id="showPic"></div>
     <br>
-    <input type="button" value="Speichern" id="saveResized">
-    <input type="button" value="Senden" id="saveAll" onClick="savePictures()">
+    <input id="saveResized" type="button" value="Speichern">
+    <input id="saveAll" onClick="postPictures()" type="button" value="Senden">
 </div>
 <div id="showReport"></div>
-    <script type="text/javascript">
-        function savePictures() {
-            let sendingData = {
-                match: document.getElementById('matches').value,
-                result: document.getElementById('matchResult').value,
-                headline: document.getElementById('headline').value,
-                report: document.getElementById('report').value,
-                /**
-                reporterOpp: document.getElementById('reporterOpp').value,
-                reportOpp: document.getElementById('reportOpp').value,
-                reporterOwn: document.getElementById('reporterOwn').value,
-                reportOwn : document.getElementById('reportOwn').value,
-                 **/
-                future: document.getElementById('future').value
-            }
-            fetch(window.location.origin + '/sendMenMatchResult', {
-                method: 'POST',
-                mode: 'cors',
-                cache: 'no-cache',
-                credentials: 'same-origin',
-                redirect: 'follow',
-                referrerPolicy: 'no-referrer',
-                body: JSON.stringify(sendingData),
-            })
-                .then(response => response.json())
-                // .then(data => createElementContainer(data))
-                .then(data => {
-                    // console.log(data.fileDir);
-                    let repDiv = document.getElementById('showReport');
-                    repDiv.innerText = data.caption;
-                    window.open(window.location.origin + '/zip-download/' + data.fileDir);
-                })
-                .catch((error) => {
-                    console.error('Error: ', error);
-                });
-        }
+<script type="text/javascript">
     function newPicture() {
         let sp = document.getElementById('showPic');
         while (sp.lastElementChild){
@@ -150,11 +114,11 @@
                     })
                         .then(() => {
                             console.log('Success!');
-			    alert("Bild gespeichert!");
+                            alert("Bild gespeichert!");
                         })
                         .catch((error) => {
                             console.error('Error: ', error);
-			    alert("Fehler! Bitte erneut probieren!");
+                            alert("Fehler! Bitte erneut probieren!");
                         });
                 }
             }
