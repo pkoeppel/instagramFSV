@@ -1,9 +1,33 @@
 {
-  "BSV 53 Irfersgrün": {
+  "VfB Sch\u00f6neck": {
+    "fileName": "VfB_Schoeneck",
+    "insta_acc": "vfbschoeneck",
+    "insta_acc2": "",
+    "place": "Sch\u00f6neck"
+  },
+  "SG Stra\u00dfberg": {
+    "fileName": "SG_Strassberg",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "Stra\u00dfberg"
+  },
+  "SV Motor Zwickau S\u00fcd": {
+    "fileName": "SV_Motor_Zwickau_Sued",
+    "insta_acc": "sv_motor_zwickau_sued",
+    "insta_acc2": "",
+    "place": "Stadion an der Jablonecer Stra\u00dfe"
+  },
+  "SV 1903 Kottengr\u00fcn": {
+    "fileName": "SV_1903_Kottengruen",
+    "insta_acc": "svk1903",
+    "insta_acc2": "",
+    "place": "Kottengr\u00fcn"
+  },
+  "BSV 53 Irfersgr\u00fcn": {
     "fileName": "BSV_53_Irfersgruen",
-    "insta_acc": "bsv_53_irfersgrün_herren",
+    "insta_acc": "bsv_53_irfersgr\u00fcn_herren",
     "insta_acc2": "bsv_53_kids",
-    "place": "Irfersgrün"
+    "place": "Irfersgr\u00fcn"
   },
   "SG Stahlbau Plauen": {
     "fileName": "SG_Stahlbau_Plauen",
@@ -47,11 +71,23 @@
     "insta_acc2": "",
     "place": "Rodewisch"
   },
-  "TSG Ruppertsgrün": {
+  "VfB Pausa-M\u00fchltroff": {
+    "fileName": "VfB_Pausa-Muehltroff",
+    "insta_acc": "vfb_pausamuehltroff",
+    "insta_acc2": "",
+    "place": "M\u00fchltroff"
+  },
+  "1.FC Wacker Plauen": {
+    "fileName": "1FC_Wacker_Plauen",
+    "insta_acc": "wacker_plauen",
+    "insta_acc2": "",
+    "place": "Gerhard Bertram"
+  },
+  "TSG Ruppertsgr\u00fcn": {
     "fileName": "TSG_Ruppertsgruen",
     "insta_acc": "tsgruppe1953",
     "insta_acc2": "",
-    "place": "Ruppertsgrün"
+    "place": "Ruppertsgr\u00fcn"
   },
   "SpVgg Zobes": {
     "fileName": "SpVgg_Zobes",
@@ -59,11 +95,12 @@
     "insta_acc2": "",
     "place": "Zobes"
   },
-  "SV Coschütz": {
+
+  "SV Cosch\u00fctz": {
     "fileName": "SV_Coschuetz",
     "insta_acc": "svcoschuetz1955",
     "insta_acc2": "",
-    "place": "Coschütz"
+    "place": "Cosch\u00fctz"
   },
   "FSV Bau Weischlitz": {
     "fileName": "FSV_Bau_Weischlitz",
@@ -71,11 +108,12 @@
     "insta_acc2": "",
     "place": "Weischlitz"
   },
-  "SpVgg Grünbach-Falkenstein": {
-    "fileName": "SpVgg_Gruenbach-Falkenstein",
-    "insta_acc": "spvgg_gruenbach_falkenstein",
+
+  "SG J\u00f6ssnitz": {
+    "fileName": "SG_Joessnitz",
+    "insta_acc": "sgj1951",
     "insta_acc2": "",
-    "place": "Falkenstein"
+    "place": "J\u00f6ssnitz"
   },
   "VFC Plauen": {
     "fileName": "VFC_Plauen",
@@ -125,11 +163,11 @@
     "insta_acc2": "",
     "place": "Treuen"
   },
-  "SG Jössnitz": {
-    "fileName": "SG_Joessnitz",
-    "insta_acc": "sgj1951",
+  "VfL Reumtengr\u00fcn": {
+    "fileName": "VfL_Reumtengruen",
+    "insta_acc": "",
     "insta_acc2": "",
-    "place": "Jössnitz"
+    "place": "Reumtengr\u00fcn"
   },
   "SpG 1880 Reuth": {
     "fileName": "SpG_1880_Reuth",
@@ -137,11 +175,17 @@
     "insta_acc2": "",
     "place": "Reuth"
   },
+  "SV Blau-Weiss Rebesgr\u00fcn": {
+    "fileName": "SV_Blau-Weiss_Rebesgruen",
+    "insta_acc": "sv_blau_weiss_rebesgr\u00fcn",
+    "insta_acc2": "",
+    "place": "Rebesgr\u00fcn"
+  },
   "PSV Plauen": {
     "fileName": "PSV_Plauen",
     "insta_acc": "post_sv_plauen",
     "insta_acc2": "",
-    "place": "Luisenstraße"
+    "place": "Luisenstra\u00dfe"
   },
   "SV Turbine Bergen": {
     "fileName": "SV_Turbine_Bergen",
@@ -153,13 +197,31 @@
     "fileName": "SG_Strassberg",
     "insta_acc": "",
     "insta_acc2": "",
-    "place": "Straßberg"
+    "place": "Treuen"
+  },
+  "VfB Gro\u00dffriesen": {
+    "fileName": "VfB_Grossfriesen",
+    "insta_acc": "vfb_gro\u00dffriesen_1951",
+    "insta_acc2": "",
+    "place": "Gro\u00dffriesen"
+  },
+  "SG K\u00fcrbitz": {
+    "fileName": "SG_Kuerbitz",
+    "insta_acc": "sg_kuerbitz1897",
+    "insta_acc2": "",
+    "place": "K\u00fcrbitz"
+  },
+  "SV Morgenr\u00f6the-Rautenkranz": {
+    "fileName": "SV_Morgenroethe-Rautenkranz",
+    "insta_acc": "sv.morgenroethe_rautenkranz",
+    "insta_acc2": "",
+    "place": "M-Rautenkranz"
   },
   "VFC Reichenbach 96": {
     "fileName": "VFC_Reichenbach_96",
     "insta_acc": "vfcreichenbach",
     "insta_acc2": "",
-    "place": "Schöne Aussicht"
+    "place": "Sch\u00f6ne Aussicht"
   },
   "SG Rotschau": {
     "fileName": "SG_Rotschau",
@@ -177,7 +239,7 @@
     "fileName": "SV_Concordia_Plauen",
     "insta_acc": "sv_concordia_plauen",
     "insta_acc2": "",
-    "place": "Hegelstraße"
+    "place": "Hegelstra\u00dfe"
   },
   "FC Teutonia Netzschkau": {
     "fileName": "FC_Teutonia_Netzschkau",
@@ -219,11 +281,11 @@
     "fileName": "VfB_Nord_Plauen",
     "insta_acc": "vfb.plauen.nord.e.v",
     "insta_acc2": "",
-    "place": "H.-Sachs-Straße"
+    "place": "H.-Sachs-Stra\u00dfe"
   },
-  "SV Motor Zwickau-Süd": {
-    "fileName": "SV_Motor_Zwickau_Sued",
-    "insta_acc": "sv_motor_zwickau_sued",
+  "SpVgg Gr\u00fcnbach-Falkenstein": {
+    "fileName": "SpVgg_Gruenbach-Falkenstein",
+    "insta_acc": "spvgg_gruenbach_falkenstein",
     "insta_acc2": "",
     "place": "Stadion an der Jablonecer Straße"
   },
@@ -243,7 +305,7 @@
     "fileName": "VSC_Mylau-Reichenbach",
     "insta_acc": "vscmylaureichbach",
     "insta_acc2": "",
-    "place": "Reichbacherstraße"
+    "place": "Reichbacherstra\u00dfe"
   },
   "SG Unterlosa": {
     "fileName": "SG_Unterlosa",
@@ -275,11 +337,11 @@
     "insta_acc2": "",
     "place": "Adorf"
   },
-  "FC Fortuna 91 Plauen e.V.": {
-    "fileName": "FC_Fortuna_91_Plauen",
-    "insta_acc": "fortuna_plauen",
+  "SV Gr\u00fcn-Weiss Wernesgr\u00fcn": {
+    "fileName": "SV_Gruen-Weiss_Wernesgruen",
+    "insta_acc": "svwernesgruen",
     "insta_acc2": "",
-    "place": "Crieschwitzer Hang"
+    "place": "Wernesgr\u00fcn"
   },
   "VfB Lengenfeld 1908 e.V ": {
     "fileName": "VfB_Lengenfeld_1908",
