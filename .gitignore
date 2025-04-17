@@ -35,6 +35,5 @@ build/
 /save/
 /buffer/
 /src/main/resources/save/
-/src/main/resources/templates/men-games-kickoff.json
-/src/main/resources/templates/men-games-result.json
+/src/main/resources/templates/men-games.json
 /src/main/resources/templates/youth-games.json.json
