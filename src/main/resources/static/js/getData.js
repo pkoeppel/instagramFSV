@@ -118,7 +118,7 @@ function getAllYouthMatches() {
                         btDelete.type = "button";
                         btDelete.value = "Löschen";
                         btDelete.addEventListener('click', function (){
-                            deleteMatchEntry("youth", element)
+                            deleteMatchEntry("youth", JSON.stringify(element.game));
                         });
                         span.appendChild(btDelete);
                     } else {
@@ -164,10 +164,10 @@ function getMenMatches() {
     });
 }
 
-function deleteMatchEntry(team, element) {
+function deleteMatchEntry(team, game) {
     if (confirm("Soll das Spiel wirklich gelöscht werden?")) {
         let formData = new FormData();
-        formData.append("game", JSON.stringify(element.game));
+        formData.append("game", game);
         formData.append("team", team);
         fetch(window.location.origin + '/deleteMatchEntry', {
             method: 'POST',
@@ -190,4 +190,38 @@ function deleteMatchEntry(team, element) {
                 console.error('Error: ', error);
             });
     }
+}
+
+function postYouthResults() {
+    let caption = document.getElementById("headline").value + " 🔴🟢🟡" + "\n\n";
+    let resDev = document.getElementById("reportboxes");
+    let elem = resDev.querySelectorAll("textarea");
+    for (let i = 0; i < elem.length; i++) {
+        caption += elem[i].id + ":\n" + elem[i].value + "\n\n";
+    }
+    fetch(window.location.origin + '/postYouthResults', {
+        method: 'POST',
+        mode: 'cors',
+        cache: 'no-cache',
+        credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json',},
+        redirect: 'follow',
+        referrerPolicy: 'no-referrer',
+        body: JSON.stringify(saveTemp)
+    })
+        .then(response => response.json())
+        .then((data) => {
+            console.log(data);
+            for (let [key, value] of Object.entries(data)) {
+                for (let i = 1; i <= value; i++) {
+                    window.open(window.location.origin + '/download/youth/' + key + '/Result' + i + '.jpeg');
+                }
+            }
+            let repDiv = document.getElementById('showReport');
+            repDiv.innerText = caption;
+        })
+        .catch((error) => {
+            alert("Es ist ein Fehler beim Erstellen aufgetreten: " + error);
+            console.error('Error: ', error);
+        });
 }

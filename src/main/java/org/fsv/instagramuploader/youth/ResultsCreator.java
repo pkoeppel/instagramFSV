@@ -52,9 +52,13 @@ public class ResultsCreator {
 	 Helper.writeOnPicture(background, rm.getValue("matchType"), "match-type-short", FontClass.simpleYouth, Color.BLACK, blockStart);
 	 
 	 checkMatchDate(rm.getValue("date"));
+	 String oppName = rm.getValue("oppName");
+	 if (oppName.toLowerCase().contains("spg treuener land")) {
+		oppName = "SpG Treuener Land";
+	 }
 	 ClubSelector getClub = new ClubSelector();
 	 ClubModel ownClub = getClub.getClubDetails("SpG Treuener Land");
-	 ClubModel oppClub = getClub.getClubDetails(rm.getValue("oppName"));
+	 ClubModel oppClub = getClub.getClubDetails(oppName);
 	 if (rm.text().equals("Abgesagt")) {
 		logger.info("Game cancel!");
 		Helper.pictureOnPicture(background, ownClub.clubLogo(), "logo-left-youth", blockStart);

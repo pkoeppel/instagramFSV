@@ -203,7 +203,7 @@ public class Controller {
  }
  
  @RequestMapping("/updateTeamInfo")
- public ResponseEntity<String> getTeamIds(@RequestParam("newData") String newData){
+ public ResponseEntity<String> updateTeamInfo(@RequestParam("newData") String newData){
 	try{
 	 logger.info("Update team info ...");
 	 FileWriter fw = new FileWriter("src/main/resources/templates/teamInfo.json");
@@ -221,8 +221,8 @@ public class Controller {
 	try{
 	 logger.info("Update matchdays info ...");
 	 JSONObject jo = new JSONObject();
-	 jo.put("lastLeagueMatchday", leagueMatchday);
-	 jo.put("lastCupMatchday", cupMatchday);
+	 jo.put("lastLeagueMatchday", Long.valueOf(leagueMatchday));
+	 jo.put("lastCupMatchday", Long.valueOf(cupMatchday));
 	 FileWriter fw = new FileWriter("src/main/resources/templates/data.json");
 	 fw.write(jo.toJSONString());
 	 fw.flush();
