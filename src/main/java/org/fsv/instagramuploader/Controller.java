@@ -168,7 +168,7 @@ public class Controller {
  }
  
  @RequestMapping("/postMatchMen")
- public ResponseEntity<String> postMatchFile(@RequestParam("game") GameModel match) {
+ public ResponseEntity<String> postMatchMen(@RequestBody GameModel match) {
 	try {
 	 logger.info("Post match men started...");
 	 String result = mc.createMatch(match);
@@ -332,7 +332,7 @@ public class Controller {
  }
  
  @RequestMapping("/postMatchFilesYouth")
- public ResponseEntity<?> postMatchFilesYouth(@RequestParam("allGames") ArrayList<GameModel> mmArr) {
+ public ResponseEntity<?> postMatchFilesYouth(@RequestBody ArrayList<GameModel> mmArr) {
 	try {
 	 logger.info("Post match files youth ...");
 	 Map<String, Integer> result = msc.createMatches(mmArr);
@@ -355,7 +355,7 @@ public class Controller {
  }
  
  @RequestMapping("/postYouthResults")
- public ResponseEntity<?> postYouthResult(@RequestParam("allResults") ArrayList<ResultModel> rmArr) {
+ public ResponseEntity<?> postYouthResult(@RequestBody ArrayList<ResultModel> rmArr) {
 	try {
 	 logger.info("Post youth results ...");
 	 Map<String, Integer> result = rsc.createResults(rmArr);

@@ -54,8 +54,6 @@ function postYouthResults() {
     for (let i = 0; i < elem.length; i++) {
         caption += elem[i].id + ":\n" + elem[i].value + "\n\n";
     }
-    let formData = new FormData();
-    formData.append("allResults",JSON.stringify(saveTemp));
     fetch(window.location.origin + '/postYouthResults', {
         method: 'POST',
         mode: 'cors',
@@ -64,7 +62,7 @@ function postYouthResults() {
         headers: {'Content-Type': 'application/json',},
         redirect: 'follow',
         referrerPolicy: 'no-referrer',
-        body: formData
+        body: JSON.stringify(saveTemp)
     })
         .then(response => response.json())
         .then((data) => {
@@ -84,8 +82,6 @@ function postYouthResults() {
 }
 
 function postYouthMatchday() {
-    let formData = new FormData();
-    formData.append("allGames",JSON.stringify(matchData));
     fetch(window.location.origin + '/postMatchFilesYouth', {
         method: 'POST',
         mode: 'cors',
@@ -94,7 +90,7 @@ function postYouthMatchday() {
         headers: {'Content-Type': 'application/json',},
         redirect: 'follow',
         referrerPolicy: 'no-referrer',
-        body: formData,
+        body: JSON.stringify(matchData)
     })
         .then(response => response.json())
         .then((data) => {
