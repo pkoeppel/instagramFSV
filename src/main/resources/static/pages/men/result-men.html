@@ -30,7 +30,7 @@
     <label for="matches"></label>
     <select id="matches" name="matches">
     </select>
-    <input id="deleteEntry" onclick="deleteMatchEntry('men')" type="button" value="Eintrag löschen">
+    <input id="deleteEntry" onclick="deleteMatchEntry('men', document.getElementById('matches').value)" type="button" value="Eintrag löschen">
     <br>
     <label for="matchResult">Ergebnis:</label>
     <input class="result" id="matchResult" name="matchResult" onkeyup="setCharCount()" type="text">
