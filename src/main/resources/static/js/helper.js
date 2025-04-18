@@ -372,8 +372,6 @@ function updateTeamValues(teamInfo){
 }
 
 function postMenMatch(game) {
-    let formData = new FormData();
-    formData.append("game", JSON.stringify(game));
     fetch(window.location.origin + '/postMatchMen', {
         method: 'POST',
         mode: 'cors',
@@ -382,7 +380,7 @@ function postMenMatch(game) {
         headers: {'Content-Type': 'application/json',},
         redirect: 'follow',
         referrerPolicy: 'no-referrer',
-        body: formData,
+        body: JSON.stringify(game)
     })
         .then(response => {
             let status = response.status;
