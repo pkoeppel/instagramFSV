@@ -47,40 +47,6 @@ function postNewTeam() {
         });
 }
 
-function postYouthResults() {
-    let caption = document.getElementById("headline").value + " 🔴🟢🟡" + "\n\n";
-    let resDev = document.getElementById("reportboxes");
-    let elem = resDev.querySelectorAll("textarea");
-    for (let i = 0; i < elem.length; i++) {
-        caption += elem[i].id + ":\n" + elem[i].value + "\n\n";
-    }
-    fetch(window.location.origin + '/postYouthResults', {
-        method: 'POST',
-        mode: 'cors',
-        cache: 'no-cache',
-        credentials: 'same-origin',
-        headers: {'Content-Type': 'application/json',},
-        redirect: 'follow',
-        referrerPolicy: 'no-referrer',
-        body: JSON.stringify(saveTemp)
-    })
-        .then(response => response.json())
-        .then((data) => {
-            console.log(data);
-            for (let [key, value] of Object.entries(data)) {
-                for (let i = 1; i <= value; i++) {
-                    window.open(window.location.origin + '/download/youth/' + key + '/Result' + i + '.jpeg');
-                }
-            }
-            let repDiv = document.getElementById('showReport');
-            repDiv.innerText = caption;
-        })
-        .catch((error) => {
-            alert("Es ist ein Fehler beim Erstellen aufgetreten: " + error);
-            console.error('Error: ', error);
-        });
-}
-
 function postYouthMatchday() {
     fetch(window.location.origin + '/postMatchFilesYouth', {
         method: 'POST',

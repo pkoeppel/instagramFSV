@@ -93,7 +93,7 @@ async function getAllTeamInformation() {
     let matchdays = await getSavedMatchdays();
     let lbLeague = document.createElement("label");
     lbLeague.innerText = "Liga:";
-    idFieldset.appendChild(lbLeague);
+    matchdayFieldset.appendChild(lbLeague);
     let inputLeague = document.createElement("input");
     inputLeague.id = "inputLeague";
     inputLeague.value = matchdays["lastLeagueMatchday"];
@@ -101,7 +101,7 @@ async function getAllTeamInformation() {
     matchdayFieldset.appendChild(document.createElement("br"));
     let lbCup = document.createElement("label");
     lbCup.innerText = "Pokal:";
-    idFieldset.appendChild(lbCup);
+    matchdayFieldset.appendChild(lbCup);
     let inputCup = document.createElement("input");
     inputCup.id = "inputCup";
     inputCup.value = matchdays["lastCupMatchday"];
@@ -145,7 +145,7 @@ function updateMatchdays(leagueMatchday, cupMatchday) {
     })
         .then((response) => {
             alert("Erfolgreich gespeichert!");
-            return response.json();
+            return response;
         })
         .catch((error) => {
             alert("Es ist ein Fehler beim Ändern aufgetreten: " + error);
@@ -363,7 +363,7 @@ function updateTeamValues(teamInfo){
     })
         .then((response) => {
             alert("Erfolgreich gespeichert!");
-            return response.json();
+            return response;
         })
         .catch((error) => {
             alert("Es ist ein Fehler beim Ändern aufgetreten: " + error);

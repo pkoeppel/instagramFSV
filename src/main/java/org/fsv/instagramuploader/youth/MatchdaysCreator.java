@@ -101,17 +101,20 @@ public class MatchdaysCreator {
  private void filledBlock(BufferedImage background, GameModel m, int startPoint) throws IOException, ParseException {
 	logger.info("Normal game");
 	boolean isHomeGame;
+	String opponent;
 	ClubModel homeClub, awayClub;
 	if (m.getHomeTeam().contains("SpG Treuener Land")) {
 	 m.setHomeTeam(m.getHomeTeam().replaceAll("\\s*\\([^)]*\\)", "").trim());
 	 homeClub = getClub.getClubDetails("SpG Treuener Land");
 	 awayClub = getClub.getClubDetails(m.getAwayTeam());
 	 isHomeGame = true;
+	 opponent = m.getAwayTeam();
 	} else {
 	 m.setAwayTeam(m.getAwayTeam().replaceAll("\\s*\\([^)]*\\)", "").trim());
 	 homeClub = getClub.getClubDetails(m.getHomeTeam());
 	 awayClub = getClub.getClubDetails("SpG Treuener Land");
 	 isHomeGame = false;
+	 opponent = m.getHomeTeam();
 	}
 	
 	if (m.getChangeName() != null) {
@@ -124,6 +127,8 @@ public class MatchdaysCreator {
 		m.setHomeTeam(m.getChangeName().replaceAll("\\s*\\([^)]*\\)", "").trim());
 	 }
 	 m.setChangeName(buffer);
+	} else {
+	 m.setChangeName(opponent);
 	}
 	String gamePlace = "Sportplatz ";
 	if (isHomeGame) {
@@ -153,7 +158,7 @@ public class MatchdaysCreator {
 	logger.info("Kinderfest");
 	ClubModel homeClub;
 	ClubModel ownClub = getClub.getClubDetails("SpG Treuener Land");
-	String gamePlace = "Sportplatz ";
+		String gamePlace = "Sportplatz ";
 	if (!m.getHomeTeam().toLowerCase().contains("spg treuener land")) {
 	 homeClub = getClub.getClubDetails(m.getHomeTeam());
 	 gamePlace += homeClub.clubPlace();
@@ -163,7 +168,19 @@ public class MatchdaysCreator {
 	 JSONObject teamInfo = (JSONObject) obj.get(m.getYouthTeam());;
 	 gamePlace += teamInfo.get("default-place");
 	}
-	
+	if (m.getChangeName() != null) {
+	 String buffer;
+	 if (m.getHomeGame()) {
+		buffer = m.getAwayTeam();
+		m.setAwayTeam(m.getChangeName().replaceAll("\\s*\\([^)]*\\)", "").trim());
+	 } else {
+		buffer = m.getHomeTeam();
+		m.setHomeTeam(m.getChangeName().replaceAll("\\s*\\([^)]*\\)", "").trim());
+	 }
+	 m.setChangeName(buffer);
+	} else {
+	 m.setChangeName("SpG Treuener Land");
+	}
 	Helper.pictureOnPicture(background, ownClub.clubLogo(), "logo-right-youth", startPoint);
 	Helper.pictureOnPicture(background, homeClub.clubLogo(), "logo-left-youth", startPoint);
 	
