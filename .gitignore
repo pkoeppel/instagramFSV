@@ -36,4 +36,6 @@ build/
 /buffer/
 /src/main/resources/save/
 /src/main/resources/templates/men-games.json
-/src/main/resources/templates/youth-games.json.json
+/src/main/resources/templates/youth-games.json
+/src/main/resources/templates/allMatches.json
+/src/main/resources/templates/clubs.json
