@@ -52,7 +52,7 @@ public class MatchdaysCreator {
 	 }
 	 Graphics g = background.getGraphics();
 	 g.setColor(Color.GRAY);
-	 int[] polyX = {0, 275, 250, 0};
+	 int[] polyX = {0, 250, 225, 0};
 	 int[] polyY = {blockStart, blockStart, blockStart + 100, blockStart + 100};
 	 g.fillPolygon(polyX, polyY, polyY.length);
 	 checkMatchDate(m.getPrintDate());
@@ -116,6 +116,8 @@ public class MatchdaysCreator {
 	 isHomeGame = false;
 	 opponent = m.getHomeTeam();
 	}
+	
+	m.setHomeGame(isHomeGame);
 	
 	if (m.getChangeName() != null) {
 	 String buffer;

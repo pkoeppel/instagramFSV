@@ -71,15 +71,15 @@ public class Helper {
 	
 	switch (pos) {
 	 case "logo-left-youth" -> {
-		sizeX = 142;
-		sizeY = 142;
-		posX = 280;
+		sizeX = 128;
+		sizeY = 128;
+		posX = 245;
 		posY = fac - 1;
 	 }
 	 case "logo-right-youth" -> {
-		sizeX = 142;
-		sizeY = 142;
-		posX = 1092;
+		sizeX = 128;
+		sizeY = 128;
+		posX = 940;
 		posY = fac - 1;
 	 }
 	 case "logo-left-men" -> {
@@ -181,26 +181,41 @@ public class Helper {
 		 y = textSize + 45;
 		}
 		case "matchType" -> {
-		 x = 757 - (fm.stringWidth(line) / 2);
-		 y = textSize + 50;
+		 x = 655 - (fm.stringWidth(line) / 2);
+		 y = textSize + 40;
 		}
 		case "club-name-home" -> {
-		 x = 580 - (fm.stringWidth(line) / 2);
-		 y = 80 + textPos;
+		 x = 500 - (fm.stringWidth(line) / 2);
+		 y = 60 + textPos;
 		 textPos += textSize;
 		}
 		case "club-name-away" -> {
-		 x = 923 - (fm.stringWidth(line) / 2);
+		 x = 800 - (fm.stringWidth(line) / 2);
+		 y = 60 + textPos;
+		 textPos += textSize;
+		}
+		case "club-name-stats-home" -> {
+		 x = 480 - (fm.stringWidth(line) / 2);
+		 y = 80 + textPos;
+		 textPos += textSize;
+		}
+		case "club-name-stats-away" -> {
+		 x = 815 - (fm.stringWidth(line) / 2);
 		 y = 80 + textPos;
 		 textPos += textSize;
 		}
 		case "bottom-center" -> {
-		 x = 757 - (fm.stringWidth(line) / 2);
-		 y = 175 - textSize + textPos;
+		 x = 652 - (fm.stringWidth(line) / 2);
+		 y = 165 - textSize + textPos;
 		 textPos += textSize;
 		}
 		case "center-point" -> {
-		 x = 757 - (fm.stringWidth(line) / 2);
+		 x = 655 - (fm.stringWidth(line) / 2);
+		 y = 60 + textPos;
+		 textPos += textSize;
+		}
+		case "center-point-stats" -> {
+		 x = 652 - (fm.stringWidth(line) / 2);
 		 y = 80 + textPos;
 		 textPos += textSize;
 		}

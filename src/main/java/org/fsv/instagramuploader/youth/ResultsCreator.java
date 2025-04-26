@@ -43,7 +43,7 @@ public class ResultsCreator {
 	 
 	 Graphics g = background.getGraphics();
 	 g.setColor(Color.GRAY);
-	 int[] polyX = {0, 275, 250, 0};
+	 int[] polyX = {0, 250, 225, 0};
 	 int[] polyY = {blockStart, blockStart, blockStart + 100, blockStart + 100};
 	 g.fillPolygon(polyX, polyY, polyY.length);
 	 
@@ -57,18 +57,24 @@ public class ResultsCreator {
 		oppName = "SpG Treuener Land";
 	 }
 	 ClubSelector getClub = new ClubSelector();
-	 ClubModel ownClub = getClub.getClubDetails("SpG Treuener Land");
-	 ClubModel oppClub = getClub.getClubDetails(oppName);
+	 ClubModel homeClub, awayClub;
+	 if (Boolean.parseBoolean(rm.getValue("homeGame"))){
+		homeClub = getClub.getClubDetails("SpG Treuener Land");
+		awayClub = getClub.getClubDetails(oppName);
+	 } else {
+		homeClub = getClub.getClubDetails(oppName);
+		awayClub = getClub.getClubDetails("SpG Treuener Land");
+	 }
 	 if (rm.text().equals("Abgesagt")) {
 		logger.info("Game cancel!");
-		Helper.pictureOnPicture(background, ownClub.clubLogo(), "logo-left-youth", blockStart);
-		Helper.pictureOnPicture(background, oppClub.clubLogo(), "logo-right-youth", blockStart);
-		Helper.writeOnPicture(background, "Abgesagt!", "center-point", FontClass.clubOwnYouth, Color.BLACK, blockStart);
+		Helper.pictureOnPicture(background, homeClub.clubLogo(), "logo-left-youth", blockStart);
+		Helper.pictureOnPicture(background, awayClub.clubLogo(), "logo-right-youth", blockStart);
+		Helper.writeOnPicture(background, "Abgesagt!", "center-point-stats", FontClass.clubOwnYouth, Color.BLACK, blockStart);
 	 } else {
 		if (rm.getValue("matchType").toLowerCase().contains("kinder")) {
 		 logger.info("Game is Kinderfest!");
-		 Helper.pictureOnPicture(background, ownClub.clubLogo(), "logo-left-youth", blockStart);
-		 Helper.writeOnPicture(background, "Kinderfest!", "center-point", FontClass.clubOwnYouth, Color.BLACK, blockStart);
+		 Helper.pictureOnPicture(background, getClub.getClubDetails("SpG Treuener Land").clubLogo(), "logo-left-youth", blockStart);
+		 Helper.writeOnPicture(background, "Kinderfest!", "center-point-stats", FontClass.clubOwnYouth, Color.BLACK, blockStart);
 		} else {
 		 logger.info("Game normal!");
 		 String homeTeamText = Helper.wrapString(rm.getValue("homeTeam"), 23);
@@ -77,16 +83,11 @@ public class ResultsCreator {
 			homeTeamText += "\n" + rm.homeStats();
 			awayTeamText += "\n" + rm.awayStats();
 		 }
-		 Helper.writeOnPicture(background, homeTeamText, "club-name-home", FontClass.simpleYouth, Color.BLACK, blockStart);
-		 Helper.writeOnPicture(background, awayTeamText, "club-name-away", FontClass.simpleYouth, Color.BLACK, blockStart);
-		 if (Boolean.parseBoolean(rm.getValue("homeGame"))) {
-			Helper.pictureOnPicture(background, ownClub.clubLogo(), "logo-left-youth", blockStart);
-			Helper.pictureOnPicture(background, oppClub.clubLogo(), "logo-right-youth", blockStart);
-		 } else {
-			Helper.pictureOnPicture(background, oppClub.clubLogo(), "logo-left-youth", blockStart);
-			Helper.pictureOnPicture(background, ownClub.clubLogo(), "logo-right-youth", blockStart);
-		 }
-		 Helper.writeOnPicture(background, rm.result(), "center-point", FontClass.resultYouth, Color.BLACK, blockStart);
+		 Helper.writeOnPicture(background, homeTeamText, "club-name-stats-home", FontClass.simpleYouth, Color.BLACK, blockStart);
+		 Helper.writeOnPicture(background, awayTeamText, "club-name-stats-away", FontClass.simpleYouth, Color.BLACK, blockStart);
+		 Helper.pictureOnPicture(background, homeClub.clubLogo(), "logo-left-youth", blockStart);
+		 Helper.pictureOnPicture(background, awayClub.clubLogo(), "logo-right-youth", blockStart);
+		 Helper.writeOnPicture(background, rm.result(), "center-point-stats", FontClass.resultYouth, Color.BLACK, blockStart);
 		}
 	 }
 	 blockStart += 200;
