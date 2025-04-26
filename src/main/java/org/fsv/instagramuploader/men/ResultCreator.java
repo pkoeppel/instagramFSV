@@ -93,11 +93,11 @@ public class ResultCreator {
  }
  
  public void savePicture(JSONObject c, MultipartFile file) throws IOException {
-	targetImg = new BufferedImage(1365, 1365, BufferedImage.TYPE_INT_RGB);
+	targetImg = new BufferedImage(1080, 1350, BufferedImage.TYPE_INT_RGB);
 	BufferedImage image = ImageIO.read(file.getInputStream());
 	BufferedImage subImg = image.getSubimage(Helper.getC(c, "x"), Helper.getC(c, "y"), Helper.getC(c, "w"), Helper.getC(c, "h"));
 	Graphics2D g2 = targetImg.createGraphics();
-	g2.drawImage(subImg, 0, 0, 1365, 1365, null);
+	g2.drawImage(subImg, 0, 0, 1080, 1350, null);
 	allImg.add(targetImg);
  }
 }

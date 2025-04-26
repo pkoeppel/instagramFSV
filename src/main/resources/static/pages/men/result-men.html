@@ -93,7 +93,7 @@
 
         // noinspection JSUnresolvedReference
         $('#crop-image').Jcrop({
-            aspectRatio: 1,
+            aspectRatio: 0.8,
             onSelect: function (coOrdinates) {
                 coOrdinates.x = coOrdinates.x * (image.naturalWidth / newW);
                 coOrdinates.y = coOrdinates.y * (image.naturalHeight / newH);

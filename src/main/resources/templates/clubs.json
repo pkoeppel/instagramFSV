@@ -1,359 +1,99 @@
 {
-  "VfB Sch\u00f6neck": {
-    "fileName": "VfB_Schoeneck",
-    "insta_acc": "vfbschoeneck",
-    "insta_acc2": "",
-    "place": "Sch\u00f6neck"
-  },
-  "SG Stra\u00dfberg": {
-    "fileName": "SG_Strassberg",
+  "FC Fortuna 91 Plauen e.V.": {
+    "fileName": "FC_Fortuna_91_Plauen",
     "insta_acc": "",
     "insta_acc2": "",
-    "place": "Stra\u00dfberg"
+    "place": "Crieschwitzer Hang"
   },
-  "SV Motor Zwickau S\u00fcd": {
-    "fileName": "SV_Motor_Zwickau_Sued",
-    "insta_acc": "sv_motor_zwickau_sued",
-    "insta_acc2": "",
-    "place": "Stadion an der Jablonecer Stra\u00dfe"
-  },
-  "SV 1903 Kottengr\u00fcn": {
-    "fileName": "SV_1903_Kottengruen",
-    "insta_acc": "svk1903",
-    "insta_acc2": "",
-    "place": "Kottengr\u00fcn"
-  },
-  "BSV 53 Irfersgr\u00fcn": {
-    "fileName": "BSV_53_Irfersgruen",
-    "insta_acc": "bsv_53_irfersgr\u00fcn_herren",
-    "insta_acc2": "bsv_53_kids",
-    "place": "Irfersgr\u00fcn"
-  },
-  "SG Stahlbau Plauen": {
-    "fileName": "SG_Stahlbau_Plauen",
-    "insta_acc": "sg_stahlbau_plauen",
-    "insta_acc2": "",
-    "place": "Lindentempel"
-  },
-  "SG Traktor Lauterbach": {
-    "fileName": "SG_Traktor_Lauterbach",
-    "insta_acc": "sgtraktorlauterbach",
-    "insta_acc2": "",
-    "place": "Lauterbach"
-  },
-  "FC Erzgbirge Aue": {
-    "fileName": "FC_Erzgebirge_Aue",
-    "insta_acc": "fcerzgebirgeaue",
-    "insta_acc2": "",
-    "place": "Erzgebirgsstadion"
-  },
-  "SV 1903 Kottengrün": {
-    "fileName": "SV_1903_Kottengruen",
-    "insta_acc": "svk1903",
-    "insta_acc2": "",
-    "place": "Kottengrün"
-  },
-  "SG Neustadt": {
-    "fileName": "SG_Neustadt",
-    "insta_acc": "sgneustadt",
-    "insta_acc2": "",
-    "place": "Neustadt"
-  },
-  "Leubnitzer SV 1898": {
-    "fileName": "Leubnitzer_SV",
+  "SV St\u00fctzengr\u00fcn-Hundsh\u00fcbel": {
+    "fileName": "SV_Stuetzengruen_Hundshuebel",
     "insta_acc": "",
     "insta_acc2": "",
-    "place": "Leubnitz"
+    "place": "St\u00fctzengr\u00fcn"
   },
-  "1. FC Rodewisch": {
-    "fileName": "1FC_Rodewisch",
-    "insta_acc": "1.fcrodewisch",
-    "insta_acc2": "",
-    "place": "Rodewisch"
-  },
-  "VfB Pausa-M\u00fchltroff": {
-    "fileName": "VfB_Pausa-Muehltroff",
-    "insta_acc": "vfb_pausamuehltroff",
-    "insta_acc2": "",
-    "place": "M\u00fchltroff"
-  },
-  "1.FC Wacker Plauen": {
-    "fileName": "1FC_Wacker_Plauen",
-    "insta_acc": "wacker_plauen",
-    "insta_acc2": "",
-    "place": "Gerhard Bertram"
-  },
-  "TSG Ruppertsgr\u00fcn": {
-    "fileName": "TSG_Ruppertsgruen",
-    "insta_acc": "tsgruppe1953",
-    "insta_acc2": "",
-    "place": "Ruppertsgr\u00fcn"
-  },
-  "SpVgg Zobes": {
-    "fileName": "SpVgg_Zobes",
-    "insta_acc": "zi_za_z",
-    "insta_acc2": "",
-    "place": "Zobes"
-  },
-
-  "SV Cosch\u00fctz": {
-    "fileName": "SV_Coschuetz",
-    "insta_acc": "svcoschuetz1955",
-    "insta_acc2": "",
-    "place": "Cosch\u00fctz"
-  },
-  "FSV Bau Weischlitz": {
-    "fileName": "FSV_Bau_Weischlitz",
-    "insta_acc": "fsvbauweischlitz",
-    "insta_acc2": "",
-    "place": "Weischlitz"
-  },
-
-  "SG J\u00f6ssnitz": {
-    "fileName": "SG_Joessnitz",
-    "insta_acc": "sgj1951",
-    "insta_acc2": "",
-    "place": "J\u00f6ssnitz"
-  },
-  "VFC Plauen": {
-    "fileName": "VFC_Plauen",
-    "insta_acc": "vfc_plauen",
-    "insta_acc2": "vfc_plauen_juniors_club",
-    "place": "Nach dem Stadion"
-  },
-  "SG Kürbitz": {
-    "fileName": "SG_Kuerbitz",
-    "insta_acc": "sg_kuerbitz1897",
-    "insta_acc2": "",
-    "place": "Kürbitz"
-  },
-  "ESV Lok Zwickau": {
-    "fileName": "ESV_Lokomotive_Zwickau",
-    "insta_acc": "esv_lokomotive_zwickau",
-    "insta_acc2": "",
-    "place": "Sportzentrum Marienthal"
-  },
-  "FSV Medizin Bad Elster": {
-    "fileName": "FSV_Medizin_Bad_Elster",
-    "insta_acc": "fsvmedizinbadelster",
-    "insta_acc2": "",
-    "place": "Bad Elster"
-  },
-  "SV Eintracht Auerbach": {
-    "fileName": "SV_Eintracht_Auerbach",
-    "insta_acc": "sv_eintracht_auerbach",
-    "insta_acc2": "",
-    "place": "Falkensteiner Str. AE"
-  },
-  "SG Limbach": {
-    "fileName": "SG_Limbach",
-    "insta_acc": "sg_limbach",
-    "insta_acc2": "",
-    "place": "Limbach"
-  },
-  "SV Merkur 06 Oelsnitz": {
-    "fileName": "SV_Merkur_06_Oelsnitz",
-    "insta_acc": "sv_merkur_06_oelsnitz",
-    "insta_acc2": "",
-    "place": "Elstertalstadion"
-  },
-  "FSV Treuen": {
-    "fileName": "FSV_Treuen",
-    "insta_acc": "fsvtreuen",
-    "insta_acc2": "",
-    "place": "Treuen"
-  },
-  "VfL Reumtengr\u00fcn": {
-    "fileName": "VfL_Reumtengruen",
+  "SV Theuma e.V.": {
+    "fileName": "SV_Theuma",
     "insta_acc": "",
     "insta_acc2": "",
-    "place": "Reumtengr\u00fcn"
+    "place": "Theuma"
   },
-  "SpG 1880 Reuth": {
-    "fileName": "SpG_1880_Reuth",
-    "insta_acc": "sg1880reuth",
-    "insta_acc2": "",
-    "place": "Reuth"
-  },
-  "SV Blau-Weiss Rebesgr\u00fcn": {
-    "fileName": "SV_Blau-Weiss_Rebesgruen",
-    "insta_acc": "sv_blau_weiss_rebesgr\u00fcn",
-    "insta_acc2": "",
-    "place": "Rebesgr\u00fcn"
-  },
-  "PSV Plauen": {
-    "fileName": "PSV_Plauen",
-    "insta_acc": "post_sv_plauen",
-    "insta_acc2": "",
-    "place": "Luisenstra\u00dfe"
-  },
-  "SV Turbine Bergen": {
-    "fileName": "SV_Turbine_Bergen",
-    "insta_acc": "sv_turbine_bergen",
-    "insta_acc2": "",
-    "place": "Bergen"
-  },
-  "SG Straßberg": {
-    "fileName": "SG_Strassberg",
+  "TSG Brunn": {
+    "fileName": "TSG_Brunn",
     "insta_acc": "",
     "insta_acc2": "",
-    "place": "Treuen"
+    "place": "Brunn"
   },
-  "VfB Gro\u00dffriesen": {
-    "fileName": "VfB_Grossfriesen",
-    "insta_acc": "vfb_gro\u00dffriesen_1951",
-    "insta_acc2": "",
-    "place": "Gro\u00dffriesen"
-  },
-  "SG K\u00fcrbitz": {
-    "fileName": "SG_Kuerbitz",
-    "insta_acc": "sg_kuerbitz1897",
-    "insta_acc2": "",
-    "place": "K\u00fcrbitz"
-  },
-  "SV Morgenr\u00f6the-Rautenkranz": {
-    "fileName": "SV_Morgenroethe-Rautenkranz",
-    "insta_acc": "sv.morgenroethe_rautenkranz",
-    "insta_acc2": "",
-    "place": "M-Rautenkranz"
-  },
-  "VFC Reichenbach 96": {
-    "fileName": "VFC_Reichenbach_96",
-    "insta_acc": "vfcreichenbach",
-    "insta_acc2": "",
-    "place": "Sch\u00f6ne Aussicht"
-  },
-  "SG Rotschau": {
-    "fileName": "SG_Rotschau",
-    "insta_acc": "sgrotschau",
-    "insta_acc2": "",
-    "place": "Rotschau"
-  },
-  "BC Erlbach": {
-    "fileName": "BC_Erlbach_1919",
-    "insta_acc": "bce1919",
-    "insta_acc2": "",
-    "place": "Erlbach"
-  },
-  "SV Concordia Plauen": {
-    "fileName": "SV_Concordia_Plauen",
-    "insta_acc": "sv_concordia_plauen",
-    "insta_acc2": "",
-    "place": "Hegelstra\u00dfe"
-  },
-  "FC Teutonia Netzschkau": {
-    "fileName": "FC_Teutonia_Netzschkau",
-    "insta_acc": "fc_teutonia_netzschkau",
-    "insta_acc2": "",
-    "place": "Netzschkau"
-  },
-  "FSV Ellefeld": {
-    "fileName": "FSV_Ellefeld",
-    "insta_acc": "fsvellefeld",
-    "insta_acc2": "",
-    "place": "Ellefeld"
-  },
-  "Reichenbacher FC": {
-    "fileName": "Reichenbacher_FC",
-    "insta_acc": "reichenbacher_fc",
-    "insta_acc2": "",
-    "place": "am Wasserturm"
-  },
-  "SV Londa Rothenkirchen": {
-    "fileName": "SV_Londa_Rothenkirchen",
+  "TSV IFA Chemnitz": {
+    "fileName": "TSV_IFA_Chemnitz",
     "insta_acc": "",
     "insta_acc2": "",
-    "place": "Rothenkirchen"
+    "place": "Eubaer Stra\u00dfe"
   },
-  "SV Morgenröthe-Rautenkranz": {
-    "fileName": "SV_Morgenroethe-Rautenkranz",
-    "insta_acc": "sv.morgenroethe_rautenkranz",
-    "insta_acc2": "",
-    "place": "M-Rautenkranz"
-  },
-  "FSV 1990 Klingenthal": {
-    "fileName": "FSV_1990_Klingenthal",
-    "insta_acc": "fsv1990klingenthal",
-    "insta_acc2": "",
-    "place": "Klingenthal"
-  },
-  "VfB Nord Plauen": {
-    "fileName": "VfB_Nord_Plauen",
-    "insta_acc": "vfb.plauen.nord.e.v",
-    "insta_acc2": "",
-    "place": "H.-Sachs-Stra\u00dfe"
-  },
-  "SpVgg Gr\u00fcnbach-Falkenstein": {
-    "fileName": "SpVgg_Gruenbach-Falkenstein",
-    "insta_acc": "spvgg_gruenbach_falkenstein",
-    "insta_acc2": "",
-    "place": "Stadion an der Jablonecer Straße"
-  },
-  "VfB Schöneck 1912 e.V": {
-    "fileName": "VfB_Schoeneck",
-    "insta_acc": "vfbschoeneck",
-    "insta_acc2": "",
-    "place": "Schöneck"
-  },
-  "SC Markneukirchen": {
-    "fileName": "SC_Markneukirchen",
+  "SV Blau-Gelb M\u00fclsen": {
+    "fileName": "SV_Blau-Gelb-Muelsen",
     "insta_acc": "",
     "insta_acc2": "",
-    "place": "Markneukirchen"
+    "place": "Badstra\u00dfe"
   },
-  "VSC Mylau-Reichenbach": {
-    "fileName": "VSC_Mylau-Reichenbach",
-    "insta_acc": "vscmylaureichbach",
-    "insta_acc2": "",
-    "place": "Reichbacherstra\u00dfe"
-  },
-  "SG Unterlosa": {
-    "fileName": "SG_Unterlosa",
+  "SV Fortuna Langenau": {
+    "fileName": "SV_Fortuna_Langenau",
     "insta_acc": "",
     "insta_acc2": "",
-    "place": "Unterlosa"
+    "place": "Langenau"
   },
-  "FC Werda 1921": {
-    "fileName": "FC_Werda_1921",
-    "insta_acc": "fc_werda_1921_e.v",
-    "insta_acc2": "",
-    "place": "Werda"
-  },
-  "SC Syrau 1919": {
-    "fileName": "SC_Syrau_1919",
-    "insta_acc": "sc_syrau",
-    "insta_acc2": "",
-    "place": "Syrau"
-  },
-  "SpVgg 1862 Neumark": {
-    "fileName": "SpVgg_1862_Neumark",
+  "SV Muldental Wilkau-Ha\u00dflau": {
+    "fileName": "SV_Muldental_WilkauHa\u00dflau",
     "insta_acc": "",
     "insta_acc2": "",
-    "place": "Neumark"
+    "place": "der Jugend"
   },
-  "VFC Adorf": {
-    "fileName": "VFC_Adorf",
-    "insta_acc": "vfcadorf",
-    "insta_acc2": "",
-    "place": "Adorf"
-  },
-  "SV Gr\u00fcn-Weiss Wernesgr\u00fcn": {
-    "fileName": "SV_Gruen-Weiss_Wernesgruen",
-    "insta_acc": "svwernesgruen",
-    "insta_acc2": "",
-    "place": "Wernesgr\u00fcn"
-  },
-  "VfB Lengenfeld 1908 e.V ": {
-    "fileName": "VfB_Lengenfeld_1908",
+  "SpVgg Selbitz": {
+    "fileName": "SpVgg_Selbitz",
     "insta_acc": "",
     "insta_acc2": "",
-    "place": "Lengenfeld"
+    "place": "Austra\u00dfe"
   },
-  "VfB Auerbach 1906": {
-    "fileName": "VfB_Auerbach_1906",
-    "insta_acc": "vfbauerbach",
+  "SV 1861 Kirchberg": {
+    "fileName": "SV_1861_Kirchberg",
+    "insta_acc": "",
     "insta_acc2": "",
-    "place": "Beerheide"
+    "place": "Kirchberg"
+  },
+  "SV Auerhammer": {
+    "fileName": "SV_Auerhammer",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "Auerhammer"
+  },
+  "FC Stollberg": {
+    "fileName": "FC_Stollberg",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "Gl\u00fcckauf-Stadion"
+  },
+  "FSV Motor Brand-Erbisdorf": {
+    "fileName": "FSV_Motor_Brand-Erbisdorf",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "an der Dammstra\u00dfe"
+  },
+  "FV Blau-Wei\u00df Hartmannsdorf": {
+    "fileName": "FV_Blau_Wei\u00df_Hartmannsdorf",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "Badstra\u00dfe"
+  },
+  "FC Concordia Schneeberg": {
+    "fileName": "FC_Concordia_Schneeberg",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "G.-H.Dietz-Stadion"
+  },
+  "FC Sachsen 90 Werdau": {
+    "fileName": "FC_Sachsen_90_Werdau",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "im Landwehrgrund"
   },
   "1. FC Ranch Plauen": {
     "fileName": "1FC_Ranch_Plauen",
@@ -361,47 +101,35 @@
     "insta_acc2": "",
     "place": "Neundorf"
   },
-  "SV Grün-Weiss Wernesgrün": {
-    "fileName": "SV_Gruen-Weiss_Wernesgruen",
-    "insta_acc": "svwernesgruen",
+  "1. FC Rodewisch": {
+    "fileName": "1FC_Rodewisch",
+    "insta_acc": "1.fcrodewisch",
     "insta_acc2": "",
-    "place": "Wernesgrün"
+    "place": "Rodewisch"
   },
-  "SpVgg. Heinsdorfergrund 02": {
-    "fileName": "SpVgg_Heinsdorfergrund_02",
-    "insta_acc": "spvggheinsforfergrund02",
+  "1.FC Wacker Plauen": {
+    "fileName": "1FC_Wacker_Plauen",
+    "insta_acc": "wacker_plauen",
     "insta_acc2": "",
-    "place": "Kaltes Feld Heinsd'grund"
+    "place": "Gerhard Bertram"
   },
-  "VfL Reumtengrün": {
-    "fileName": "VfL_Reumtengruen",
-    "insta_acc": "",
+  "BC Erlbach": {
+    "fileName": "BC_Erlbach_1919",
+    "insta_acc": "bce1919",
     "insta_acc2": "",
-    "place": "Reumtengrün"
+    "place": "Erlbach"
   },
-  "SV 08 Wildenau": {
-    "fileName": "SV_08_Wildenau",
-    "insta_acc": "sv08wildenau",
-    "insta_acc2": "",
-    "place": "Wildenau"
+  "BSV 53 Irfersgr\u00fcn": {
+    "fileName": "BSV_53_Irfersgruen",
+    "insta_acc": "bsv_53_irfersgr\u00fcn_herren",
+    "insta_acc2": "bsv_53_kids",
+    "place": "Irfersgr\u00fcn"
   },
-  "SV Blau-Weiss Rebesgrün": {
-    "fileName": "SV_Blau-Weiss_Rebesgruen",
-    "insta_acc": "sv_blau_weiss_rebesgrün",
+  "ESV Lok Zwickau": {
+    "fileName": "ESV_Lokomotive_Zwickau",
+    "insta_acc": "esv_lokomotive_zwickau",
     "insta_acc2": "",
-    "place": "Rebesgrün"
-  },
-  "VfB Pausa-Mühltroff": {
-    "fileName": "VfB_Pausa-Muehltroff",
-    "insta_acc": "vfb_pausamuehltroff",
-    "insta_acc2": "",
-    "place": "Mühltroff"
-  },
-  "SpG Treuener Land": {
-    "fileName": "SpG_Treuener_Land",
-    "insta_acc": "treuenerland_jugend",
-    "insta_acc2": "",
-    "place": "Treuen"
+    "place": "Sportzentrum Marienthal"
   },
   "Elsterberger BC": {
     "fileName": "Elsterberger_BC",
@@ -409,17 +137,257 @@
     "insta_acc2": "",
     "place": "Elsterberg"
   },
-  "VfB Großfriesen": {
-    "fileName": "VfB_Grossfriesen",
-    "insta_acc": "vfb_großfriesen_1951",
+  "FC Carl Zeiss Jena": {
+    "fileName": "FC_Carl_Zeiss_Jena",
+    "insta_acc": "fccarlzeissjena_official",
     "insta_acc2": "",
-    "place": "Großfriesen"
+    "place": "Ernst-Abbe-Sportfeld"
   },
-  "1. FC Wacker Plauen": {
-    "fileName": "1FC_Wacker_Plauen",
-    "insta_acc": "wacker_plauen",
+  "FC Erzgbirge Aue": {
+    "fileName": "FC_Erzgebirge_Aue",
+    "insta_acc": "fcerzgebirgeaue",
     "insta_acc2": "",
-    "place": "Gerhard Bertram"
+    "place": "Erzgebirgsstadion"
+  },
+  "FC Teutonia Netzschkau": {
+    "fileName": "FC_Teutonia_Netzschkau",
+    "insta_acc": "fc_teutonia_netzschkau",
+    "insta_acc2": "",
+    "place": "Netzschkau"
+  },
+  "FC Werda 1921": {
+    "fileName": "FC_Werda_1921",
+    "insta_acc": "fc_werda_1921_e.v",
+    "insta_acc2": "",
+    "place": "Werda"
+  },
+  "FSV 1990 Klingenthal": {
+    "fileName": "FSV_1990_Klingenthal",
+    "insta_acc": "fsv1990klingenthal",
+    "insta_acc2": "",
+    "place": "Klingenthal"
+  },
+  "FSV Bau Weischlitz": {
+    "fileName": "FSV_Bau_Weischlitz",
+    "insta_acc": "fsvbauweischlitz",
+    "insta_acc2": "",
+    "place": "Weischlitz"
+  },
+  "FSV Ellefeld": {
+    "fileName": "FSV_Ellefeld",
+    "insta_acc": "fsvellefeld",
+    "insta_acc2": "",
+    "place": "Ellefeld"
+  },
+  "FSV Medizin Bad Elster": {
+    "fileName": "FSV_Medizin_Bad_Elster",
+    "insta_acc": "fsvmedizinbadelster",
+    "insta_acc2": "",
+    "place": "Bad Elster"
+  },
+  "FSV Treuen": {
+    "fileName": "FSV_Treuen",
+    "insta_acc": "fsvtreuen",
+    "insta_acc2": "",
+    "place": "Treuen"
+  },
+  "Leubnitzer SV 1898": {
+    "fileName": "Leubnitzer_SV",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "Leubnitz"
+  },
+  "PSV Plauen": {
+    "fileName": "PSV_Plauen",
+    "insta_acc": "post_sv_plauen",
+    "insta_acc2": "",
+    "place": "Luisenstra\u00dfe"
+  },
+  "Reichenbacher FC": {
+    "fileName": "Reichenbacher_FC",
+    "insta_acc": "reichenbacher_fc",
+    "insta_acc2": "",
+    "place": "am Wasserturm"
+  },
+  "SC Markneukirchen": {
+    "fileName": "SC_Markneukirchen",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "Markneukirchen"
+  },
+  "SC Syrau 1919": {
+    "fileName": "SC_Syrau_1919",
+    "insta_acc": "sc_syrau",
+    "insta_acc2": "",
+    "place": "Syrau"
+  },
+  "SG J\u00f6ssnitz": {
+    "fileName": "SG_Joessnitz",
+    "insta_acc": "sgj1951",
+    "insta_acc2": "",
+    "place": "J\u00f6ssnitz"
+  },
+  "SG K\u00fcrbitz": {
+    "fileName": "SG_Kuerbitz",
+    "insta_acc": "sg_kuerbitz1897",
+    "insta_acc2": "",
+    "place": "K\u00fcrbitz"
+  },
+  "SG Limbach": {
+    "fileName": "SG_Limbach",
+    "insta_acc": "sg_limbach",
+    "insta_acc2": "",
+    "place": "Limbach"
+  },
+  "SG Neustadt": {
+    "fileName": "SG_Neustadt",
+    "insta_acc": "sgneustadt",
+    "insta_acc2": "",
+    "place": "Neustadt"
+  },
+  "SG Rotschau": {
+    "fileName": "SG_Rotschau",
+    "insta_acc": "sgrotschau",
+    "insta_acc2": "",
+    "place": "Rotschau"
+  },
+  "SG Stahlbau Plauen": {
+    "fileName": "SG_Stahlbau_Plauen",
+    "insta_acc": "sg_stahlbau_plauen",
+    "insta_acc2": "",
+    "place": "Lindentempel"
+  },
+  "SG Stra\u00dfberg": {
+    "fileName": "SG_Strassberg",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "Stra\u00dfberg"
+  },
+  "SG Traktor Lauterbach": {
+    "fileName": "SG_Traktor_Lauterbach",
+    "insta_acc": "sgtraktorlauterbach",
+    "insta_acc2": "",
+    "place": "Lauterbach"
+  },
+  "SG Unterlosa": {
+    "fileName": "SG_Unterlosa",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "Unterlosa"
+  },
+  "SV 08 Wildenau": {
+    "fileName": "SV_08_Wildenau",
+    "insta_acc": "sv08wildenau",
+    "insta_acc2": "",
+    "place": "Wildenau"
+  },
+  "SV 1903 Kottengr\u00fcn": {
+    "fileName": "SV_1903_Kottengruen",
+    "insta_acc": "svk1903",
+    "insta_acc2": "",
+    "place": "Kottengr\u00fcn"
+  },
+  "SV Blau-Weiss Rebesgr\u00fcn": {
+    "fileName": "SV_Blau-Weiss_Rebesgruen",
+    "insta_acc": "sv_blau_weiss_rebesgr\u00fcn",
+    "insta_acc2": "",
+    "place": "Rebesgr\u00fcn"
+  },
+  "SV Concordia Plauen": {
+    "fileName": "SV_Concordia_Plauen",
+    "insta_acc": "sv_concordia_plauen",
+    "insta_acc2": "",
+    "place": "Hegelstra\u00dfe"
+  },
+  "SV Cosch\u00fctz": {
+    "fileName": "SV_Coschuetz",
+    "insta_acc": "svcoschuetz1955",
+    "insta_acc2": "",
+    "place": "Cosch\u00fctz"
+  },
+  "SV Eintracht Auerbach": {
+    "fileName": "SV_Eintracht_Auerbach",
+    "insta_acc": "sv_eintracht_auerbach",
+    "insta_acc2": "",
+    "place": "Falkensteiner Str. AE"
+  },
+  "SV Gr\u00fcn-Weiss Wernesgr\u00fcn": {
+    "fileName": "SV_Gruen-Weiss_Wernesgruen",
+    "insta_acc": "svwernesgruen",
+    "insta_acc2": "",
+    "place": "Wernesgr\u00fcn"
+  },
+  "SV Londa Rothenkirchen": {
+    "fileName": "SV_Londa_Rothenkirchen",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "Rothenkirchen"
+  },
+  "SV Merkur 06 Oelsnitz": {
+    "fileName": "SV_Merkur_06_Oelsnitz",
+    "insta_acc": "sv_merkur_06_oelsnitz",
+    "insta_acc2": "",
+    "place": "Elstertalstadion"
+  },
+  "SV Morgenr\u00f6the-Rautenkranz": {
+    "fileName": "SV_Morgenroethe-Rautenkranz",
+    "insta_acc": "sv.morgenroethe_rautenkranz",
+    "insta_acc2": "",
+    "place": "M-Rautenkranz"
+  },
+  "SV Motor Zwickau S\u00fcd": {
+    "fileName": "SV_Motor_Zwickau_Sued",
+    "insta_acc": "sv_motor_zwickau_sued",
+    "insta_acc2": "",
+    "place": "Stadion an der Jablonecer Stra\u00dfe"
+  },
+  "SV Turbine Bergen": {
+    "fileName": "SV_Turbine_Bergen",
+    "insta_acc": "sv_turbine_bergen",
+    "insta_acc2": "",
+    "place": "Bergen"
+  },
+  "SpG 1880 Reuth": {
+    "fileName": "SpG_1880_Reuth",
+    "insta_acc": "sg1880reuth",
+    "insta_acc2": "",
+    "place": "Reuth"
+  },
+  "SpG Treuener Land": {
+    "fileName": "SpG_Treuener_Land",
+    "insta_acc": "treuenerland_jugend",
+    "insta_acc2": "",
+    "place": "Treuen"
+  },
+  "SpVgg 1862 Neumark": {
+    "fileName": "SpVgg_1862_Neumark",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "Neumark"
+  },
+  "SpVgg Gr\u00fcnbach-Falkenstein": {
+    "fileName": "SpVgg_Gruenbach-Falkenstein",
+    "insta_acc": "spvgg_gruenbach_falkenstein",
+    "insta_acc2": "",
+    "place": "Stadion an der Jablonecer Stra\u00dfe"
+  },
+  "SpVgg Zobes": {
+    "fileName": "SpVgg_Zobes",
+    "insta_acc": "zi_za_z",
+    "insta_acc2": "",
+    "place": "Zobes"
+  },
+  "SpVgg. Heinsdorfergrund 02": {
+    "fileName": "SpVgg_Heinsdorfergrund_02",
+    "insta_acc": "spvggheinsforfergrund02",
+    "insta_acc2": "",
+    "place": "Kaltes Feld Heinsd'grund"
+  },
+  "TSG Ruppertsgr\u00fcn": {
+    "fileName": "TSG_Ruppertsgruen",
+    "insta_acc": "tsgruppe1953",
+    "insta_acc2": "",
+    "place": "Ruppertsgr\u00fcn"
   },
   "TSV Trieb 1887": {
     "fileName": "TSV_Trieb_1887",
@@ -427,10 +395,75 @@
     "insta_acc2": "",
     "place": "Trieb"
   },
-  "FC Carl Zeiss Jena": {
-    "fileName": "FC_Carl_Zeiss_Jena",
-    "insta_acc": "fccarlzeissjena_official",
+  "VFC Adorf": {
+    "fileName": "VFC_Adorf",
+    "insta_acc": "vfcadorf",
     "insta_acc2": "",
-    "place": "Ernst-Abbe-Sportfeld"
+    "place": "Adorf"
+  },
+  "VFC Plauen": {
+    "fileName": "VFC_Plauen",
+    "insta_acc": "vfc_plauen",
+    "insta_acc2": "vfc_plauen_juniors_club",
+    "place": "Nach dem Stadion"
+  },
+  "VFC Reichenbach 96": {
+    "fileName": "VFC_Reichenbach_96",
+    "insta_acc": "vfcreichenbach",
+    "insta_acc2": "",
+    "place": "Sch\u00f6ne Aussicht"
+  },
+  "VSC Mylau-Reichenbach": {
+    "fileName": "VSC_Mylau-Reichenbach",
+    "insta_acc": "vscmylaureichbach",
+    "insta_acc2": "",
+    "place": "Reichbacherstra\u00dfe"
+  },
+  "VfB Auerbach 1906": {
+    "fileName": "VfB_Auerbach_1906",
+    "insta_acc": "vfbauerbach",
+    "insta_acc2": "",
+    "place": "Beerheide"
+  },
+  "VfB Gro\u00dffriesen": {
+    "fileName": "VfB_Grossfriesen",
+    "insta_acc": "vfb_gro\u00dffriesen_1951",
+    "insta_acc2": "",
+    "place": "Gro\u00dffriesen"
+  },
+  "VfB Lengenfeld 1908 e.V ": {
+    "fileName": "VfB_Lengenfeld_1908",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "Lengenfeld"
+  },
+  "VfB Nord Plauen": {
+    "fileName": "VfB_Nord_Plauen",
+    "insta_acc": "vfb.plauen.nord.e.v",
+    "insta_acc2": "",
+    "place": "H.-Sachs-Stra\u00dfe"
+  },
+  "VfB Pausa-M\u00fchltroff": {
+    "fileName": "VfB_Pausa-Muehltroff",
+    "insta_acc": "vfb_pausamuehltroff",
+    "insta_acc2": "",
+    "place": "M\u00fchltroff"
+  },
+  "VfB Sch\u00f6neck": {
+
+
+
+    "fileName": "VfB_Schoeneck",
+    "insta_acc": "vfbschoeneck",
+    "insta_acc2": "",
+    "place": "Sch\u00f6neck"
+  },
+  "VfL Reumtengr\u00fcn": {
+
+
+    "fileName": "VfL_Reumtengruen",
+    "insta_acc": "",
+    "insta_acc2": "",
+    "place": "Reumtengr\u00fcn"
   }
 }
