@@ -1,6 +1,7 @@
 package org.fsv.instagramuploader.men;
 
 import org.fsv.instagramuploader.ClubSelector;
+import org.fsv.instagramuploader.GoogleDriveService;
 import org.fsv.instagramuploader.Helper;
 import org.fsv.instagramuploader.model.ClubModel;
 import org.json.simple.JSONObject;
@@ -17,6 +18,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
@@ -27,7 +29,7 @@ public class ResultCreator {
  final ArrayList<BufferedImage> allImg = new ArrayList<>();
  BufferedImage targetImg;
  
- public JSONObject createResult(JSONObject match) throws IOException, ParseException {
+ public JSONObject createResult(JSONObject match) throws IOException, ParseException, GeneralSecurityException {
 	logger.info("Creating result ...");
 	JSONObject m = Helper.parser(match.get("match").toString());
 	String mType = m.get("matchType").toString();
@@ -71,17 +73,19 @@ public class ResultCreator {
 	}
 	String formatedDate = DateTimeFormatter.ofPattern("yyyyMMdd").format(DateTimeFormatter.ofPattern("yyyy-MM-dd").parse(mDate));
 	logger.info("Add logos to pictures ...");
+	GoogleDriveService googleService = new GoogleDriveService(saveName);
 	for (BufferedImage img : allImg) {
 	 Helper.pictureOnPicture(img, oppClub.clubLogo(), "smallClubResult-men", 0);
 	 Helper.pictureOnPicture(img, ownClub.clubLogo(), "bigClubResult-men", 0);
 	 File fileToSave = new File(directory + "/" + formatedDate + "_" + imgCount + ".jpeg");
 	 ImageIO.write(img, "jpeg", fileToSave);
+	 googleService.uploadFileToFolder(fileToSave);
 	 imgCount++;
 	}
 	BufferedWriter writer = new BufferedWriter(new FileWriter("src/main/resources/save/" + dir + "/report.txt"));
 	writer.write(fullReport);
 	writer.close();
-	logger.info("Save report finished (Path: +" + dir + ")!");
+	logger.info("Save report finished (Path: +{})!", dir);
 	
 	Helper.deleteTempTxt(m, "men-games");
 	Helper.updateMatchdayValue(mType);
