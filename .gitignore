@@ -50,6 +50,7 @@ Thumbs.db
 /src/main/resources/templates/clubs.json
 /src/main/resources/templates/data.json
 /src/main/resources/templates/googleCred.json
+/src/main/resources/templates/teamInfo.json
 
 # Ignoriere Ordner für gespeicherte Spielstände oder Zwischenspeicher
 /src/main/resources/save/*
