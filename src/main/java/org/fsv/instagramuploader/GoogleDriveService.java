@@ -36,6 +36,7 @@ public class GoogleDriveService {
 					GoogleNetHttpTransport.newTrustedTransport(),
 					JSON_FACTORY,
 					credential)
+					.setApplicationName("FSV-Pictures")
 					.build();
 	
 	String fsvFolderId = getFolder("", "FSV");
