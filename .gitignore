@@ -44,10 +44,6 @@ Thumbs.db
 # === Eigene Projektpfade ===
 
 # Ignoriere spezifische JSON-Dateien im templates-Ordner
-/src/main/resources/templates/men-games.json
-/src/main/resources/templates/youth-games.json
-/src/main/resources/templates/allMatches.json
-/src/main/resources/templates/googleCred.json
 
 # Ignoriere Ordner für gespeicherte Spielstände oder Zwischenspeicher
 /src/main/resources/save/*
