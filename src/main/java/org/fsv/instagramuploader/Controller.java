@@ -168,7 +168,7 @@ public class Controller {
  }
  
  @RequestMapping("/postMatchMen")
- public ResponseEntity<String> postMatchFile(@RequestParam("game") GameModel match) {
+ public ResponseEntity<String> postMatchMen(@RequestBody GameModel match) {
 	try {
 	 logger.info("Post match men started...");
 	 String result = mc.createMatch(match);
@@ -203,7 +203,7 @@ public class Controller {
  }
  
  @RequestMapping("/updateTeamInfo")
- public ResponseEntity<String> getTeamIds(@RequestParam("newData") String newData){
+ public ResponseEntity<String> updateTeamInfo(@RequestParam("newData") String newData){
 	try{
 	 logger.info("Update team info ...");
 	 FileWriter fw = new FileWriter("src/main/resources/templates/teamInfo.json");
@@ -221,8 +221,8 @@ public class Controller {
 	try{
 	 logger.info("Update matchdays info ...");
 	 JSONObject jo = new JSONObject();
-	 jo.put("lastLeagueMatchday", leagueMatchday);
-	 jo.put("lastCupMatchday", cupMatchday);
+	 jo.put("lastLeagueMatchday", Long.valueOf(leagueMatchday));
+	 jo.put("lastCupMatchday", Long.valueOf(cupMatchday));
 	 FileWriter fw = new FileWriter("src/main/resources/templates/data.json");
 	 fw.write(jo.toJSONString());
 	 fw.flush();
@@ -332,7 +332,7 @@ public class Controller {
  }
  
  @RequestMapping("/postMatchFilesYouth")
- public ResponseEntity<?> postMatchFilesYouth(@RequestParam("allGames") ArrayList<GameModel> mmArr) {
+ public ResponseEntity<?> postMatchFilesYouth(@RequestBody ArrayList<GameModel> mmArr) {
 	try {
 	 logger.info("Post match files youth ...");
 	 Map<String, Integer> result = msc.createMatches(mmArr);
@@ -355,7 +355,7 @@ public class Controller {
  }
  
  @RequestMapping("/postYouthResults")
- public ResponseEntity<?> postYouthResult(@RequestParam("allResults") ArrayList<ResultModel> rmArr) {
+ public ResponseEntity<?> postYouthResult(@RequestBody ArrayList<ResultModel> rmArr) {
 	try {
 	 logger.info("Post youth results ...");
 	 Map<String, Integer> result = rsc.createResults(rmArr);

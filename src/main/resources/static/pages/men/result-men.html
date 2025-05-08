@@ -30,7 +30,7 @@
     <label for="matches"></label>
     <select id="matches" name="matches">
     </select>
-    <input id="deleteEntry" onclick="deleteMatchEntry('men')" type="button" value="Eintrag löschen">
+    <input id="deleteEntry" onclick="deleteMatchEntry('men', document.getElementById('matches').value)" type="button" value="Eintrag löschen">
     <br>
     <label for="matchResult">Ergebnis:</label>
     <input class="result" id="matchResult" name="matchResult" onkeyup="setCharCount()" type="text">
@@ -93,7 +93,7 @@
 
         // noinspection JSUnresolvedReference
         $('#crop-image').Jcrop({
-            aspectRatio: 1,
+            aspectRatio: 0.8,
             onSelect: function (coOrdinates) {
                 coOrdinates.x = coOrdinates.x * (image.naturalWidth / newW);
                 coOrdinates.y = coOrdinates.y * (image.naturalHeight / newH);
