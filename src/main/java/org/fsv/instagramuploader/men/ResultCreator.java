@@ -33,10 +33,10 @@ public class ResultCreator {
 	logger.info("Creating result ...");
 	JSONObject m = Helper.parser(match.get("match").toString());
 	String mType = m.get("matchType").toString();
-	String mOpp = m.get("opponent").toString();
+	String mOpp = m.get("oppTeamName").toString();
 	String mDate = m.get("matchDate").toString();
 	String mHome = m.get("homeGame").toString();
-	String oppName = m.get("oppTeamName").toString();
+	String oppName = m.get("opponent").toString();
 	ClubSelector getClub = new ClubSelector();
 	ClubModel ownClub = getClub.getClubDetails("FSV Treuen");
 	ClubModel oppClub = getClub.getClubDetails(mOpp);

@@ -97,10 +97,17 @@ public class MatchdayCreator {
 	match.setHomeGame(homeClub.clubName().equals("FSV Treuen"));
 	
 	if (match.getChangeName() != null) {
-	 if (homeClub.clubName().equals("FSV Treuen"))
-		match.setAwayTeam(match.getChangeName());
-	 else
-		match.setHomeTeam(match.getChangeName());
+	 	String buffer;
+		if (homeClub.clubName().equals("FSV Treuen")){
+			buffer = match.getAwayTeam();
+			match.setAwayTeam(match.getChangeName());
+			match.setChangeName(buffer);
+		}
+		 else {
+			buffer = match.getHomeTeam();
+			match.setHomeTeam(match.getChangeName());
+			match.setChangeName(buffer);
+		}
 	}
 	
 	if (match.getHomeStats() == null || match.getAwayStats() == null) {

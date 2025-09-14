@@ -37,7 +37,7 @@ public class KickoffCreator {
 	String headline = "Testspiel";
 	if (competition.contains("liga")) {
 	 headline = "in der" + "\n" + "Vogtlandliga";
-	} else if (opponent.contains("pokal")) {
+	} else if (competition.contains("pokal")) {
 	 headline = "im" + "\n" + "Vogtlandpokal";
 	}
 	
