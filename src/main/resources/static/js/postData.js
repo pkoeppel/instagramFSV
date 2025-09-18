@@ -85,13 +85,36 @@ function getData() {
          reporterOwn: document.getElementById('reporterOwn').value,
          reportOwn : document.getElementById('reportOwn').value,
          **/
-        future: document.getElementById('future').value
+        future: document.getElementById('future').value,
+        scorerHome: getScorer(document.getElementById("scorer1")),
+        scorerAway: getScorer(document.getElementById("scorer2"))
     }
+}
+
+function getScorer(data) {
+    const result = [];
+    const mins = Array.from(data.querySelectorAll("input.min"));
+    const players = Array.from(data.querySelectorAll("input.player"));
+
+    const max = Math.max(mins.length, players.length);
+    for (let i = 0; i < max; i++) {
+        const minInput = mins[i];
+        const playerInput = players[i];
+        if (minInput && playerInput) {
+            const minRaw = String(minInput.value ?? "").trim();
+            const player = String(playerInput.value ?? "").trim();
+            if (minRaw && player) {
+                const minuteKey = /^\d+$/.test(minRaw) ? parseInt(minRaw, 10) : minRaw;
+                result.push({[minuteKey]: player});
+            }
+        }
+    }
+    return result;
 }
 
 function postPictures() {
     let formData = new FormData();
-    formData.append("match",JSON.stringify(getData()));
+    formData.append("match", JSON.stringify(getData()));
     fetch(window.location.origin + '/postMenMatchResult', {
         method: 'POST',
         mode: 'cors',

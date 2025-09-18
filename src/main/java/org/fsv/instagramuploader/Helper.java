@@ -1,11 +1,16 @@
 package org.fsv.instagramuploader;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.fsv.instagramuploader.model.ClubModel;
 import org.fsv.instagramuploader.model.GameModel;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -15,14 +20,15 @@ import org.json.simple.parser.ParseException;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -67,8 +73,7 @@ public class Helper {
 	int backX = background.getWidth();
 	int backY = background.getHeight();
 	
-	int sizeX = 0, sizeY = 0, posX = 0, posY = 0;
-	
+	int sizeX, sizeY, posX, posY;
 	switch (pos) {
 	 case "logo-left-youth" -> {
 		sizeX = 128;
@@ -85,14 +90,26 @@ public class Helper {
 	 case "logo-left-men" -> {
 		sizeX = 345 - fac;
 		sizeY = 345 - fac;
-		posX = (backX / 2 - (345 - fac)) / 2;
-		posY = 655 + fac / 2;
+		posX = (backX / 2 - (190 - fac)) / 2;
+		posY = 1310 + fac / 2;
 	 }
 	 case "logo-right-men" -> {
 		sizeX = 345 - fac;
 		sizeY = 345 - fac;
-		posX = (backX / 2 - (345 - fac)) / 2 + backX / 2;
-		posY = 655 + fac / 2;
+		posX = (backX / 2 - (500 - fac)) / 2 + backX / 2;
+		posY = 1310 + fac / 2;
+	 }
+	 case "homeClubResult-men" -> {
+		sizeX = 280 - (fac / 2);
+		sizeY = 280 - (fac / 2);
+		posX = (backX / 2 - (210 - fac / 2)) / 2;
+		posY = 720 + fac / 2;
+	 }
+	 case "awayClubResult-men" -> {
+		sizeX = 280 - (fac / 2);
+		sizeY = 280 - (fac / 2);
+		posX = (backX / 2 - (350 - fac / 2)) / 2 + backX / 2;
+		posY = 720 + fac / 2;
 	 }
 	 case "sponsor-men" -> {
 		sizeX = 300;
@@ -130,6 +147,18 @@ public class Helper {
 		posX = 500;
 		posY = 720;
 	 }
+	 case "template" -> {
+		sizeX = 1080;
+		sizeY = 538;
+		posX = 0;
+		posY = 1350 - sizeY;
+	 }
+	 default -> {
+		sizeX = 0;
+		sizeY = 0;
+		posX = 0;
+		posY = 0;
+	 }
 	}
 	g.drawImage(image, posX, posY, sizeX, sizeY, null);
  }
@@ -141,33 +170,58 @@ public class Helper {
 	int width = background.getWidth();
 	
 	FontMetrics fm = g.getFontMetrics();
-	int x = 0, y = 0;
-	
+	int x, y;
+	int border = 35;
 	int splitCount = text.split("\n").length - 1;
 	int textSize = fm.getFont().getSize() + 5;
 	int textPos = splitCount * (textSize / -2);
+	int textPosUp = 0;
 	for (String line : text.split("\n")) {
 	 switch (pos) {
 		//Matchday men
-		case "headline2-men" -> {
+		case "headline-men" -> {
 		 x = (width - fm.stringWidth(line)) / 2;
 		 y = fm.getHeight();
-		 yStart = (yStart + fm.getHeight()) - 20;
 		}
 		case "homeclub-men" -> {
-		 x = (width / 2 - fm.stringWidth(line)) / 2;
+		 x = (width + 4 * border - 2 * fm.stringWidth(line)) / 4;
+		 y = 0;
 		 yStart += fm.getHeight();
 		}
 		case "awayclub-men" -> {
-		 x = (width / 2 - fm.stringWidth(line)) / 2 + width / 2;
+		 x = (3 * width - 4 * border - 2 * fm.stringWidth(line)) / 4;
+		 y = 0;
 		 yStart += fm.getHeight();
 		}
-		case "bottom-men" -> {
-		 x = (width - fm.stringWidth(line)) / 2;
+		case "dateTime-men" -> {
+		 x = (790 - fm.stringWidth(line) / 2);
 		 y = fm.getHeight();
 		 yStart += fm.getHeight();
 		}
-		
+		case "result" -> {
+		 x = (width - fm.stringWidth(line)) / 2;
+		 y = 990;
+		}
+		case "homeClubResult-men" -> {
+		 x = (width + 4 * border - 2 * fm.stringWidth(line)) / 4;
+		 y = 1040 + textPos;
+		 textPos += textSize;
+		}
+		case "awayClubResult-men" -> {
+		 x = (3 * width - 4 * border - 2 * fm.stringWidth(line)) / 4;
+		 y = 1040 + textPos;
+		 textPos += textSize;
+		}
+		case "homeScorer" -> {
+		 x = width - fm.stringWidth(line) - (width / 2 + 50);
+		 y = 1120 + textPosUp;
+		 textPosUp += textSize;
+		}
+		case "awayScorer" -> {
+		 x = width / 2 + 50;
+		 y = 1120 + textPosUp;
+		 textPosUp += textSize;
+		}
 		case "head" -> {
 		 x = (width - fm.stringWidth(line)) / 2;
 		 y = 400;
@@ -219,6 +273,11 @@ public class Helper {
 		 y = 80 + textPos;
 		 textPos += textSize;
 		}
+		default -> {
+		 y = 0;
+		 x = 0;
+		 yStart = 0;
+		}
 	 }
 	 g.drawString(line, x, y + yStart);
 	}
@@ -245,14 +304,14 @@ public class Helper {
  }
  
  public static void deleteTempTxt(JSONObject delMatch, String file) throws IOException {
-	JSONParser jp = new JSONParser();
 	JSONArray ja = new JSONArray();
 	JSONObject curObj;
 	try {
-	 ja = (JSONArray) jp.parse(new FileReader("src/main/resources/templates/" + file + ".json"));
+	 InputStreamReader reader = new InputStreamReader(new FileInputStream("src/main/resources/templates/" + file + ".json"), StandardCharsets.UTF_8);
+	 ja = (JSONArray) new JSONParser().parse(reader);
 	 for (int i = 0; i < ja.size(); i++) {
 		curObj = (JSONObject) ja.get(i);
-		if (curObj.get("game").equals(delMatch)) {
+		if (curObj.equals(delMatch)) {
 		 ja.remove(i);
 		 break;
 		}
@@ -260,25 +319,8 @@ public class Helper {
 	 ja.remove(delMatch);
 	} catch (ParseException ignored) {
 	}
-	FileWriter fw = new FileWriter("src/main/resources/templates/" + file + ".json");
-	fw.write(ja.toJSONString());
-	fw.flush();
-	fw.close();
- }
- 
- public static void saveTempTxt(JSONArray ja, JSONObject gameDetails) {
-	JSONObject game = new JSONObject();
-	game.put("game", gameDetails);
-	
-	boolean exists = false;
-	for (Object oldGame : ja) {
-	 if (oldGame.equals(game)) {
-		exists = true;
-		break;
-	 }
-	}
-	if (!exists) {
-	 ja.add(game);
+	try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream("src/main/resources/templates/" + file + ".json"), StandardCharsets.UTF_8)) {
+	 writer.write(ja.toJSONString());
 	}
  }
  
@@ -290,8 +332,9 @@ public class Helper {
  public static void savePicture(BufferedImage img, String pathURL, String fileName) throws IOException {
 	File dir = new File(pathURL);
 	if (!dir.exists()) {
-	 //noinspection ResultOfMethodCallIgnored
-	 dir.mkdir();
+	 if (!dir.mkdirs()) {
+		System.err.println("Error creating directory: " + dir.getAbsolutePath());
+	 }
 	}
 	File fileToSafe = new File(dir + "/" + fileName + ".jpeg");
 	ImageIO.write(img, "jpeg", fileToSafe);
@@ -306,47 +349,50 @@ public class Helper {
 	}
  }
  
- public static void updateNextMatchesFromFBDE() throws IOException, ParseException {
-	JSONObject allGames = new JSONObject();
-	JSONObject teams = (JSONObject) new JSONParser()
-					.parse(new FileReader("src/main/resources/templates/teamInfo.json"));
-	teams.keySet().forEach(key -> {
-	 JSONArray games = new JSONArray();
-	 JSONObject team = (JSONObject) teams.get(key);
-	 String teamId = team.get("club-id").toString();
-	 try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-		HttpGet getMatches = new HttpGet("https://www.fussball.de/ajax.team.next.games/-/mode/PAGE/team-id/" + teamId);
-		try (CloseableHttpResponse response = httpClient.execute(getMatches)) {
-		 if (response.getCode() == 200) {
-			if (response.getEntity() != null) {
-			 String html = EntityUtils.toString(response.getEntity());
-			 games = parseGames(html);
-			} else {
-			 System.err.println("Request failed with status code: " + response.getCode());
-			}
-		 } else {
-			return;
-		 }
-		}
-	 } catch (java.text.ParseException | org.apache.hc.core5.http.ParseException | ParseException | IOException e) {
-		throw new RuntimeException(e);
-	 }
-	 allGames.put(key.toString(), games);
+ public static void updateNextMatchesFromFBDE() throws IOException, URISyntaxException {
+	Map<String, List<JSONObject>> allGames = new HashMap<>();
+	Map<String, Map<String, String>> teams = new ObjectMapper().readValue(new File("src/main/resources/templates/teamInfo.json"), new TypeReference<>() {
 	});
+	try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+	 for (Map.Entry<String, Map<String, String>> entry : teams.entrySet()) {
+		String key = entry.getKey();
+		Map<String, String> team = entry.getValue();
+		List<JSONObject> games = new ArrayList<>();
+		String teamId = team.get("club-id");
+		HttpGet getMatches = new HttpGet("https://www.fussball.de/ajax.team.next.games/-/mode/PAGE/team-id/" + teamId);
+		URI uri = getMatches.getUri();
+		HttpHost host = new HttpHost(uri.getScheme(), uri.getHost(), uri.getPort());
+		try (ClassicHttpResponse response = httpClient.executeOpen(host, getMatches, HttpClientContext.create())) {
+		 int statusCode = response.getCode();
+		 if (statusCode == 200 && response.getEntity() != null) {
+			String html = EntityUtils.toString(response.getEntity());
+			games = parseGames(html, team);
+		 } else {
+			System.err.println("Request failed with status code: " + response.getCode());
+		 }
+		} catch (java.text.ParseException | org.apache.hc.core5.http.ParseException | ParseException | IOException e) {
+		 throw new RuntimeException(e);
+		}
+		allGames.put(key, games);
+	 }
+	}
 	JSONObject jo = new JSONObject(allGames);
-	FileWriter fw = new FileWriter("src/main/resources/templates/allMatches.json");
 	
-	fw.write(jo.toJSONString());
-	fw.flush();
-	fw.close();
+	try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream("src/main/resources/templates/allMatches.json"), StandardCharsets.UTF_8)) {
+	 writer.write(jo.toJSONString());
+	}
  }
  
- private static JSONArray parseGames(String html) throws IOException, ParseException, java.text.ParseException {
-	JSONObject matchdays = (JSONObject) new JSONParser().parse(new FileReader("src/main/resources/templates/data.json"));
-	Long leagueMatchday = (Long) matchdays.get("lastLeagueMatchday");
-	Long cupMatchday = (Long) matchdays.get("lastCupMatchday");
+ private static List<JSONObject> parseGames(String html, Map<String, String> team) throws IOException, ParseException, java.text.ParseException, URISyntaxException {
+	Long leagueMatchday = null, cupMatchday = null;
+	if (team.get("lastLeagueMatchday") != null) {
+	 leagueMatchday = Long.valueOf(team.get("lastLeagueMatchday"));
+	}
+	if (team.get("lastCupMatchday") != null) {
+	 cupMatchday = Long.valueOf(team.get("lastCupMatchday"));
+	}
 	
-	JSONArray result = new JSONArray();
+	List<JSONObject> result = new ArrayList<>();
 	String gamesRegex = "<tr class=\"row-headline visible-small\">.*?</tr>.*?<tr class=\"odd row-competition hidden-small\">.*?</tr>.*?<tr class=\"odd\">.*?</tr>";
 	Matcher gamesMatcher = Pattern.compile(gamesRegex, Pattern.DOTALL).matcher(html);
 	
@@ -360,17 +406,20 @@ public class Helper {
 		LocalDate date = parseDate(dateStr);
 		String time = gameMatcher.group(2);
 		String competition = gameMatcher.group(3);
-		String team1 = StringEscapeUtils.unescapeHtml4(gameMatcher.group(4)).replace("\u200B", "").trim();
+		String homeTeam = StringEscapeUtils.unescapeHtml4(gameMatcher.group(4)).replace("\u200B", "").trim();
+		String awayTeam = StringEscapeUtils.unescapeHtml4(gameMatcher.group(5)).replace("\u200B", "").trim();
 		
-		String team2 = StringEscapeUtils.unescapeHtml4(gameMatcher.group(5)).replace("\u200B", "").trim();
 		String gameId;
 		if (competition.contains("Kinder")) {
 		 gameId = gameMatcher.group(6).trim().split("/-/staffel/")[1];
+		 homeTeam = homeTeam.replace(" - Kinderfestival", "");
 		} else {
 		 gameId = gameMatcher.group(6).trim().split("/-/spiel/")[1];
 		}
-		GameModel newGame = new GameModel(competition, team1, null, team2, null, date, time, null);
-		if (competition.contains("liga")) {
+		GameModel newGame = new GameModel(competition, date, time, null);
+		ClubModel homeClub = checkForOwnClub(homeTeam);
+		ClubModel awayClub = checkForOwnClub(awayTeam);
+		if (competition.contains("liga") || competition.contains("klasse")) {
 		 Matcher stats = teamStats(gameId);
 		 
 		 if (stats != null) {
@@ -383,19 +432,20 @@ public class Helper {
 			String homeTrend = stats.group(7);
 			String awayTrend = stats.group(8);
 			
-			String homeStats = "\nPlatz " + homePlace + " (" + homePoints + " / " + homeScore + ")\nTrend: " + homeTrend;
-			String awayStats = "\nPlatz " + awayPlace + " (" + awayPoints + " / " + awayScore + ")\nTrend: " + awayTrend;
-			newGame.setHomeStats(homeStats);
-			newGame.setAwayStats(awayStats);
-			
-			newGame.setMatchDay(String.valueOf(leagueMatchday));
-			leagueMatchday++;
+			homeClub.setClubStats("\nPlatz " + homePlace + " (" + homePoints + " / " + homeScore + ")\nTrend: " + homeTrend);
+			awayClub.setClubStats("\nPlatz " + awayPlace + " (" + awayPoints + " / " + awayScore + ")\nTrend: " + awayTrend);
+			if (leagueMatchday != null) {
+			 newGame.setMatchDay(String.valueOf(leagueMatchday));
+			 leagueMatchday++;
+			}
 		 }
 		}
-		if (competition.contains("pokal")) {
+		if (competition.contains("pokal") && cupMatchday != null) {
 		 newGame.setMatchDay(String.valueOf(cupMatchday));
 		 cupMatchday++;
 		}
+		newGame.setHomeTeam(homeClub);
+		newGame.setAwayTeam(awayClub);
 		result.add(newGame.toJSON());
 	 }
 	}
@@ -407,10 +457,22 @@ public class Helper {
 	return LocalDate.parse(dateStr, formatter);
  }
  
- private static Matcher teamStats(String gameId) throws IOException {
+ private static ClubModel checkForOwnClub(String teamName) {
+	if (!teamName.equals("FSV Treuen") && teamName.contains("FSV Treuen")) {
+	 return new ClubModel("FSV Treuen", null, null, null, null, teamName);
+	}
+	if (!teamName.equals("SpG Treuener Land") && teamName.contains("SpG Treuener Land")) {
+	 return new ClubModel("SpG Treuener Land", null, null, null, null, teamName);
+	}
+	return new ClubModel(teamName, null, null, null, null, null);
+ }
+ 
+ private static Matcher teamStats(String gameId) throws IOException, URISyntaxException {
+	HttpGet getMatches = new HttpGet("https://www.fussball.de/ajax.season.stats/-/mode/PAGE/spiel/" + gameId);
 	try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-	 HttpGet getMatches = new org.apache.hc.client5.http.classic.methods.HttpGet("https://www.fussball.de/ajax.season.stats/-/mode/PAGE/spiel/" + gameId);
-	 try (CloseableHttpResponse response = httpClient.execute(getMatches)) {
+	 URI uri = getMatches.getUri();
+	 HttpHost host = new HttpHost(uri.getScheme(), uri.getHost(), uri.getPort());
+	 try (ClassicHttpResponse response = httpClient.executeOpen(host, getMatches, HttpClientContext.create())) {
 		if (response.getCode() == 200) {
 		 if (response.getEntity() != null) {
 			String html = EntityUtils.toString(response.getEntity());
@@ -431,21 +493,30 @@ public class Helper {
 	return null;
  }
  
- public static void updateMatchdayValue(String matchType) throws IOException, ParseException {
-	JSONObject matchdays = (JSONObject) new JSONParser().parse(new FileReader("src/main/resources/templates/data.json"));
-	Long leagueMatchday = (Long) matchdays.get("lastLeagueMatchday");
-	Long cupMatchday = (Long) matchdays.get("lastCupMatchday");
-	if (matchType.toLowerCase().contains("pokal")) {
-	 matchdays.remove("lastCupMatchday");
-	 matchdays.put("lastCupMatchday", cupMatchday + 1);
+ public static void updateMatchdayValue(String team, String matchType) throws IOException {
+	Map<String, Map<String, String>> allTeams = new ObjectMapper().readValue(new File("src/main/resources/templates/teamInfo.json"), new TypeReference<>() {
+	});
+	Map<String, String> teamData = allTeams.get(team);
+	long leagueMatchday = Long.parseLong(teamData.get("lastLeagueMatchday"));
+	long cupMatchday = Long.parseLong(teamData.get("lastCupMatchday"));
+	
+	String matchTypeLower = matchType.toLowerCase(Locale.ROOT);
+	
+	if (matchTypeLower.contains("pokal")) {
+	 teamData.remove("lastCupMatchday");
+	 teamData.put("lastCupMatchday", String.valueOf(cupMatchday + 1));
 	}
-	if (matchType.toLowerCase().contains("liga") || matchType.toLowerCase().contains("klasse")) {
-	 matchdays.remove("lastLeagueMatchday");
-	 matchdays.put("lastLeagueMatchday", leagueMatchday + 1);
+	if (matchTypeLower.contains("liga") || matchTypeLower.contains("klasse")) {
+	 teamData.remove("lastLeagueMatchday");
+	 teamData.put("lastLeagueMatchday", String.valueOf(leagueMatchday + 1));
 	}
-	FileWriter fw = new FileWriter("src/main/resources/templates/data.json");
-	fw.write(matchdays.toJSONString());
-	fw.flush();
-	fw.close();
+	new ObjectMapper().writeValue(new File("src/main/resources/templates/teamInfo.json"), allTeams);
+ }
+ 
+ public static int isOwnClub(ClubModel club) {
+	if (club.getClubName().equals("FSV Treuen")) {
+	 return 0;
+	}
+	return 80;
  }
 }

@@ -9,13 +9,8 @@ function getAllYouthMatches() {
         .then((result) => result.json())
         .then((data) => {
             let matchList = document.getElementById('matchesList');
-            data.forEach(element => {
-                let game = element.game;
-                let home = "Zuhause";
-                if (game.homeGame === false) {
-                    home = "Auswärts";
-                }
-                let matchData = game.youth + "; " + game.date + "; " + game.matchType + "; " + game.homeTeam + " VS " + game.awayTeam + "; " + home;
+            data.forEach(game => {
+                let matchData = game.team + "; " + game.date + "; " + game.matchType + "; " + game.homeTeam.clubName + " VS " + game.awayTeam.clubName;
                 let match = document.createElement('li');
 
                 let span = document.createElement('span');
@@ -73,7 +68,7 @@ function getAllYouthMatches() {
                                     text: ""
                                 };
                                 let report = document.getElementById('reportboxes');
-                                let taId = value.id.youth;
+                                let taId = value.id.team;
                                 if (!document.getElementById(taId)) {
                                     textArea = document.createElement('textarea');
                                     textArea.id = taId;
@@ -117,7 +112,7 @@ function getAllYouthMatches() {
                         let btDelete = document.createElement('input');
                         btDelete.type = "button";
                         btDelete.value = "Löschen";
-                        btDelete.addEventListener('click', function (){
+                        btDelete.addEventListener('click', function () {
                             deleteMatchEntry("youth", JSON.stringify(element.game));
                         });
                         span.appendChild(btDelete);
@@ -147,21 +142,21 @@ function getMenMatches() {
     })
         .then((result) => result.json())
         .then((data) => {
-            data.forEach(element => {
-                let match = element.game;
-                let type = match.matchType;
-                let opp = match.opponent;
+            data.forEach(match => {
+                let type = match.competition;
+                let homeTeam = match.homeClub.clubName;
+                let awayTeam = match.awayClub.clubName;
                 let date = match.matchDate;
                 let opt = document.createElement("option");
-                opt.text = date + ", " + opp + ", " + type;
+                opt.text = date + ", " + homeTeam + " VS " + awayTeam + ", " + type;
                 opt.value = JSON.stringify(match);
                 sel.append(opt);
             });
         })
         .catch((error) => {
-        alert("Es ist ein Fehler beim Laden aufgetreten: " + error);
-        console.error('Error: ', error);
-    });
+            alert("Es ist ein Fehler beim Laden aufgetreten: " + error);
+            console.error('Error: ', error);
+        });
 }
 
 function deleteMatchEntry(team, game) {

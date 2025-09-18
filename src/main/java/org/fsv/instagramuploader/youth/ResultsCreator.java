@@ -3,7 +3,6 @@ package org.fsv.instagramuploader.youth;
 import org.fsv.instagramuploader.ClubSelector;
 import org.fsv.instagramuploader.FontClass;
 import org.fsv.instagramuploader.Helper;
-import org.fsv.instagramuploader.men.MatchdayCreator;
 import org.fsv.instagramuploader.model.ClubModel;
 import org.fsv.instagramuploader.model.ResultModel;
 import org.json.simple.parser.ParseException;
@@ -27,7 +26,7 @@ public class ResultsCreator {
  private List<LocalDate> matchDates;
  
  public Map<String, Integer> createResults(ArrayList<ResultModel> rmArr) throws IOException, ParseException {
-	logger.info("Creating results for " + rmArr.size() + " games of youth");
+	logger.info("Creating results for {} games of youth", rmArr.size());
 	BufferedImage background = ImageIO.read(new File("src/main/resources/pictures/template/youth/resultTemp.jpg"));
 	matchDates = new ArrayList<>();
 	int blockStart = 500;
@@ -46,52 +45,47 @@ public class ResultsCreator {
 	 int[] polyX = {0, 250, 225, 0};
 	 int[] polyY = {blockStart, blockStart, blockStart + 100, blockStart + 100};
 	 g.fillPolygon(polyX, polyY, polyY.length);
-	 
-	 Helper.writeOnPicture(background, rm.getValue("youth") + "-Jugend", "team-name", FontClass.teamYouth, Color.BLACK, blockStart);
+	 Helper.writeOnPicture(background, rm.getValue("team") + "-Jugend", "team-name", FontClass.teamYouth, Color.BLACK, blockStart);
 	 
 	 Helper.writeOnPicture(background, rm.getValue("matchType"), "match-type-short", FontClass.simpleYouth, Color.BLACK, blockStart);
 	 
 	 checkMatchDate(rm.getValue("date"));
-	 String oppName = rm.getValue("oppName");
-	 if (oppName.toLowerCase().contains("spg treuener land")) {
-		oppName = "SpG Treuener Land";
-	 }
-	 ClubSelector getClub = new ClubSelector();
-	 ClubModel homeClub, awayClub;
-	 if (Boolean.parseBoolean(rm.getValue("homeGame"))){
-		homeClub = getClub.getClubDetails("SpG Treuener Land");
-		awayClub = getClub.getClubDetails(oppName);
-	 } else {
-		homeClub = getClub.getClubDetails(oppName);
-		awayClub = getClub.getClubDetails("SpG Treuener Land");
-	 }
-	 if (rm.text().equals("Abgesagt")) {
-		logger.info("Game cancel!");
-		Helper.pictureOnPicture(background, homeClub.clubLogo(), "logo-left-youth", blockStart);
-		Helper.pictureOnPicture(background, awayClub.clubLogo(), "logo-right-youth", blockStart);
-		Helper.writeOnPicture(background, "Abgesagt!", "center-point-stats", FontClass.clubOwnYouth, Color.BLACK, blockStart);
-	 } else {
-		if (rm.getValue("matchType").toLowerCase().contains("kinder")) {
-		 logger.info("Game is Kinderfest!");
-		 Helper.pictureOnPicture(background, getClub.getClubDetails("SpG Treuener Land").clubLogo(), "logo-left-youth", blockStart);
-		 Helper.writeOnPicture(background, "Kinderfest!", "center-point-stats", FontClass.clubOwnYouth, Color.BLACK, blockStart);
+	 
+	 ClubModel homeClub = ClubSelector.searchClubDetails(rm.getClubName("homeTeam"));
+	 ClubModel awayClub = ClubSelector.searchClubDetails(rm.getClubName("awayTeam"));
+	 if (homeClub != null && awayClub != null) {
+		if (rm.text().equals("Abgesagt")) {
+		 logger.info("Game cancel!");
+		 Helper.pictureOnPicture(background, ImageIO.read(new File(homeClub.getClubLogoDir())), "logo-left-youth", blockStart);
+		 Helper.pictureOnPicture(background, ImageIO.read(new File(awayClub.getClubLogoDir())), "logo-right-youth", blockStart);
+		 Helper.writeOnPicture(background, "Abgesagt!", "center-point-stats", FontClass.clubOwnYouth, Color.BLACK, blockStart);
 		} else {
-		 logger.info("Game normal!");
-		 String homeTeamText = Helper.wrapString(rm.getValue("homeTeam"), 23);
-		 String awayTeamText = Helper.wrapString(rm.getValue("awayTeam"), 23);
-		 if (rm.getValue("matchType").toLowerCase().contains("liga") || rm.getValue("matchType").toLowerCase().contains("klasse")) {
-			homeTeamText += "\n" + rm.homeStats();
-			awayTeamText += "\n" + rm.awayStats();
+		 String matchTypeLower = rm.getValue("matchType").toLowerCase(Locale.ROOT);
+		 
+		 if (matchTypeLower.contains("kinder")) {
+			logger.info("Game is Kinderfest!");
+			Helper.pictureOnPicture(background, ImageIO.read(new File(Objects.requireNonNull(ClubSelector.searchClubDetails("SpG Treuener Land")).getClubLogoDir())), "logo-left-youth", blockStart);
+			Helper.writeOnPicture(background, "Kinderfest!", "center-point-stats", FontClass.clubOwnYouth, Color.BLACK, blockStart);
+		 } else {
+			logger.info("Game normal!");
+			String homeTeamText = Helper.wrapString(homeClub.getClubName(), 23);
+			String awayTeamText = Helper.wrapString(awayClub.getClubName(), 23);
+			
+			
+			if (matchTypeLower.contains("liga") || matchTypeLower.contains("klasse")) {
+			 homeTeamText += "\n" + rm.homeStats();
+			 awayTeamText += "\n" + rm.awayStats();
+			}
+			Helper.writeOnPicture(background, homeTeamText, "club-name-stats-home", FontClass.simpleYouth, Color.BLACK, blockStart);
+			Helper.writeOnPicture(background, awayTeamText, "club-name-stats-away", FontClass.simpleYouth, Color.BLACK, blockStart);
+			Helper.pictureOnPicture(background, ImageIO.read(new File(homeClub.getClubLogoDir())), "logo-left-youth", blockStart);
+			Helper.pictureOnPicture(background, ImageIO.read(new File(awayClub.getClubLogoDir())), "logo-right-youth", blockStart);
+			Helper.writeOnPicture(background, rm.result(), "center-point-stats", FontClass.resultYouth, Color.BLACK, blockStart);
 		 }
-		 Helper.writeOnPicture(background, homeTeamText, "club-name-stats-home", FontClass.simpleYouth, Color.BLACK, blockStart);
-		 Helper.writeOnPicture(background, awayTeamText, "club-name-stats-away", FontClass.simpleYouth, Color.BLACK, blockStart);
-		 Helper.pictureOnPicture(background, homeClub.clubLogo(), "logo-left-youth", blockStart);
-		 Helper.pictureOnPicture(background, awayClub.clubLogo(), "logo-right-youth", blockStart);
-		 Helper.writeOnPicture(background, rm.result(), "center-point-stats", FontClass.resultYouth, Color.BLACK, blockStart);
 		}
+		blockStart += 200;
+		Helper.deleteTempTxt(rm.id(), "youth-games");
 	 }
-	 blockStart += 200;
-	 Helper.deleteTempTxt(rm.id(), "youth-games");
 	}
 	String savePathPart = Helper.createMatchdaysHead(background, matchDates);
 	Helper.savePicture(background, "src/main/resources/save/youth/" + savePathPart, "Result" + pageCount);
