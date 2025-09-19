@@ -47,6 +47,9 @@ public class ClubModel {
 	if (club.containsKey("changedName") && club.get("changedName") != null) {
 	 this.changedName = club.get("changedName").toString();
 	}
+	if (club.containsKey("saveName") && club.get("saveName") != null) {
+	 this.saveName = club.get("saveName").toString();
+	}
  }
  
  public String getClubName() {

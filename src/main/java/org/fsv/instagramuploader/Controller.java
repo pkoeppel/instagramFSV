@@ -101,7 +101,7 @@ public class Controller {
 	 if (fileList != null && fileList.length != 0) {
 		res.setStatus(HttpServletResponse.SC_OK);
 		res.addHeader(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
-						.filename("download.zip", StandardCharsets.UTF_8)
+						.filename(dir + ".zip", StandardCharsets.UTF_8)
 						.build()
 						.toString());
 		try (ZipOutputStream zipOS = new ZipOutputStream(res.getOutputStream())) {

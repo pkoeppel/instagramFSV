@@ -16,6 +16,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -34,6 +36,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Helper {
+ static Logger logger = LoggerFactory.getLogger(Helper.class);
+ 
  public static int getC(JSONObject c, String val) {
 	try {
 	 double coord = (double) c.get(val);
@@ -333,7 +337,7 @@ public class Helper {
 	File dir = new File(pathURL);
 	if (!dir.exists()) {
 	 if (!dir.mkdirs()) {
-		System.err.println("Error creating directory: " + dir.getAbsolutePath());
+		logger.error("Error creating directory: {}", dir.getAbsolutePath());
 	 }
 	}
 	File fileToSafe = new File(dir + "/" + fileName + ".jpeg");
@@ -368,7 +372,7 @@ public class Helper {
 			String html = EntityUtils.toString(response.getEntity());
 			games = parseGames(html, team);
 		 } else {
-			System.err.println("Request failed with status code: " + response.getCode());
+			logger.error("Request failed with status code: {}", response.getCode());
 		 }
 		} catch (java.text.ParseException | org.apache.hc.core5.http.ParseException | ParseException | IOException e) {
 		 throw new RuntimeException(e);
@@ -483,7 +487,7 @@ public class Helper {
 			 return gamesMatcher;
 			}
 		 } else {
-			System.err.println("Request failed with status code: " + response.getCode());
+			logger.error("Request failed with status code: {}", response.getCode());
 		 }
 		}
 	 } catch (org.apache.hc.core5.http.ParseException e) {

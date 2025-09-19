@@ -72,20 +72,23 @@ public class ResultCreator {
 	File directory = new File("src/main/resources/save/" + savePath + "/Bilder");
 	if (!directory.exists()) {
 	 if (!directory.mkdirs()) {
-		System.err.println("Error creating directory: " + directory.getAbsolutePath());
+		logger.error("Error creating directory: {}", directory.getAbsolutePath());
 	 }
 	}
 	String formatedDate = DateTimeFormatter.ofPattern("yyyyMMdd").format(DateTimeFormatter.ofPattern("yyyy-MM-dd").parse(mDate));
 	logger.info("Add logos to pictures ...");
 	BufferedImage opponentClubLogo, ownClubLogo;
+	String folderName;
 	if (!homeGame) {
 	 opponentClubLogo = ImageIO.read(new File(homeClub.getClubLogoDir()));
 	 ownClubLogo = ImageIO.read(new File(awayClub.getClubLogoDir()));
+	 folderName = homeClub.getSaveName();
 	} else {
 	 ownClubLogo = ImageIO.read(new File(homeClub.getClubLogoDir()));
 	 opponentClubLogo = ImageIO.read(new File(awayClub.getClubLogoDir()));
+	 folderName = awayClub.getSaveName();
 	}
-	GoogleDriveService googleService = new GoogleDriveService(savePath);
+	GoogleDriveService googleService = new GoogleDriveService(folderName);
 	if (!allImg.isEmpty()) {
 	 for (BufferedImage img : allImg) {
 		Helper.pictureOnPicture(img, opponentClubLogo, "smallClubResult-men", 0);

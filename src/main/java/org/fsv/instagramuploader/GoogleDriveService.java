@@ -63,10 +63,10 @@ public class GoogleDriveService {
 	 com.google.api.services.drive.model.File file = drive.files().create(fileMetadata)
 					 .setFields("id")
 					 .execute();
-	 System.out.println("Folder ID: " + file.getId());
+	 logger.info("Folder ID: {}", file.getId());
 	 return file.getId();
 	} catch (GoogleJsonResponseException e) {
-	 System.err.println("Unable to create folder: " + e.getDetails());
+	 logger.error("Unable to create folder: {}", e.getDetails());
 	}
 	return "";
  }
@@ -97,7 +97,7 @@ public class GoogleDriveService {
 	 com.google.api.services.drive.model.File uploadedFile = drive.files().create(fileMetadata, mediaContent)
 					 .setFields("id").execute();
 	 String imageUrl = "https://drive.google.com/uc?export=view&id=" + uploadedFile.getId();
-	 System.out.println("IMAGE URL: " + imageUrl);
+	 logger.info("IMAGE URL: {}", imageUrl);
 	 
 	} catch (IOException e) {
 	 logger.error("Error by upload");
