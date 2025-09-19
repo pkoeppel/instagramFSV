@@ -47,45 +47,7 @@ function postNewTeam() {
         });
 }
 
-function postYouthResults() {
-    let caption = document.getElementById("headline").value + " 🔴🟢🟡" + "\n\n";
-    let resDev = document.getElementById("reportboxes");
-    let elem = resDev.querySelectorAll("textarea");
-    for (let i = 0; i < elem.length; i++) {
-        caption += elem[i].id + ":\n" + elem[i].value + "\n\n";
-    }
-    let formData = new FormData();
-    formData.append("allResults",JSON.stringify(saveTemp));
-    fetch(window.location.origin + '/postYouthResults', {
-        method: 'POST',
-        mode: 'cors',
-        cache: 'no-cache',
-        credentials: 'same-origin',
-        headers: {'Content-Type': 'application/json',},
-        redirect: 'follow',
-        referrerPolicy: 'no-referrer',
-        body: formData
-    })
-        .then(response => response.json())
-        .then((data) => {
-            console.log(data);
-            for (let [key, value] of Object.entries(data)) {
-                for (let i = 1; i <= value; i++) {
-                    window.open(window.location.origin + '/download/youth/' + key + '/Result' + i + '.jpeg');
-                }
-            }
-            let repDiv = document.getElementById('showReport');
-            repDiv.innerText = caption;
-        })
-        .catch((error) => {
-            alert("Es ist ein Fehler beim Erstellen aufgetreten: " + error);
-            console.error('Error: ', error);
-        });
-}
-
 function postYouthMatchday() {
-    let formData = new FormData();
-    formData.append("allGames",JSON.stringify(matchData));
     fetch(window.location.origin + '/postMatchFilesYouth', {
         method: 'POST',
         mode: 'cors',
@@ -94,7 +56,7 @@ function postYouthMatchday() {
         headers: {'Content-Type': 'application/json',},
         redirect: 'follow',
         referrerPolicy: 'no-referrer',
-        body: formData,
+        body: JSON.stringify(matchData)
     })
         .then(response => response.json())
         .then((data) => {
@@ -123,13 +85,36 @@ function getData() {
          reporterOwn: document.getElementById('reporterOwn').value,
          reportOwn : document.getElementById('reportOwn').value,
          **/
-        future: document.getElementById('future').value
+        future: document.getElementById('future').value,
+        scorerHome: getScorer(document.getElementById("scorer1")),
+        scorerAway: getScorer(document.getElementById("scorer2"))
     }
+}
+
+function getScorer(data) {
+    const result = [];
+    const mins = Array.from(data.querySelectorAll("input.min"));
+    const players = Array.from(data.querySelectorAll("input.player"));
+
+    const max = Math.max(mins.length, players.length);
+    for (let i = 0; i < max; i++) {
+        const minInput = mins[i];
+        const playerInput = players[i];
+        if (minInput && playerInput) {
+            const minRaw = String(minInput.value ?? "").trim();
+            const player = String(playerInput.value ?? "").trim();
+            if (minRaw && player) {
+                const minuteKey = /^\d+$/.test(minRaw) ? parseInt(minRaw, 10) : minRaw;
+                result.push({[minuteKey]: player});
+            }
+        }
+    }
+    return result;
 }
 
 function postPictures() {
     let formData = new FormData();
-    formData.append("match",JSON.stringify(getData()));
+    formData.append("match", JSON.stringify(getData()));
     fetch(window.location.origin + '/postMenMatchResult', {
         method: 'POST',
         mode: 'cors',

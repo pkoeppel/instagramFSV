@@ -9,7 +9,7 @@
     <script src="../js/postData.js" type="text/javascript"></script>
     <script src="../js/deleteData.js" type="text/javascript"></script>
 </head>
-<body onload="getAllTeamInformation()">
+<body>
 <div class="topbar">
     <ul>
         <li><a href="../index.html">Home</a></li>
@@ -37,10 +37,12 @@
             <legend>Mannschafts-Ids:</legend>
 
         </fieldset>
-        <fieldset id="matchdayValues">
-            <legend>Spieltage</legend>
-        </fieldset>
     </form>
 </div>
+<script type="text/javascript">
+    window.addEventListener('load', () => {
+        getAllTeamInformation();
+    });
+</script>
 </body>
 </html>

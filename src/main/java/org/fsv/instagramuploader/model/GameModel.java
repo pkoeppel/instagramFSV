@@ -4,30 +4,23 @@ import org.json.simple.JSONObject;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 public class GameModel {
  private final String competition;
  private final LocalDate gameDate;
  private final String gameTime;
- private boolean homeGame;
  private String matchDay;
- private String homeTeam;
- private String homeStats;
- private String awayTeam;
- private String awayStats;
- private String changedName;
- private String youthTeam;
+ private ClubModel homeTeam;
+ private ClubModel awayTeam;
+ private final String team;
  
- public GameModel(String competition, String homeTeam, String homeStats, String awayTeam, String awayStats, LocalDate gameDate, String gameTime, String changedName) {
+ public GameModel(String competition, LocalDate gameDate, String gameTime, String team) {
 	this.competition = competition;
-	this.homeTeam = homeTeam;
-	this.homeStats = homeStats;
-	this.awayTeam = awayTeam;
-	this.awayStats = awayStats;
 	this.gameDate = gameDate;
 	this.gameTime = gameTime;
-	
-	this.changedName = changedName;
+	this.team = team;
  }
  
  public String getCompetition() {
@@ -42,48 +35,24 @@ public class GameModel {
 	this.matchDay = matchDay;
  }
  
- public String getHomeTeam() {
-	return homeTeam;
+ public ClubModel getHomeTeam() {
+	return new ClubModel(homeTeam);
  }
  
- public void setHomeTeam(String homeTeam) {
-	this.homeTeam = homeTeam;
+ public void setHomeTeam(ClubModel homeTeam) {
+	this.homeTeam = new ClubModel(homeTeam);
  }
  
- public String getHomeStats() {
-	return homeStats;
+ public ClubModel getAwayTeam() {
+	return new ClubModel(awayTeam);
  }
  
- public void setHomeStats(String homeStats) {
-	this.homeStats = homeStats;
- }
- 
- public String getAwayTeam() {
-	return awayTeam;
- }
- 
- public void setAwayTeam(String awayTeam) {
-	this.awayTeam = awayTeam;
- }
- 
- public String getAwayStats() {
-	return awayStats;
- }
- 
- public void setAwayStats(String awayStats) {
-	this.awayStats = awayStats;
+ public void setAwayTeam(ClubModel awayTeam) {
+	this.awayTeam = new ClubModel(awayTeam);
  }
  
  public String getGameTime() {
 	return gameTime;
- }
- 
- public String getChangeName() {
-	return changedName;
- }
- 
- public void setChangeName(String changeName) {
-	this.changedName = changeName;
  }
  
  public String getSaveGameDate() {
@@ -101,29 +70,26 @@ public class GameModel {
 	return gameDate.format(formatter);
  }
  
- public boolean getHomeGame() {
-	return homeGame;
- }
- 
- public void setHomeGame(boolean homeGame) {
-	this.homeGame = homeGame;
- }
- 
  public JSONObject toJSON() {
-	JSONObject result = new JSONObject();
+	Map<String, Object> result = new HashMap<>();
 	result.put("competition", competition);
-	result.put("homeTeam", homeTeam);
-	result.put("homeStats", homeStats);
-	result.put("awayTeam", awayTeam);
-	result.put("awayStats", awayStats);
+	if (homeTeam != null) {
+	 result.put("homeTeam", homeTeam.toJSON());
+	} else {
+	 result.put("homeTeam", null);
+	}
+	if (awayTeam != null) {
+	 result.put("awayTeam", awayTeam.toJSON());
+	} else {
+	 result.put("awayTeam", null);
+	}
 	result.put("gameDate", getSaveGameDate());
 	result.put("gameTime", gameTime);
-	result.put("changedName", changedName);
 	result.put("matchDay", matchDay);
-	return result;
+	return new JSONObject(result);
  }
  
- public String getYouthTeam() {
-	return youthTeam;
+ public String getTeam() {
+	return team;
  }
 }
