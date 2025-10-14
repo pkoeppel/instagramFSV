@@ -185,7 +185,8 @@ public class Helper {
 		//Matchday men
 		case "headline-men" -> {
 		 x = (width - fm.stringWidth(line)) / 2;
-		 y = fm.getHeight();
+		 y = 50;
+		 yStart += fm.getHeight() - 50;
 		}
 		case "homeclub-men" -> {
 		 x = (width + 4 * border - 2 * fm.stringWidth(line)) / 4;

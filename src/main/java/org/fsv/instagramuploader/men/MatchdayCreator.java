@@ -67,7 +67,7 @@ public class MatchdayCreator {
 	 logger.info("Cup match");
 	 headline = matchDay;
 	 if (Helper.isNumeric(matchDay)) {
-		headline += ". Pokalrunde";
+		headline += ". Pokal-\nrunde";
 	 }
 	}
 	if (competition.contains("freundschaft")) {
