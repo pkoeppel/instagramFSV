@@ -16,6 +16,16 @@ public class GameModel {
  private ClubModel awayTeam;
  private final String team;
  
+ public GameModel(JSONObject game, String team) {
+	this.competition = game.get("competition").toString();
+	this.gameDate = LocalDate.parse(game.get("gameDate").toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+	this.gameTime = game.get("gameTime").toString();
+	this.matchDay = game.get("matchDay").toString();
+	this.homeTeam = (ClubModel) game.get("homeTeam");
+	this.awayTeam = (ClubModel) game.get("awayTeam");
+	this.team = team;
+ }
+ 
  public GameModel(String competition, LocalDate gameDate, String gameTime, String team) {
 	this.competition = competition;
 	this.gameDate = gameDate;
