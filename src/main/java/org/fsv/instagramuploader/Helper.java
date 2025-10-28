@@ -218,12 +218,22 @@ public class Helper {
 		 textPos += textSize;
 		}
 		case "homeScorer" -> {
-		 x = width - fm.stringWidth(line) - (width / 2 + 50);
+		 int shiftLeft = 0;
+		 if (textPosUp > 230) {
+			textPosUp = 0;
+			shiftLeft = 250;
+		 }
+		 x = width - fm.stringWidth(line) - (width / 2 + 20) -  shiftLeft;
 		 y = 1120 + textPosUp;
 		 textPosUp += textSize;
 		}
 		case "awayScorer" -> {
-		 x = width / 2 + 50;
+		 int shiftRight = 0;
+		 if (textPosUp > 230) {
+			textPosUp = 0;
+			shiftRight = 250;
+		 }
+		 x = width / 2 + 20 + shiftRight;
 		 y = 1120 + textPosUp;
 		 textPosUp += textSize;
 		}
