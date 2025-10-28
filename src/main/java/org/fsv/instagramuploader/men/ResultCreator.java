@@ -105,7 +105,16 @@ public class ResultCreator {
 	 Helper.pictureOnPicture(firstImg, ImageIO.read(new File(homeClub.getClubLogoDir())), "homeClubResult-men", Helper.isOwnClub(homeClub));
 	 Helper.pictureOnPicture(firstImg, ImageIO.read(new File(awayClub.getClubLogoDir())), "awayClubResult-men", Helper.isOwnClub(awayClub));
 	 String result = match.get("result").toString();
-	 Helper.writeOnPicture(firstImg, result, "result", FontClass.resultMen, Color.BLACK, 0);
+	 String[] resultSplit = result.split(":");
+	 int resultShift;
+	 if (resultSplit[0].length() == resultSplit[1].length()	) {
+		resultShift = 0;
+	 } else if (resultSplit[0].length() > resultSplit[1].length()) {
+		resultShift = -20;
+	 } else {
+		resultShift = 20;
+	 }
+	 Helper.writeOnPicture(firstImg, result, "result", FontClass.resultMen, Color.BLACK, resultShift);
 	 Helper.writeOnPicture(firstImg, Helper.wrapString(homeClubName, 23), "homeClubResult-men", FontClass.clubMenResult, Color.BLACK, 0);
 	 Helper.writeOnPicture(firstImg, Helper.wrapString(awayClubName, 23), "awayClubResult-men", FontClass.clubMenResult, Color.BLACK, 0);
 	 Helper.writeOnPicture(firstImg, homeScore.toString(), "homeScorer", FontClass.scorer, Color.WHITE, 0);

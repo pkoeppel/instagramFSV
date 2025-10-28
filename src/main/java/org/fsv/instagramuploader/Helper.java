@@ -180,6 +180,7 @@ public class Helper {
 	int textSize = fm.getFont().getSize() + 5;
 	int textPos = splitCount * (textSize / -2);
 	int textPosUp = 0;
+	int shift = 0;
 	for (String line : text.split("\n")) {
 	 switch (pos) {
 		//Matchday men
@@ -204,8 +205,8 @@ public class Helper {
 		 yStart += fm.getHeight();
 		}
 		case "result" -> {
-		 x = (width - fm.stringWidth(line)) / 2;
-		 y = 990;
+		 x = (width - fm.stringWidth(line)) / 2 + yStart;
+		 y = 990 - yStart;
 		}
 		case "homeClubResult-men" -> {
 		 x = (width + 4 * border - 2 * fm.stringWidth(line)) / 4;
@@ -218,22 +219,20 @@ public class Helper {
 		 textPos += textSize;
 		}
 		case "homeScorer" -> {
-		 int shiftLeft = 0;
 		 if (textPosUp > 230) {
 			textPosUp = 0;
-			shiftLeft = 250;
+			shift = 250;
 		 }
-		 x = width - fm.stringWidth(line) - (width / 2 + 20) -  shiftLeft;
+		 x = width - fm.stringWidth(line) - (width / 2 + 20) -  shift;
 		 y = 1120 + textPosUp;
 		 textPosUp += textSize;
 		}
 		case "awayScorer" -> {
-		 int shiftRight = 0;
 		 if (textPosUp > 230) {
 			textPosUp = 0;
-			shiftRight = 250;
+			shift = 250;
 		 }
-		 x = width / 2 + 20 + shiftRight;
+		 x = width / 2 + 20 + shift;
 		 y = 1120 + textPosUp;
 		 textPosUp += textSize;
 		}
