@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:8080:8080"   # bind nur localhost!
+    environment:
+      - APP_USER=${APP_USER}
+      - APP_PASSWORD=${APP_PASSWORD}
+      # - GOOGLE_CREDENTIALS=/run/secrets/google.json  (wenn benötigt)
+    restart: unless-stopped

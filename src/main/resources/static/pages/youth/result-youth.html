@@ -9,7 +9,7 @@
     <script src="../../js/postData.js" type="text/javascript"></script>
     <script src="../../js/deleteData.js" type="text/javascript"></script>
 </head>
-<body onload="getAllYouthMatches()">
+<body>
 <div class="topbar">
     <ul>
         <li><a href="../../index.html">Home</a></li>
@@ -34,5 +34,10 @@
 <div id="created"></div>
 <br>
 <div id="showReport"></div>
+<script>
+    window.addEventListener('load', () => {
+        getAllYouthMatches();
+    });
+</script>
 </body>
 </html>

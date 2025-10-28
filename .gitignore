@@ -1,39 +1,51 @@
-HELP.md
+# === Build-Verzeichnisse ===
 target/
-src/main/resource/save/*
-!.mvn/wrapper/maven-wrapper.jar
+build/
 !**/src/main/**/target/
 !**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
-### STS ###
+# === IDE-spezifische Dateien ===
+
+## Eclipse / Spring Tool Suite (STS)
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
-.idea
+## IntelliJ IDEA
+.idea/
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
+## NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+## VS Code
 .vscode/
+
+# === OS-spezifisch ===
+.DS_Store
+Thumbs.db
+
+# === Logs & Temporäre Dateien ===
+*.log
+*.tmp
+
+# === Eigene Projektpfade ===
+
+# Ignoriere spezifische JSON-Dateien im templates-Ordner
+
+# Ignoriere Ordner für gespeicherte Spielstände oder Zwischenspeicher
+/src/main/resources/save/*
 /save/
 /buffer/
-/src/main/resources/save/
-/src/main/resources/templates/men-games.json
-/src/main/resources/templates/youth-games.json.json

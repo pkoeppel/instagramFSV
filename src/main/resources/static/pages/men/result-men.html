@@ -13,7 +13,7 @@
     <script src="../../js/helper.js" type="text/javascript"></script>
     <link href="../../style.css" rel="stylesheet">
 </head>
-<body onload="getMenMatches()">
+<body>
 <div class="topbar">
     <ul>
         <li><a href="../../index.html">Home</a></li>
@@ -30,10 +30,12 @@
     <label for="matches"></label>
     <select id="matches" name="matches">
     </select>
-    <input id="deleteEntry" onclick="deleteMatchEntry('men')" type="button" value="Eintrag löschen">
+    <input id="deleteEntry" onclick="deleteMatchEntry('men', document.getElementById('matches').value)" type="button"
+           value="Eintrag löschen">
     <br>
     <label for="matchResult">Ergebnis:</label>
-    <input class="result" id="matchResult" name="matchResult" onkeyup="setCharCount()" type="text">
+    <input class="result" id="matchResult" name="matchResult" onkeyup="setCharCount()"
+           onblur="addScorerInput(this.value)" type="text">
     <br>
     <label for="headline">Überschrift:</label>
     <input class="resHeadline" id="headline" name="headline" onkeyup="setCharCount()" type="text">
@@ -42,38 +44,73 @@
     <br>
     <textarea class="resReport" id="report" name="report" onkeyup="setCharCount()"></textarea>
     <br>
-    <!--
-    <label>Stimmen zum Spiel:</label>
-    <br>
-    <label for="reporterOpp">Gegner:</label>
-    <input type="text" id="reporterOpp" name="reporterOpp" onkeyup="setCharCount()">
-    <br>
-    <label for="reportOpp"></label><textarea id="reportOpp" name="reportOpp" onkeyup="setCharCount()"></textarea>
-    <br>
-    <label for="reporterOwn">Eigener:</label>
-    <input type="text" id="reporterOwn" name="reporterOwn" onkeyup="setCharCount()">
-    <br>
-    <label for="reportOwn"></label><textarea id="reportOwn" name="reportOwn" onkeyup="setCharCount()"></textarea>
-    <br>
-    -->
     <label for="future">Ausblick:</label>
     <br>
     <textarea class="resFuture" id="future" name="future" onkeyup="setCharCount()"></textarea>
     <br>
-    <label id="chars">Zeichen: 0/2200</label>
+    <p style="margin: 5px" id="chars">Zeichen: 0/2200</p>
+    <br>
+    <div id="scorer1" class="scorer">
+    </div>
+    <div id="scorer2" class="scorer">
+    </div>
     <br>
     <input accept="image/*" id="inputFile" onchange="newPicture()" type="file">
     <br>
     <div id="showPic"></div>
     <br>
-    <input id="saveResized" type="button" value="Speichern">
-    <input id="saveAll" onClick="postPictures()" type="button" value="Senden">
+    <input id="saveResized" type="button" value="Bild abspeichern">
+    <input id="saveAll" onClick="postPictures()" type="button" value="Bericht absenden">
 </div>
 <div id="showReport"></div>
 <script type="text/javascript">
+    window.addEventListener('load', () => {
+        getMenMatches();
+    });
+
+    function addScorerInput(score) {
+
+        const splitScore = score.split(":");
+        for (let team = 1; team <= splitScore.length; team++) {
+            const goalNumber = splitScore[team - 1];
+            const scorerDiv = document.getElementById('scorer' + team);
+            while (scorerDiv.firstChild) {
+                scorerDiv.removeChild(scorerDiv.firstChild);
+            }
+            const header = document.createElement("p");
+            header.style.margin = "0px";
+            header.style.marginTop = "3px";
+            header.innerHTML = "Tore Team " + team + ":";
+            scorerDiv.append(header)
+            if (goalNumber > 0) {
+                for (let goal = 1; goal <= goalNumber; goal++) {
+                    const lbMin = document.createElement('label');
+                    lbMin.innerHTML = "Min:"
+                    scorerDiv.appendChild(lbMin);
+                    const goalInputMin = document.createElement('input');
+                    goalInputMin.id = "min";
+                    goalInputMin.className = "min";
+                    goalInputMin.type = "number";
+                    scorerDiv.appendChild(goalInputMin);
+                    const lbPlayer = document.createElement('label');
+                    lbPlayer.innerHTML = "Player:"
+                    scorerDiv.appendChild(lbPlayer);
+                    const goalInputPlayer = document.createElement('input');
+                    goalInputPlayer.id = "player";
+                    goalInputPlayer.maxLength = "15";
+                    goalInputPlayer.className = "player";
+                    goalInputPlayer.type = "text";
+                    scorerDiv.appendChild(goalInputPlayer);
+                    scorerDiv.appendChild(document.createElement('br'))
+                }
+            }
+        }
+
+    }
+
     function newPicture() {
         let sp = document.getElementById('showPic');
-        while (sp.lastElementChild){
+        while (sp.lastElementChild) {
             sp.removeChild(sp.lastElementChild);
         }
 
@@ -84,7 +121,7 @@
         image.style.maxWidth = '600px';
         image.style.maxHeight = '600px';
 
-        let newW,newH;
+        let newW, newH;
         sp.appendChild(image);
         image.onload = function () {
             newW = image.width;
@@ -93,7 +130,7 @@
 
         // noinspection JSUnresolvedReference
         $('#crop-image').Jcrop({
-            aspectRatio: 1,
+            aspectRatio: 0.8,
             onSelect: function (coOrdinates) {
                 coOrdinates.x = coOrdinates.x * (image.naturalWidth / newW);
                 coOrdinates.y = coOrdinates.y * (image.naturalHeight / newH);
