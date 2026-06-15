@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GameModel {
+ private final String gameId;
  private final String competition;
  private final LocalDate gameDate;
  private final String gameTime;
@@ -21,12 +22,14 @@ public class GameModel {
 	this.gameDate = LocalDate.parse(game.get("gameDate").toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 	this.gameTime = game.get("gameTime").toString();
 	this.matchDay = game.get("matchDay").toString();
-	this.homeTeam = (ClubModel) game.get("homeTeam");
-	this.awayTeam = (ClubModel) game.get("awayTeam");
+	this.homeTeam = new ClubModel((JSONObject) game.get("homeTeam"));
+	this.awayTeam = new ClubModel((JSONObject) game.get("awayTeam"));
 	this.team = team;
+	this.gameId = (String) game.get("gameId");
  }
  
- public GameModel(String competition, LocalDate gameDate, String gameTime, String team) {
+ public GameModel(String gameId, String competition, LocalDate gameDate, String gameTime, String team) {
+	this.gameId = gameId;
 	this.competition = competition;
 	this.gameDate = gameDate;
 	this.gameTime = gameTime;
@@ -96,6 +99,7 @@ public class GameModel {
 	result.put("gameDate", getSaveGameDate());
 	result.put("gameTime", gameTime);
 	result.put("matchDay", matchDay);
+	result.put("id", gameId);
 	return new JSONObject(result);
  }
  

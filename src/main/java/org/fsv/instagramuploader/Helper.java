@@ -409,12 +409,11 @@ public class Helper {
 	List<JSONObject> result = new ArrayList<>();
 	String gamesRegex = "<tr class=\"row-headline visible-small\">.*?</tr>.*?<tr class=\"odd row-competition hidden-small\">.*?</tr>.*?<tr class=\"odd\">.*?</tr>";
 	Matcher gamesMatcher = Pattern.compile(gamesRegex, Pattern.DOTALL).matcher(html);
-	
+	int gameCount = 1;
 	while (gamesMatcher.find()) {
 	 
 	 String gameRegex = "<td colspan=\"6\">.*?, (.*?) - (.*?) Uhr \\| (.*?)</td>.*?<td class=\"column-club\">.*?<div class=\"club-name\">(.*?)</div>.*?<div class=\"club-name\">(.*?)</div>.*?<td class=\"column-detail\">.*?<a href=\"(.*?)\">.*?</td>";
 	 Matcher gameMatcher = Pattern.compile(gameRegex, Pattern.DOTALL).matcher(gamesMatcher.group(0));
-	 
 	 while (gameMatcher.find()) {
 		String dateStr = gameMatcher.group(1);
 		LocalDate date = parseDate(dateStr);
@@ -430,7 +429,7 @@ public class Helper {
 		} else {
 		 gameId = gameMatcher.group(6).trim().split("/-/spiel/")[1];
 		}
-		GameModel newGame = new GameModel(competition, date, time, null);
+		GameModel newGame = new GameModel(String.valueOf(gameCount), competition, date, time, null);
 		ClubModel homeClub = checkForOwnClub(homeTeam);
 		ClubModel awayClub = checkForOwnClub(awayTeam);
 		if (competition.contains("liga") || competition.contains("klasse")) {
@@ -461,6 +460,7 @@ public class Helper {
 		newGame.setHomeTeam(homeClub);
 		newGame.setAwayTeam(awayClub);
 		result.add(newGame.toJSON());
+		gameCount++;
 	 }
 	}
 	return result;
