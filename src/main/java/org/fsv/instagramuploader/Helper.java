@@ -149,6 +149,15 @@ public class Helper {
 		 case "left" -> posX = 0;
 		 case "right" -> posX = backX - sizeX;
 	 }
+
+	 // If fac is not used as an axis offset, treat it as a shrink factor
+	 // and keep the image centered inside the configured area.
+	 if ("".equals(offsetAxis) && fac != 0) {
+		posX += fac / 2;
+		posY += fac / 2;
+		sizeX = Math.max(1, sizeX - fac);
+		sizeY = Math.max(1, sizeY - fac);
+	 }
 	} else {
 	 // Fallback to default values if position not found in coordinates
 	 sizeX = 0;
