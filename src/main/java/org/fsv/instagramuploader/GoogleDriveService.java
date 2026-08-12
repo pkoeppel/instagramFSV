@@ -108,7 +108,6 @@ public class GoogleDriveService {
 	try {
 	 com.google.api.services.drive.model.File uploadedFile = drive.files().create(fileMetadata, mediaContent)
 					 .setFields("id").execute();
-	 String imageUrl = "https://drive.google.com/uc?export=view&id=" + uploadedFile.getId();
 	 logger.info("Uploaded image to Google Drive: fileName='{}', id='{}'", file.getName(), uploadedFile.getId());
 
 	} catch (IOException e) {

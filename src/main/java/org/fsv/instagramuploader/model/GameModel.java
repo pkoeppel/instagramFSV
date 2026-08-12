@@ -1,5 +1,7 @@
 package org.fsv.instagramuploader.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.json.simple.JSONObject;
 
 import java.time.LocalDate;
@@ -8,13 +10,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GameModel {
+ @Getter
  private final String competition;
  private final LocalDate gameDate;
+ @Getter
  private final String gameTime;
+ @Getter
+ @Setter
  private String matchDay;
  private ClubModel homeTeam;
  private ClubModel awayTeam;
+ @Getter
  private final String team;
+ @Setter
+ @Getter
  private String gameUrl;
  
  public GameModel(String competition, LocalDate gameDate, String gameTime, String team) {
@@ -23,20 +32,8 @@ public class GameModel {
 	this.gameTime = gameTime;
 	this.team = team;
  }
- 
- public String getCompetition() {
-	return competition;
- }
- 
- public String getMatchDay() {
-	return matchDay;
- }
- 
- public void setMatchDay(String matchDay) {
-	this.matchDay = matchDay;
- }
- 
- public ClubModel getHomeTeam() {
+  
+  public ClubModel getHomeTeam() {
 	return new ClubModel(homeTeam);
  }
  
@@ -51,20 +48,8 @@ public class GameModel {
  public void setAwayTeam(ClubModel awayTeam) {
 	this.awayTeam = new ClubModel(awayTeam);
  }
- 
- public String getGameTime() {
-	return gameTime;
- }
-
- public String getGameUrl() {
-	return gameUrl;
- }
-
- public void setGameUrl(String gameUrl) {
-	this.gameUrl = gameUrl;
- }
- 
- public String getSaveGameDate() {
+  
+  public String getSaveGameDate() {
 	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	return gameDate.format(formatter);
  }
@@ -99,7 +84,4 @@ public class GameModel {
 	return new JSONObject(result);
  }
  
- public String getTeam() {
-	return team;
- }
 }

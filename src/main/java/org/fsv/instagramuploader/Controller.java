@@ -249,8 +249,8 @@ public class Controller {
 					 || team.get("club-id") == null || team.get("club-id").isBlank()
 					 || team.get("default-place") == null || team.get("default-place").isBlank()
 					 || team.get("category") != null && !team.get("category").matches("men|youth")
-					 || !isPositiveNumberOrMissing(team.get("lastLeagueMatchday"))
-					 || !isPositiveNumberOrMissing(team.get("lastCupMatchday"))) {
+					 || isPositiveNumberOrMissing(team.get("lastLeagueMatchday"))
+					 || isPositiveNumberOrMissing(team.get("lastCupMatchday"))) {
 		return false;
 	 }
 	}
@@ -259,12 +259,12 @@ public class Controller {
 
  private boolean isPositiveNumberOrMissing(String value) {
 	if (value == null) {
-	 return true;
+	 return false;
 	}
 	try {
-	 return Long.parseLong(value) > 0;
+	 return Long.parseLong(value) <= 0;
 	} catch (NumberFormatException e) {
-	 return false;
+	 return true;
 	}
  }
 

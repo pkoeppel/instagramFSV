@@ -50,10 +50,9 @@ public class Helper {
  }
 
  private static void loadCoordinates() throws IOException {
-	ObjectMapper mapper = OBJECT_MAPPER;
-	File file = new File("src/main/resources/templates/coordinates.json");
+   File file = new File("src/main/resources/templates/coordinates.json");
 	if (file.exists()) {
-	 Map<String, Object> data = mapper.readValue(file, new TypeReference<Map<String, Object>>() {});
+	 Map<String, Object> data = OBJECT_MAPPER.readValue(file, new TypeReference<>() {});
 	 coordinates = (Map<String, Map<String, Object>>) data.get("coordinates");
 	} else {
 	 logger.warn("Coordinates file not found, using empty coordinates");
@@ -551,7 +550,7 @@ public class Helper {
 	 if (response.getCode() == 200 && response.getEntity() != null) {
 		try {
 		 String html = EntityUtils.toString(response.getEntity());
-		 String statsRegex = "<td.*?>(.*?)</td>.*?<td>Aktuelle Platzierung</td>.*?<td.*?>(.*?)</td>.*?<td.*?>(.*?)</td>.*?<td>Aktuelle Punktzahl</td>.*?<td.*?>(.*?)</td>.*?<td.*?>(.*?)</td>.*?<td>Aktuelles Torverh\u00e4ltnis</td>.*?<td.*?>(.*?)</td>.*?<td.*?><span.*?>(.*?)</span>.*?</td>.*?<td>Aktueller Trend</td>.*?<td.*?>.*?<span.*?>(.*?)</span>.*?</td>";
+		 String statsRegex = "<td.*?>(.*?)</td>.*?<td>Aktuelle Platzierung</td>.*?<td.*?>(.*?)</td>.*?<td.*?>(.*?)</td>.*?<td>Aktuelle Punktzahl</td>.*?<td.*?>(.*?)</td>.*?<td.*?>(.*?)</td>.*?<td>Aktuelles Torverhältnis</td>.*?<td.*?>(.*?)</td>.*?<td.*?><span.*?>(.*?)</span>.*?</td>.*?<td>Aktueller Trend</td>.*?<td.*?>.*?<span.*?>(.*?)</span>.*?</td>";
 		 Matcher gamesMatcher = Pattern.compile(statsRegex, Pattern.DOTALL).matcher(html);
 		 return gamesMatcher.find() ? gamesMatcher : null;
 		} catch (org.apache.hc.core5.http.ParseException e) {
