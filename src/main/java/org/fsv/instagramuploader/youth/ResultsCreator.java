@@ -8,7 +8,6 @@ import org.fsv.instagramuploader.model.ResultModel;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -20,15 +19,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 
-@Component("rsc")
 public class ResultsCreator {
- Logger logger = LoggerFactory.getLogger(ResultsCreator.class);
- private List<LocalDate> matchDates;
+ private static final Logger logger = LoggerFactory.getLogger(ResultsCreator.class);
  
  public Map<String, Integer> createResults(ArrayList<ResultModel> rmArr) throws IOException, ParseException {
-	logger.info("Creating results for {} games of youth", rmArr.size());
+	logger.info("Creating youth result images for {} games", rmArr.size());
 	BufferedImage background = ImageIO.read(new File("src/main/resources/pictures/template/youth/resultTemp.jpg"));
-	matchDates = new ArrayList<>();
+	List<LocalDate> matchDates = new ArrayList<>();
 	int blockStart = 500;
 	int pageCount = 1;
 	for (ResultModel rm : rmArr) {
@@ -45,17 +42,18 @@ public class ResultsCreator {
 	 int[] polyX = {0, 250, 225, 0};
 	 int[] polyY = {blockStart, blockStart, blockStart + 100, blockStart + 100};
 	 g.fillPolygon(polyX, polyY, polyY.length);
+	 g.dispose();
 	 Helper.writeOnPicture(background, rm.getValue("team") + "-Jugend", "team-name", FontClass.teamYouth, Color.BLACK, blockStart);
 	 
 	 Helper.writeOnPicture(background, rm.getValue("matchType"), "match-type-short", FontClass.simpleYouth, Color.BLACK, blockStart);
 	 
-	 checkMatchDate(rm.getValue("date"));
+	 checkMatchDate(matchDates, rm.getValue("date"));
 	 
 	 ClubModel homeClub = ClubSelector.searchClubDetails(rm.getClubName("homeTeam"));
 	 ClubModel awayClub = ClubSelector.searchClubDetails(rm.getClubName("awayTeam"));
 	 if (homeClub != null && awayClub != null) {
 		if (rm.text().equals("Abgesagt")) {
-		 logger.info("Game cancel!");
+		 logger.debug("Rendering cancelled youth game: team={}, date={}", rm.getValue("team"), rm.getValue("date"));
 		 Helper.pictureOnPicture(background, ImageIO.read(new File(homeClub.getClubLogoDir())), "logo-left-youth", blockStart);
 		 Helper.pictureOnPicture(background, ImageIO.read(new File(awayClub.getClubLogoDir())), "logo-right-youth", blockStart);
 		 Helper.writeOnPicture(background, "Abgesagt!", "center-point-stats", FontClass.clubOwnYouth, Color.BLACK, blockStart);
@@ -63,11 +61,11 @@ public class ResultsCreator {
 		 String matchTypeLower = rm.getValue("matchType").toLowerCase(Locale.ROOT);
 		 
 		 if (matchTypeLower.contains("kinder")) {
-			logger.info("Game is Kinderfest!");
+			logger.debug("Rendering youth festival result: team={}, date={}", rm.getValue("team"), rm.getValue("date"));
 			Helper.pictureOnPicture(background, ImageIO.read(new File(Objects.requireNonNull(ClubSelector.searchClubDetails("SpG Treuener Land")).getClubLogoDir())), "logo-left-youth", blockStart);
 			Helper.writeOnPicture(background, "Kinderfest!", "center-point-stats", FontClass.clubOwnYouth, Color.BLACK, blockStart);
 		 } else {
-			logger.info("Game normal!");
+			logger.debug("Rendering youth game result: team={}, date={}, result={}", rm.getValue("team"), rm.getValue("date"), rm.result());
 			String homeTeamText = Helper.wrapString(homeClub.getClubName(), 23);
 			String awayTeamText = Helper.wrapString(awayClub.getClubName(), 23);
 			
@@ -85,6 +83,8 @@ public class ResultsCreator {
 		}
 		blockStart += 200;
 		Helper.deleteTempTxt(rm.id(), "youth-games");
+	 } else {
+		logger.warn("Cannot render youth result because one or both clubs could not be resolved: home={}, away={}", rm.getClubName("homeTeam"), rm.getClubName("awayTeam"));
 	 }
 	}
 	String savePathPart = Helper.createMatchdaysHead(background, matchDates);
@@ -92,11 +92,11 @@ public class ResultsCreator {
 	
 	Map<String, Integer> result = new HashMap<>();
 	result.put(savePathPart, pageCount);
-	logger.info("Return report");
+	logger.info("Youth result images created: path='{}', pages={}, renderedGames={}", savePathPart, pageCount, rmArr.size());
 	return result;
  }
  
- private void checkMatchDate(String date) {
+ private void checkMatchDate(List<LocalDate> matchDates, String date) {
 	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	LocalDate formattedDate = LocalDate.parse(date, dtf);
 	if (!matchDates.contains(formattedDate)) {

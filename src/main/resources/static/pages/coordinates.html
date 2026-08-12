@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Vorlagenblöcke bearbeiten</title>
+    <link href="../style.css" rel="stylesheet">
+    <script src="../js/navigation.js" defer></script>
+    <style>
+        .editor-page { max-width: 1500px; margin: 0 auto; padding: 16px; font-family: Arial, sans-serif; }
+        .intro { margin: 8px 0 18px; color: #444; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 16px; }
+        .toolbar label, .form-field label { display: block; font-weight: bold; margin-bottom: 4px; }
+        .toolbar select, .toolbar input, .form-field input, .form-field select { box-sizing: border-box; width: 100%; padding: 7px; font-size: 14px; }
+        .toolbar-group { min-width: 190px; }
+        .editor-layout { display: grid; grid-template-columns: minmax(500px, 2fr) minmax(320px, 1fr); gap: 18px; align-items: start; }
+        .panel { border: 1px solid #ccc; border-radius: 6px; padding: 14px; background: #fff; }
+        .panel h2 { text-align: left; font-size: 20px; margin-bottom: 12px; }
+        .stage-wrapper { overflow: auto; display: flex; justify-content: center; min-height: 500px; padding: 12px; background: #e5e5e5; }
+        #stage { position: relative; flex: none; overflow: hidden; background: #777; box-shadow: 0 2px 12px rgba(0,0,0,.25); touch-action: none; }
+        #backgroundImage { position: absolute; object-fit: fill; pointer-events: none; }
+        .template-block { position: absolute; box-sizing: border-box; border: 2px solid rgba(255,255,255,.9); background: rgba(33,150,243,.35); color: #fff; overflow: hidden; cursor: move; user-select: none; text-shadow: 0 1px 2px #000; }
+        .template-block.selected { border: 3px solid #ffeb3b; background: rgba(244,67,54,.45); z-index: 3; }
+        .block-content { width: 100%; height: 100%; display: flex; padding: 3px; box-sizing: border-box; overflow: hidden; }
+        .image-placeholder { align-items: center; justify-content: center; font-weight: bold; text-align: center; }
+        .resize-handle { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; background: #ffeb3b; border-left: 1px solid #333; border-top: 1px solid #333; cursor: nwse-resize; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .form-field.full { grid-column: 1 / -1; }
+        .text-settings { border-top: 1px solid #ddd; margin-top: 14px; padding-top: 14px; }
+        .template-checks { display: grid; gap: 5px; }
+        .template-checks label { display: flex; align-items: center; gap: 7px; font-weight: normal; }
+        .template-checks input { width: auto; margin: 0; }
+        .actions { display: flex; gap: 8px; margin-top: 16px; }
+        .actions button, .toolbar button { width: auto; padding: 8px 14px; font-size: 14px; cursor: pointer; }
+        .primary { background: #2e7d32; color: #fff; border: 0; border-radius: 4px; }
+        .danger { background: #c62828; color: #fff; border: 0; border-radius: 4px; }
+        .secondary { background: #eee; border: 1px solid #aaa; border-radius: 4px; }
+        #status { min-height: 20px; margin-top: 10px; font-weight: bold; }
+        .hint { color: #555; font-size: 13px; margin: 8px 0; }
+        .font-meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 5px; color: #555; font-size: 12px; }
+        .font-preview { width: 100%; height: 58px; margin-top: 8px; object-fit: contain; object-position: left center; border: 1px solid #ddd; background: #fff; }
+        @media (max-width: 900px) { .editor-layout { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<header class="app-header" data-active="designer"></header>
+<main class="editor-page">
+    <h1>Vorlagenblöcke bearbeiten</h1>
+    <p class="intro">Vorlage und Block auswählen. Der markierte Block kann direkt verschoben und am gelben Griff skaliert werden. Alle Werte lassen sich zusätzlich rechts exakt eingeben.</p>
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <label for="templateSelect">Vorlage</label>
+            <select id="templateSelect"></select>
+        </div>
+        <div class="toolbar-group">
+            <label for="blockSelect">Block</label>
+            <select id="blockSelect"></select>
+        </div>
+    </div>
+    <div class="editor-layout">
+        <section class="panel">
+            <h2>Vorschau</h2>
+            <p class="hint">Ziehen: Block verschieben · Gelber Griff: Größe ändern</p>
+            <div class="stage-wrapper"><div id="stage"><img id="backgroundImage" alt="Vorlage"></div></div>
+        </section>
+        <section class="panel">
+            <h2>Block-Einstellungen</h2>
+            <div id="emptySelection" class="hint">Bitte einen Block auswählen.</div>
+            <form id="blockForm" hidden>
+                <div class="form-grid">
+                    <div class="form-field full"><label for="blockLabel">Anzeigename</label><input id="blockLabel"></div>
+                    <div class="form-field"><label for="blockType">Typ</label><select id="blockType"><option value="text">Schrift</option><option value="image">Bild</option></select></div>
+                    <div class="form-field"><label for="posX">X-Position</label><input type="number" min="0" id="posX"></div>
+                    <div class="form-field"><label for="posY">Y-Position</label><input type="number" min="0" id="posY"></div>
+                    <div class="form-field"><label for="sizeX">Breite</label><input type="number" min="1" id="sizeX"></div>
+                    <div class="form-field"><label for="sizeY">Höhe</label><input type="number" min="1" id="sizeY"></div>
+                    <div class="form-field full"><label>Verwendet in</label><div id="templateChecks" class="template-checks"></div></div>
+                </div>
+                <div id="textSettings" class="text-settings">
+                    <div class="form-grid">
+                        <div class="form-field full"><label for="sampleText">Beispieltext</label><input id="sampleText"></div>
+                        <div class="form-field full">
+                            <label for="fontFamily">Schriftart</label>
+                            <select id="fontFamily"></select>
+                            <div class="font-meta"><span id="fontCount"></span><span>Vorschau wird vom Server erzeugt</span></div>
+                            <img id="fontPreview" class="font-preview" alt="Schriftvorschau">
+                        </div>
+                        <div class="form-field"><label for="fontStyle">Schriftstil</label><select id="fontStyle"><option value="plain">Normal</option><option value="bold">Fett</option><option value="italic">Kursiv</option><option value="bold-italic">Fett und kursiv</option></select></div>
+                        <div class="form-field"><label for="fontSize">Schriftgröße</label><input type="number" min="1" id="fontSize"></div>
+                        <div class="form-field"><label for="textColor">Schriftfarbe</label><input type="color" id="textColor"></div>
+                        <div class="form-field"><label for="alignment">Horizontal</label><select id="alignment"><option value="left">Links</option><option value="center">Zentriert</option><option value="right">Rechts</option></select></div>
+                        <div class="form-field"><label for="verticalAlignment">Vertikal</label><select id="verticalAlignment"><option value="top">Oben</option><option value="middle">Mittig</option><option value="bottom">Unten</option></select></div>
+                    </div>
+                </div>
+                <div id="imageSettings" class="text-settings">
+                    <div class="form-grid">
+                        <div class="form-field full">
+                            <label for="opacity">Deckkraft (%)</label>
+                            <input type="range" id="opacity" min="0" max="100" step="5">
+                            <div class="font-meta"><span id="opacityValue">100 %</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button class="primary" id="saveAll" type="button">Alle Änderungen speichern</button>
+                    <button class="secondary" id="resetAll" type="button">Neu laden</button>
+                </div>
+            </form>
+            <div id="status"></div>
+        </section>
+    </div>
+</main>
+<script>
+    const MAX_PREVIEW_WIDTH = 700;
+    const MAX_PREVIEW_HEIGHT = 760;
+    let configuration = {templates: {}, coordinates: {}};
+    let currentTemplate = null;
+    let currentBlockId = null;
+    let scale = 1;
+    let interaction = null;
+    let availableFonts = [];
+    let fontPreviewTimer = null;
+
+    const templateSelect = document.getElementById('templateSelect');
+    const blockSelect = document.getElementById('blockSelect');
+    const stage = document.getElementById('stage');
+    const backgroundImage = document.getElementById('backgroundImage');
+    const blockForm = document.getElementById('blockForm');
+    const emptySelection = document.getElementById('emptySelection');
+    const textSettings = document.getElementById('textSettings');
+    const imageSettings = document.getElementById('imageSettings');
+    const fontFamilySelect = document.getElementById('fontFamily');
+    const fontPreview = document.getElementById('fontPreview');
+    const opacityInput = document.getElementById('opacity');
+    const opacityValue = document.getElementById('opacityValue');
+    const status = document.getElementById('status');
+
+    window.addEventListener('load', loadConfiguration);
+    templateSelect.addEventListener('change', () => selectTemplate(templateSelect.value));
+    blockSelect.addEventListener('change', () => selectBlock(blockSelect.value));
+    document.getElementById('saveAll').addEventListener('click', saveConfiguration);
+    document.getElementById('resetAll').addEventListener('click', loadConfiguration);
+    window.addEventListener('pointermove', moveInteraction);
+    window.addEventListener('pointerup', () => interaction = null);
+
+    ['blockLabel', 'blockType', 'posX', 'posY', 'sizeX', 'sizeY', 'sampleText', 'fontFamily', 'fontStyle', 'fontSize', 'textColor', 'alignment', 'verticalAlignment', 'opacity']
+        .forEach(id => document.getElementById(id).addEventListener('input', updateBlockFromForm));
+
+    async function loadConfiguration() {
+        setStatus('Konfiguration wird geladen ...', '#444');
+        try {
+            const [coordinatesResponse, fontsResponse] = await Promise.all([fetch('/getCoordinates'), fetch('/getFonts')]);
+            if (!coordinatesResponse.ok) throw new Error('HTTP ' + coordinatesResponse.status);
+            if (!fontsResponse.ok) throw new Error('HTTP ' + fontsResponse.status);
+            configuration = await coordinatesResponse.json();
+            availableFonts = await fontsResponse.json();
+            document.getElementById('fontCount').textContent = availableFonts.length + ' verfügbare Schriften';
+            fillTemplateSelect();
+            selectTemplate(templateSelect.value || Object.keys(configuration.templates)[0]);
+            setStatus('Konfiguration geladen.', '#2e7d32');
+        } catch (error) {
+            setStatus('Konfiguration konnte nicht geladen werden.', '#c62828');
+            console.error(error);
+        }
+    }
+
+    function fillTemplateSelect() {
+        templateSelect.innerHTML = '';
+        function groupRank(id) {
+            if (id.startsWith('men-')) return 0;
+            if (id.startsWith('youth-')) return 1;
+            return 2;
+        }
+        Object.entries(configuration.templates)
+            .sort(([idA, a], [idB, b]) => {
+                const rankA = groupRank(idA);
+                const rankB = groupRank(idB);
+                if (rankA !== rankB) return rankA - rankB;
+                return a.label.localeCompare(b.label, 'de');
+            })
+            .forEach(([id, template]) => {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = template.label;
+                templateSelect.appendChild(option);
+            });
+    }
+
+    function fillFontSelect(selectedFamily) {
+        fontFamilySelect.innerHTML = '';
+        const isAvailable = availableFonts.some(font => font.toLowerCase() === selectedFamily.toLowerCase());
+        if (!isAvailable) {
+            const unavailable = document.createElement('option');
+            unavailable.value = selectedFamily;
+            unavailable.textContent = selectedFamily + ' (auf diesem Server nicht verfügbar)';
+            unavailable.style.fontFamily = `"${selectedFamily}"`;
+            fontFamilySelect.appendChild(unavailable);
+        }
+        availableFonts.forEach(font => {
+            const option = document.createElement('option');
+            option.value = font;
+            option.textContent = font;
+            option.style.fontFamily = `"${font}"`;
+            fontFamilySelect.appendChild(option);
+        });
+        fontFamilySelect.value = selectedFamily;
+        fontFamilySelect.style.fontFamily = `"${selectedFamily}"`;
+    }
+
+    function updateFontPreview() {
+        clearTimeout(fontPreviewTimer);
+        const block = configuration.coordinates[currentBlockId];
+        if (!block || block.type !== 'text') {
+            fontPreview.removeAttribute('src');
+            return;
+        }
+        const family = block.fontFamily;
+        const style = block.fontStyle || 'plain';
+        const text = block.sampleText || block.label || 'Aa Bb Cc 123 - Beispieltext';
+        fontFamilySelect.style.fontFamily = `"${family}"`;
+        fontPreviewTimer = setTimeout(() => {
+            const params = new URLSearchParams({family, text, style});
+            fontPreview.src = '/getFontPreview?' + params.toString();
+        }, 150);
+    }
+
+    function selectTemplate(templateId) {
+        currentTemplate = templateId;
+        templateSelect.value = templateId;
+        const template = configuration.templates[templateId];
+        scale = Math.min(MAX_PREVIEW_WIDTH / template.width, MAX_PREVIEW_HEIGHT / template.height);
+        stage.style.width = Math.round(template.width * scale) + 'px';
+        stage.style.height = Math.round(template.height * scale) + 'px';
+        backgroundImage.src = '/getBackgroundImage?template=' + encodeURIComponent(templateId);
+        backgroundImage.style.left = Math.round(template.backgroundX * scale) + 'px';
+        backgroundImage.style.top = Math.round(template.backgroundY * scale) + 'px';
+        backgroundImage.style.width = Math.round(template.backgroundWidth * scale) + 'px';
+        backgroundImage.style.height = Math.round(template.backgroundHeight * scale) + 'px';
+        fillBlockSelect();
+        const firstBlock = blockSelect.options[0]?.value || null;
+        selectBlock(firstBlock);
+    }
+
+    function blocksForCurrentTemplate() {
+        return Object.entries(configuration.coordinates)
+            .filter(([, block]) => (block.templates || []).includes(currentTemplate))
+            .sort((a, b) => a[1].label.localeCompare(b[1].label, 'de'));
+    }
+
+    function fillBlockSelect() {
+        blockSelect.innerHTML = '';
+        blocksForCurrentTemplate().forEach(([id, block]) => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = block.label + ' · ' + (block.type === 'text' ? 'Schrift' : 'Bild');
+            blockSelect.appendChild(option);
+        });
+    }
+
+    function selectBlock(blockId) {
+        currentBlockId = blockId;
+        if (blockId) blockSelect.value = blockId;
+        renderStage();
+        fillBlockForm();
+    }
+
+    function renderStage() {
+        stage.querySelectorAll('.template-block').forEach(element => element.remove());
+        blocksForCurrentTemplate().forEach(([id, block]) => {
+            const element = document.createElement('div');
+            element.className = 'template-block' + (id === currentBlockId ? ' selected' : '');
+            element.dataset.blockId = id;
+            element.style.left = Math.round(block.posX * scale) + 'px';
+            element.style.top = Math.round(block.posY * scale) + 'px';
+            element.style.width = Math.max(4, Math.round(block.sizeX * scale)) + 'px';
+            element.style.height = Math.max(4, Math.round(block.sizeY * scale)) + 'px';
+            element.style.backgroundColor = colorWithAlpha(block.previewColor || '#1976d2', .4);
+            if (block.type === 'image') {
+                element.style.opacity = (block.opacity ?? 1).toString();
+            }
+            element.addEventListener('pointerdown', event => startInteraction(event, id, false));
+            const content = document.createElement('div');
+            content.className = 'block-content' + (block.type === 'image' ? ' image-placeholder' : '');
+            if (block.type === 'text') {
+                content.textContent = block.sampleText || block.label;
+                content.style.fontFamily = block.fontFamily;
+                content.style.fontSize = Math.max(7, block.fontSize * scale) + 'px';
+                content.style.fontWeight = block.fontStyle.includes('bold') ? 'bold' : 'normal';
+                content.style.fontStyle = block.fontStyle.includes('italic') ? 'italic' : 'normal';
+                content.style.color = block.textColor;
+                content.style.justifyContent = block.alignment === 'left' ? 'flex-start' : block.alignment === 'right' ? 'flex-end' : 'center';
+                content.style.alignItems = block.verticalAlignment === 'top' ? 'flex-start' : block.verticalAlignment === 'bottom' ? 'flex-end' : 'center';
+                content.style.textAlign = block.alignment;
+                content.style.whiteSpace = 'pre-line';
+            } else {
+                content.textContent = block.label;
+            }
+            element.appendChild(content);
+            if (id === currentBlockId) {
+                const handle = document.createElement('div');
+                handle.className = 'resize-handle';
+                handle.addEventListener('pointerdown', event => startInteraction(event, id, true));
+                element.appendChild(handle);
+            }
+            stage.appendChild(element);
+        });
+    }
+
+    function startInteraction(event, blockId, resize) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (currentBlockId !== blockId) selectBlock(blockId);
+        const block = configuration.coordinates[blockId];
+        interaction = {blockId, resize, startX: event.clientX, startY: event.clientY, posX: block.posX, posY: block.posY, sizeX: block.sizeX, sizeY: block.sizeY};
+    }
+
+    function moveInteraction(event) {
+        if (!interaction) return;
+        const block = configuration.coordinates[interaction.blockId];
+        const dx = Math.round((event.clientX - interaction.startX) / scale);
+        const dy = Math.round((event.clientY - interaction.startY) / scale);
+        const template = configuration.templates[currentTemplate];
+        if (interaction.resize) {
+            block.sizeX = Math.max(10, Math.min(template.width - block.posX, interaction.sizeX + dx));
+            block.sizeY = Math.max(10, Math.min(template.height - block.posY, interaction.sizeY + dy));
+        } else {
+            block.posX = Math.max(0, Math.min(template.width - block.sizeX, interaction.posX + dx));
+            block.posY = Math.max(0, Math.min(template.height - block.sizeY, interaction.posY + dy));
+        }
+        updateBlockGeometry(interaction.blockId);
+    }
+
+    function updateBlockGeometry(blockId) {
+        const block = configuration.coordinates[blockId];
+        const element = Array.from(stage.querySelectorAll('.template-block')).find(candidate => candidate.dataset.blockId === blockId);
+        if (element) {
+            element.style.left = Math.round(block.posX * scale) + 'px';
+            element.style.top = Math.round(block.posY * scale) + 'px';
+            element.style.width = Math.max(4, Math.round(block.sizeX * scale)) + 'px';
+            element.style.height = Math.max(4, Math.round(block.sizeY * scale)) + 'px';
+        }
+        document.getElementById('posX').value = block.posX;
+        document.getElementById('posY').value = block.posY;
+        document.getElementById('sizeX').value = block.sizeX;
+        document.getElementById('sizeY').value = block.sizeY;
+    }
+
+    function fillBlockForm() {
+        const block = configuration.coordinates[currentBlockId];
+        blockForm.hidden = !block;
+        emptySelection.hidden = Boolean(block);
+        if (!block) return;
+        document.getElementById('blockLabel').value = block.label;
+        document.getElementById('blockType').value = block.type;
+        document.getElementById('posX').value = block.posX;
+        document.getElementById('posY').value = block.posY;
+        document.getElementById('sizeX').value = block.sizeX;
+        document.getElementById('sizeY').value = block.sizeY;
+        document.getElementById('sampleText').value = block.sampleText || '';
+        fillFontSelect(block.fontFamily || 'Dialog');
+        document.getElementById('fontStyle').value = block.fontStyle || 'plain';
+        document.getElementById('fontSize').value = block.fontSize || 30;
+        document.getElementById('textColor').value = block.textColor || '#000000';
+        document.getElementById('alignment').value = block.alignment || 'center';
+        document.getElementById('verticalAlignment').value = block.verticalAlignment || 'middle';
+        const opacityPercent = Math.round(((block.opacity ?? 1) * 100));
+        opacityInput.value = opacityPercent;
+        opacityValue.textContent = opacityPercent + ' %';
+        textSettings.hidden = block.type !== 'text';
+        imageSettings.hidden = block.type !== 'image';
+        fillTemplateChecks(block);
+        updateFontPreview();
+    }
+
+    function fillTemplateChecks(block) {
+        const container = document.getElementById('templateChecks');
+        container.innerHTML = '';
+        Object.entries(configuration.templates).forEach(([id, template]) => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = (block.templates || []).includes(id);
+            checkbox.addEventListener('change', () => {
+                block.templates = Object.keys(configuration.templates).filter(templateId => container.querySelector(`[data-template="${templateId}"]`).checked);
+                fillBlockSelect();
+                renderStage();
+            });
+            checkbox.dataset.template = id;
+            label.append(checkbox, template.label);
+            container.appendChild(label);
+        });
+    }
+
+    function updateBlockFromForm(event) {
+        const block = configuration.coordinates[currentBlockId];
+        if (!block) return;
+        block.label = document.getElementById('blockLabel').value.trim() || currentBlockId;
+        block.type = document.getElementById('blockType').value;
+        block.posX = numberValue('posX', 0);
+        block.posY = numberValue('posY', 0);
+        block.sizeX = numberValue('sizeX', 1);
+        block.sizeY = numberValue('sizeY', 1);
+        if (['posX', 'posY', 'sizeX', 'sizeY'].includes(event.target.id)) {
+            updateBlockGeometry(currentBlockId);
+            return;
+        }
+        if (block.type === 'text') {
+            block.sampleText = document.getElementById('sampleText').value;
+            block.fontFamily = fontFamilySelect.value || 'Dialog';
+            block.fontStyle = document.getElementById('fontStyle').value;
+            block.fontSize = numberValue('fontSize', 1);
+            block.textColor = document.getElementById('textColor').value;
+            block.alignment = document.getElementById('alignment').value;
+            block.verticalAlignment = document.getElementById('verticalAlignment').value;
+        } else if (block.type === 'image') {
+            const opacityPercent = Number.parseInt(opacityInput.value, 10);
+            block.opacity = Number.isFinite(opacityPercent) ? Math.min(100, Math.max(0, opacityPercent)) / 100 : 1;
+            opacityValue.textContent = Math.round(block.opacity * 100) + ' %';
+        }
+        fillBlockSelect();
+        blockSelect.value = currentBlockId;
+        textSettings.hidden = block.type !== 'text';
+        imageSettings.hidden = block.type !== 'image';
+        renderStage();
+        updateFontPreview();
+    }
+
+    async function saveConfiguration() {
+        setStatus('Änderungen werden gespeichert ...', '#444');
+        try {
+            const response = await fetch('/updateCoordinates', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(configuration)
+            });
+            if (!response.ok) throw new Error(await response.text());
+            setStatus('Alle Änderungen wurden gespeichert und sind sofort aktiv.', '#2e7d32');
+        } catch (error) {
+            setStatus('Änderungen konnten nicht gespeichert werden.', '#c62828');
+            console.error(error);
+        }
+    }
+
+    function numberValue(id, minimum) {
+        const value = Number.parseInt(document.getElementById(id).value, 10);
+        return Number.isFinite(value) ? Math.max(minimum, value) : minimum;
+    }
+
+    function colorWithAlpha(color, alpha) {
+        const value = color.replace('#', '');
+        const red = Number.parseInt(value.substring(0, 2), 16);
+        const green = Number.parseInt(value.substring(2, 4), 16);
+        const blue = Number.parseInt(value.substring(4, 6), 16);
+        return `rgba(${red},${green},${blue},${alpha})`;
+    }
+
+    function setStatus(message, color) {
+        status.textContent = message;
+        status.style.color = color;
+    }
+</script>
+</body>
+</html>

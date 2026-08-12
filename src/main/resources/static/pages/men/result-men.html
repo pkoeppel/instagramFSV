@@ -2,164 +2,188 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Create Instagram pictures</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Herren Ergebnis</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery-jcrop/0.9.15/css/jquery.Jcrop.min.css" rel="stylesheet"/>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-jcrop/0.9.15/js/jquery.Jcrop.min.js"></script>
 
-    <script src="../../js/getData.js" type="text/javascript"></script>
-    <script src="../../js/postData.js" type="text/javascript"></script>
-    <script src="../../js/deleteData.js" type="text/javascript"></script>
-    <script src="../../js/helper.js" type="text/javascript"></script>
+    <script src="../../js/getData.js" defer></script>
+    <script src="../../js/postData.js" defer></script>
+    <script src="../../js/helper.js" defer></script>
+    <script src="../../js/navigation.js" defer></script>
     <link href="../../style.css" rel="stylesheet">
 </head>
 <body>
-<div class="topbar">
-    <ul>
-        <li><a href="../../index.html">Home</a></li>
-        <li><a href="matchday-men.html">Spieltag Herren</a></li>
-        <li><a>Ergebnis Herren</a></li>
-        <li><a href="../youth/matchday-youth.html">Spieltag Kids</a></li>
-        <li><a href="../youth/result-youth.html">Ergebnis Kids</a></li>
-    </ul>
-</div>
-<div class="main-page">
-    <h1>Instagram-Beitrag erstellen</h1>
-    <h2>Ergebnis Herren</h2>
-    <br>
-    <label for="matches"></label>
-    <select id="matches" name="matches">
-    </select>
-    <input id="deleteEntry" onclick="deleteMatchEntry('men', document.getElementById('matches').value)" type="button"
-           value="Eintrag löschen">
-    <br>
-    <label for="matchResult">Ergebnis:</label>
-    <input class="result" id="matchResult" name="matchResult" onkeyup="setCharCount()"
-           onblur="addScorerInput(this.value)" type="text">
-    <br>
-    <label for="headline">Überschrift:</label>
-    <input class="resHeadline" id="headline" name="headline" onkeyup="setCharCount()" type="text">
-    <br>
-    <label for="report">Bericht:</label>
-    <br>
-    <textarea class="resReport" id="report" name="report" onkeyup="setCharCount()"></textarea>
-    <br>
-    <label for="future">Ausblick:</label>
-    <br>
-    <textarea class="resFuture" id="future" name="future" onkeyup="setCharCount()"></textarea>
-    <br>
-    <p style="margin: 5px" id="chars">Zeichen: 0/2200</p>
-    <br>
-    <div id="scorer1" class="scorer">
+<header class="app-header" data-active="men-result"></header>
+<main class="page-shell">
+    <div class="page-heading">
+        <h1>Ergebnis Herren</h1>
+        <p>Spiel auswählen, Bericht ergänzen und Bilder für den Beitrag vorbereiten.</p>
     </div>
-    <div id="scorer2" class="scorer">
-    </div>
-    <br>
-    <input accept="image/*" id="inputFile" onchange="newPicture()" type="file">
-    <br>
-    <div id="showPic"></div>
-    <br>
-    <input id="saveResized" type="button" value="Bild abspeichern">
-    <input id="saveAll" onClick="postPictures()" type="button" value="Bericht absenden">
-</div>
-<div id="showReport"></div>
+    <section class="content-card">
+        <h2>Spiel auswählen</h2>
+        <div class="selection-row">
+            <div class="mobile-field">
+                <label for="matches">Gespeicherte Begegnung</label>
+                <select id="matches" name="matches"></select>
+            </div>
+            <input class="danger-action" id="deleteEntry" onclick="deleteMatchEntry('men', document.getElementById('matches').value)" type="button" value="Eintrag löschen">
+        </div>
+        <pre class="match-details" id="matchDetails"></pre>
+    </section>
+    <section class="content-card">
+        <h2>Bericht</h2>
+        <div class="mobile-field">
+            <label for="headline">Überschrift</label>
+            <input id="headline" name="headline" oninput="setCharCount()" type="text">
+        </div>
+        <div class="mobile-field">
+            <label for="report">Berichtstext</label>
+            <textarea id="report" name="report" oninput="setCharCount()"></textarea>
+        </div>
+        <p class="character-count" id="chars">Zeichen: 0/2200</p>
+    </section>
+    <section class="content-card">
+        <h2>Bilder</h2>
+        <div class="mobile-field">
+            <label for="inputFile">Bild auswählen</label>
+            <input accept="image/*" id="inputFile" onchange="newPicture(event)" type="file">
+        </div>
+        <div id="showPic"></div>
+        <div class="button-stack">
+            <input class="secondary-action" id="saveResized" type="button" value="Bildausschnitt speichern" disabled>
+            <input class="primary-action" id="saveAll" onclick="postPictures()" type="button" value="Bericht absenden">
+        </div>
+        <div id="savedImagesInfo" class="saved-images-info"></div>
+    </section>
+    <div id="showReport"></div>
+</main>
 <script type="text/javascript">
     window.addEventListener('load', () => {
         getMenMatches();
+        document.getElementById('matches').addEventListener('change', resetSavedImages);
+        document.getElementById('saveResized').addEventListener('click', saveCroppedImage);
     });
 
-    function addScorerInput(score) {
+    let currentImageUrl = null;
+    let savedImageCount = 0;
+    let cropSelection = null;
+    let cropImageElement = null;
+    const savedImagesInfo = document.getElementById('savedImagesInfo');
 
-        const splitScore = score.split(":");
-        for (let team = 1; team <= splitScore.length; team++) {
-            const goalNumber = splitScore[team - 1];
-            const scorerDiv = document.getElementById('scorer' + team);
-            while (scorerDiv.firstChild) {
-                scorerDiv.removeChild(scorerDiv.firstChild);
-            }
-            const header = document.createElement("p");
-            header.style.margin = "0px";
-            header.style.marginTop = "3px";
-            header.innerHTML = "Tore Team " + team + ":";
-            scorerDiv.append(header)
-            if (goalNumber > 0) {
-                for (let goal = 1; goal <= goalNumber; goal++) {
-                    const lbMin = document.createElement('label');
-                    lbMin.innerHTML = "Min:"
-                    scorerDiv.appendChild(lbMin);
-                    const goalInputMin = document.createElement('input');
-                    goalInputMin.id = "min";
-                    goalInputMin.className = "min";
-                    goalInputMin.type = "number";
-                    scorerDiv.appendChild(goalInputMin);
-                    const lbPlayer = document.createElement('label');
-                    lbPlayer.innerHTML = "Player:"
-                    scorerDiv.appendChild(lbPlayer);
-                    const goalInputPlayer = document.createElement('input');
-                    goalInputPlayer.id = "player";
-                    goalInputPlayer.maxLength = "15";
-                    goalInputPlayer.className = "player";
-                    goalInputPlayer.type = "text";
-                    scorerDiv.appendChild(goalInputPlayer);
-                    scorerDiv.appendChild(document.createElement('br'))
-                }
-            }
-        }
-
+    function resetSavedImages() {
+        savedImageCount = 0;
+        savedImagesInfo.innerHTML = '';
     }
 
-    function newPicture() {
-        let sp = document.getElementById('showPic');
+    function appendSavedImageMessage() {
+        savedImageCount++;
+        const message = document.createElement('p');
+        message.textContent = 'Bild ' + savedImageCount + ' gespeichert';
+        savedImagesInfo.appendChild(message);
+    }
+
+    function newPicture(event) {
+        if (!event.target.files || !event.target.files[0]) return;
+
+        const sp = document.getElementById('showPic');
         while (sp.lastElementChild) {
             sp.removeChild(sp.lastElementChild);
         }
 
-        let image = document.createElement('img');
+        if (currentImageUrl != null) {
+            URL.revokeObjectURL(currentImageUrl);
+            currentImageUrl = null;
+        }
+
+        cropSelection = null;
+        cropImageElement = null;
+        document.getElementById('saveResized').disabled = true;
+
+        const image = document.createElement('img');
         image.id = 'crop-image';
-        image.src = URL.createObjectURL(event.target.files[0]);
         image.style.display = 'block';
         image.style.maxWidth = '600px';
         image.style.maxHeight = '600px';
-
-        let newW, newH;
+        cropImageElement = image;
         sp.appendChild(image);
+
+        let displayW, displayH;
+        let loaded = false;
         image.onload = function () {
-            newW = image.width;
-            newH = image.height;
+            if (loaded) return;
+            loaded = true;
+            displayW = image.width;
+            displayH = image.height;
+
+            // noinspection JSUnresolvedReference
+            $('#crop-image').Jcrop({
+                aspectRatio: 0.8,
+                onSelect: function (coOrdinates) {
+                    const scaleX = image.naturalWidth / displayW;
+                    const scaleY = image.naturalHeight / displayH;
+                    cropSelection = {
+                        sx: coOrdinates.x * scaleX,
+                        sy: coOrdinates.y * scaleY,
+                        sw: coOrdinates.w * scaleX,
+                        sh: coOrdinates.h * scaleY
+                    };
+                    document.getElementById('saveResized').disabled = false;
+                }
+            });
+        };
+
+        const imageUrl = URL.createObjectURL(event.target.files[0]);
+        currentImageUrl = imageUrl;
+        image.src = imageUrl;
+    }
+
+    function saveCroppedImage() {
+        if (!cropSelection || !cropImageElement) {
+            alert("Bitte zuerst einen Bildausschnitt wählen.");
+            return;
         }
 
-        // noinspection JSUnresolvedReference
-        $('#crop-image').Jcrop({
-            aspectRatio: 0.8,
-            onSelect: function (coOrdinates) {
-                coOrdinates.x = coOrdinates.x * (image.naturalWidth / newW);
-                coOrdinates.y = coOrdinates.y * (image.naturalHeight / newH);
-                coOrdinates.w = coOrdinates.w * (image.naturalWidth / newW);
-                coOrdinates.h = coOrdinates.h * (image.naturalHeight / newH);
-                document.getElementById('saveResized').onclick = function () {
-                    let formData = new FormData();
-                    formData.append("coords", JSON.stringify(coOrdinates));
-                    formData.append("file", document.getElementById('inputFile').files[0]);
-                    fetch(window.location.origin + '/sendMenMatchPicture', {
-                        method: 'POST',
-                        mode: 'cors',
-                        cache: 'no-cache',
-                        credentials: 'same-origin',
-                        redirect: 'follow',
-                        referrerPolicy: 'no-referrer',
-                        body: formData,
-                    })
-                        .then(() => {
-                            console.log('Success!');
-                            alert("Bild gespeichert!");
-                        })
-                        .catch((error) => {
-                            console.error('Error: ', error);
-                            alert("Fehler! Bitte erneut probieren!");
-                        });
-                }
-            }
-        });
+        const naturalWidth = cropImageElement.naturalWidth;
+        const naturalHeight = cropImageElement.naturalHeight;
+
+        let sx = Math.max(0, Math.min(Math.round(cropSelection.sx), naturalWidth - 1));
+        let sy = Math.max(0, Math.min(Math.round(cropSelection.sy), naturalHeight - 1));
+        let sw = Math.max(1, Math.min(Math.round(cropSelection.sw), naturalWidth - sx));
+        let sh = Math.max(1, Math.min(Math.round(cropSelection.sh), naturalHeight - sy));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1350;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 1080, 1350);
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(cropImageElement, sx, sy, sw, sh, 0, 0, 1080, 1350);
+
+        canvas.toBlob(function (blob) {
+            const formData = new FormData();
+            formData.append("coords", JSON.stringify({x: 0, y: 0, w: 1080, h: 1350}));
+            formData.append("file", blob, 'crop.jpg');
+            fetch(window.location.origin + '/sendMenMatchPicture', {
+                method: 'POST',
+                mode: 'cors',
+                cache: 'no-cache',
+                credentials: 'same-origin',
+                redirect: 'follow',
+                referrerPolicy: 'no-referrer',
+                body: formData,
+            })
+                .then(() => {
+                    console.log('Success!');
+                    appendSavedImageMessage();
+                })
+                .catch((error) => {
+                    console.error('Error: ', error);
+                    alert("Fehler! Bitte erneut probieren!");
+                });
+        }, 'image/jpeg', 0.92);
     }
 </script>
 </body>

@@ -1,43 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Create Instagram pictures</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kids Ergebnis</title>
     <link href="../../style.css" rel="stylesheet">
-    <script src="../../js/helper.js" type="text/javascript"></script>
-    <script src="../../js/getData.js" type="text/javascript"></script>
-    <script src="../../js/postData.js" type="text/javascript"></script>
-    <script src="../../js/deleteData.js" type="text/javascript"></script>
+    <script src="../../js/helper.js" defer></script>
+    <script src="../../js/getData.js" defer></script>
+    <script src="../../js/navigation.js" defer></script>
 </head>
 <body>
-<div class="topbar">
-    <ul>
-        <li><a href="../../index.html">Home</a></li>
-        <li><a href="../men/matchday-men.html">Spieltag Herren</a></li>
-        <li><a href="../men/result-men.html">Ergebnis Herren</a></li>
-        <li><a href="matchday-youth.html">Spieltag Kids</a></li>
-        <li><a>Ergebnis Kids</a></li>
-    </ul>
-</div>
-<div class="main-page">
-    <h1>Instagram-Beitrag erstellen</h1>
-    <h2>Ergebnisse Kids</h2>
-    <br>
-    <h3>Wähle die Spiele, dessen Ergebnisse wiedergegeben werden sollen:</h3>
-    <ul id="matchesList">
-    </ul>
-    <div id="reportboxes"></div>
-    <input onclick="postYouthResults()" type="button" value="Senden">
-</div>
-<br>
-<label for="headline">Überschrift</label><input id="headline" type="text">
-<div id="created"></div>
-<br>
-<div id="showReport"></div>
+<header class="app-header" data-active="youth-result"></header>
+<main class="page-shell">
+    <div class="page-heading">
+        <h1>Ergebnisse Kids</h1>
+        <p>Spiele auswählen, Berichte ergänzen und eine gemeinsame Ausgabe erstellen.</p>
+    </div>
+    <section class="content-card">
+        <h2>Spiele auswählen</h2>
+        <ul class="result-list" id="matchesList"></ul>
+    </section>
+    <section class="content-card">
+        <h2>Bericht</h2>
+        <div class="mobile-field">
+            <label for="headline">Überschrift</label>
+            <input id="headline" type="text">
+        </div>
+        <div id="reportboxes"></div>
+        <input class="primary-action" onclick="postYouthResults()" type="button" value="Ergebnisse senden">
+    </section>
+    <section class="content-card">
+        <h2>Status</h2>
+        <div id="created"></div>
+        <div id="showReport"></div>
+    </section>
+</main>
 <script>
-    window.addEventListener('load', () => {
-        getAllYouthMatches();
-    });
+    window.addEventListener('load', getAllYouthMatches);
 </script>
 </body>
 </html>

@@ -1,44 +1,36 @@
 <!DOCTYPE html>
 <html lang="de">
-
 <head>
-    <title>Create Instagram pictures</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Instagram FSV</title>
     <link href="style.css" rel="stylesheet">
+    <script src="js/navigation.js" defer></script>
 </head>
-
 <body>
-<h1>Instagram-Beitrag erstellen</h1>
-<form>
-    <fieldset>
-        <legend><h2>Herren</h2></legend>
-        <a href="pages/men/matchday-men.html">
-            <input class="homeButton" type="button" value="Spieltag Herren"/>
-        </a>
-        <br>
-        <a href="pages/men/result-men.html">
-            <input class="homeButton" type="button" value="Ergebnis Herren"/>
-        </a>
-    </fieldset>
-    <fieldset>
-        <legend><h2>Kids</h2></legend>
-        <a href="pages/youth/matchday-youth.html">
-            <input class="homeButton" type="button" value="Spieltag Kids"/>
-        </a>
-        <br>
-        <a href="pages/youth/result-youth.html">
-            <input class="homeButton" type="button" value="Ergebnisse Kids"/>
-        </a>
-    </fieldset>
-    <fieldset>
-        <legend><h2>Allgemein</h2></legend>
-        <a href="pages/addTeam.html">
-            <input class="homeButton" type="button" value="Neues Team anlegen"/>
-        </a>
-        <br>
-        <a href="pages/changeTemplates.html">
-            <input class="homeButton" type="button" value="Einstellungen"/>
-        </a>
-    </fieldset>
-</form>
+<header class="app-header" data-active="home"></header>
+<main class="page-shell">
+    <div class="page-heading">
+        <h1>Instagram-Beitrag erstellen</h1>
+        <p>Bereich auswählen und direkt mit dem nächsten Beitrag starten.</p>
+    </div>
+    <section class="content-card">
+        <h2>Beiträge</h2>
+        <div class="dashboard-grid">
+            <a class="dashboard-card" href="pages/men/matchday-men.html"><strong>Herren Spieltag</strong><span>Spielvorschau erstellen</span></a>
+            <a class="dashboard-card" href="pages/men/result-men.html"><strong>Herren Ergebnis</strong><span>Ergebnisbeitrag und Bericht erstellen</span></a>
+            <a class="dashboard-card" href="pages/youth/matchday-youth.html"><strong>Kids Spieltag</strong><span>Spiele auswählen und vormerken</span></a>
+            <a class="dashboard-card" href="pages/youth/result-youth.html"><strong>Kids Ergebnis</strong><span>Ergebnisse zusammenstellen</span></a>
+        </div>
+    </section>
+    <section class="content-card">
+        <h2>Verwaltung</h2>
+        <div class="dashboard-grid">
+            <a class="dashboard-card" href="pages/addTeam.html"><strong>Team anlegen</strong><span>Verein und Logo hinzufügen</span></a>
+            <a class="dashboard-card" href="pages/changeTemplates.html"><strong>Einstellungen</strong><span>Vereine und Mannschaften verwalten</span></a>
+            <a class="dashboard-card" href="pages/coordinates.html"><strong>Designer</strong><span>Schrift- und Bildblöcke bearbeiten</span></a>
+        </div>
+    </section>
+</main>
 </body>
 </html>
