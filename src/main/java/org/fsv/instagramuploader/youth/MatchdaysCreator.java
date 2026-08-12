@@ -2,41 +2,37 @@ package org.fsv.instagramuploader.youth;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.fsv.instagramuploader.ClubSelector;
 import org.fsv.instagramuploader.FontClass;
 import org.fsv.instagramuploader.Helper;
 import org.fsv.instagramuploader.model.ClubModel;
 import org.fsv.instagramuploader.model.GameModel;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 
-@Component("msc")
 public class MatchdaysCreator {
- Logger logger = LoggerFactory.getLogger(MatchdaysCreator.class);
+ private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
  private static final String tmpURL = "src/main/resources/pictures/template/youth/matchdayTemp.jpg";
- private List<LocalDate> matchDates;
+ private static final Logger logger = LoggerFactory.getLogger(MatchdaysCreator.class);
  
  public Map<String, Integer> createMatches(ArrayList<GameModel> mmArr) throws IOException, ParseException {
-	logger.info("Create {} matches", mmArr.size());
-	matchDates = new ArrayList<>();
+	logger.info("Creating youth matchday images for {} matches", mmArr.size());
+	List<LocalDate> matchDates = new ArrayList<>();
+	List<Map<String, Object>> games = OBJECT_MAPPER.readValue(new File("src/main/resources/templates/youth-games.json"), new TypeReference<>() {
+	});
+	Map<String, Map<String, String>> teamInfo = OBJECT_MAPPER.readValue(new File("src/main/resources/templates/teamInfo.json"), new TypeReference<>() {
+	});
 	BufferedImage background = ImageIO.read(new File(tmpURL));
 	int blockStart = 530;
 	int pageCount = 1;
@@ -54,13 +50,14 @@ public class MatchdaysCreator {
 	 int[] polyX = {0, 250, 225, 0};
 	 int[] polyY = {blockStart, blockStart, blockStart + 100, blockStart + 100};
 	 g.fillPolygon(polyX, polyY, polyY.length);
-	 checkMatchDate(m.getPrintDate());
+	 g.dispose();
+	 checkMatchDate(matchDates, m.getPrintDate());
 	 
 	 
 	 if (m.getCompetition().contains("Kinder")) {
-		emptyBlock(background, m, blockStart);
+		emptyBlock(background, m, blockStart, games, teamInfo);
 	 } else {
-		filledBlock(background, m, blockStart);
+		filledBlock(background, m, blockStart, games, teamInfo);
 	 }
 	 Helper.writeOnPicture(background, m.getTeam() + "-Jugend", "team-name", FontClass.teamYouth, Color.BLACK, blockStart);
 	 blockStart += 220;
@@ -68,32 +65,28 @@ public class MatchdaysCreator {
 	String savePathPart = Helper.createMatchdaysHead(background, matchDates);
 	String fileName = "Matchday" + pageCount;
 	Helper.savePicture(background, "src/main/resources/save/youth/" + savePathPart, fileName);
-	
+	OBJECT_MAPPER.writeValue(new File("src/main/resources/templates/youth-games.json"), games);
+
 	Map<String, Integer> result = new HashMap<>();
 	result.put(savePathPart, pageCount);
+	logger.info("Youth matchday images created: path='{}', pages={}, queuedMatches={}", savePathPart, pageCount, games.size());
 	return result;
  }
  
- @SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "Anonymous TypeReference is standard Jackson pattern")
- private void writeTempTxt(GameModel m) throws IOException {
-	logger.info("Writing match to youth-games.json");
-	List<Map<String, Object>> gamesArray = new ObjectMapper().readValue(new File("src/main/resources/templates/youth-games.json"), new TypeReference<>() {
-	});
-	
+ private void addGame(List<Map<String, Object>> games, GameModel match) {
 	Map<String, Object> gameDetails = new HashMap<>();
-	gameDetails.put("date", m.getSaveGameDate());
-	gameDetails.put("matchType", m.getCompetition());
-	gameDetails.put("team", m.getTeam());
-	gameDetails.put("homeTeam", m.getHomeTeam());
-	gameDetails.put("awayTeam", m.getAwayTeam());
-	if (!gamesArray.contains(gameDetails)) {
-	 gamesArray.add(gameDetails);
+	gameDetails.put("date", match.getSaveGameDate());
+	gameDetails.put("matchType", match.getCompetition());
+	gameDetails.put("team", match.getTeam());
+	gameDetails.put("homeTeam", match.getHomeTeam());
+	gameDetails.put("awayTeam", match.getAwayTeam());
+	if (!games.contains(gameDetails)) {
+	 games.add(gameDetails);
 	}
-	new ObjectMapper().writeValue(new File("src/main/resources/templates/youth-games.json"), gamesArray);
  }
  
- private void filledBlock(BufferedImage background, GameModel m, int startPoint) throws IOException, ParseException {
-	logger.info("Normal game");
+ private void filledBlock(BufferedImage background, GameModel m, int startPoint, List<Map<String, Object>> games, Map<String, Map<String, String>> teamInfo) throws IOException, ParseException {
+	logger.debug("Rendering youth match block: team={}, date={}, competition={}", m.getTeam(), m.getSaveGameDate(), m.getCompetition());
 	String gamePlace = "Sportplatz ";
 	String homeTeam = m.getHomeTeam().getClubName();
 	String awayTeam = m.getAwayTeam().getClubName();
@@ -109,10 +102,7 @@ public class MatchdaysCreator {
 	 if (homeClub.getClubName().equals("SpG Treuener Land")) {
 		Helper.writeOnPicture(background, Helper.wrapString(homeTeam, 23), "club-name-home", FontClass.clubOwnYouth, Color.BLACK, startPoint);
 		Helper.writeOnPicture(background, Helper.wrapString(awayTeam, 23), "club-name-away", FontClass.simpleYouth, Color.BLACK, startPoint);
-		InputStreamReader reader = new InputStreamReader(new FileInputStream("src/main/resources/templates/teamInfo.json"), StandardCharsets.UTF_8);
-		JSONObject obj = (JSONObject) new JSONParser().parse(reader);
-		JSONObject teamInfo = (JSONObject) obj.get(m.getTeam());
-		gamePlace += teamInfo.get("default-place");
+		gamePlace += getDefaultPlace(teamInfo, m.getTeam());
 	 } else {
 		Helper.writeOnPicture(background, Helper.wrapString(homeTeam, 23), "club-name-home", FontClass.simpleYouth, Color.BLACK, startPoint);
 		Helper.writeOnPicture(background, Helper.wrapString(awayTeam, 23), "club-name-away", FontClass.clubOwnYouth, Color.BLACK, startPoint);
@@ -125,11 +115,11 @@ public class MatchdaysCreator {
 	String bottom = m.fullMatchDate() + " - " + m.getGameTime() + " Uhr" + "\n" + gamePlace;
 	Helper.writeOnPicture(background, bottom, "bottom-center", FontClass.simpleYouth, Color.BLACK, startPoint);
 	Helper.writeOnPicture(background, ":", "center-point", FontClass.simpleYouth, Color.BLACK, startPoint);
-	writeTempTxt(m);
+	addGame(games, m);
  }
  
- private void emptyBlock(BufferedImage background, GameModel m, int startPoint) throws IOException, ParseException {
-	logger.info("Kinderfest");
+ private void emptyBlock(BufferedImage background, GameModel m, int startPoint, List<Map<String, Object>> games, Map<String, Map<String, String>> teamInfo) throws IOException, ParseException {
+	logger.debug("Rendering youth festival block: team={}, date={}", m.getTeam(), m.getSaveGameDate());
 	String gamePlace = "Sportplatz ";
 	String homeTeam = m.getHomeTeam().getClubName();
 	String awayTeam = m.getAwayTeam().getClubName();
@@ -141,10 +131,7 @@ public class MatchdaysCreator {
 	 awayClub.setChangedName(m.getAwayTeam().getChangedName());
 	 
 	 if (homeClub.getClubName().equals("SpG Treuener Land")) {
-		InputStreamReader reader = new InputStreamReader(new FileInputStream("src/main/resources/templates/teamInfo.json"), StandardCharsets.UTF_8);
-		JSONObject obj = (JSONObject) new JSONParser().parse(reader);
-		JSONObject teamInfo = (JSONObject) obj.get(m.getTeam());
-		gamePlace += teamInfo.get("default-place");
+		gamePlace += getDefaultPlace(teamInfo, m.getTeam());
 	 } else {
 		gamePlace += homeClub.getClubPlace();
 	 }
@@ -155,10 +142,15 @@ public class MatchdaysCreator {
 	Helper.writeOnPicture(background, m.getCompetition() + "!", "matchType", FontClass.mTypeYouth, Color.BLACK, startPoint);
 	String bottom = m.fullMatchDate() + " - " + m.getGameTime() + " Uhr" + "\n" + gamePlace;
 	Helper.writeOnPicture(background, bottom, "bottom-center", FontClass.simpleYouth, Color.BLACK, startPoint);
-	writeTempTxt(m);
+	addGame(games, m);
  }
  
- private void checkMatchDate(String date) {
+ private String getDefaultPlace(Map<String, Map<String, String>> teamInfo, String team) {
+	Map<String, String> data = teamInfo.get(team);
+	return data != null ? data.getOrDefault("default-place", "") : "";
+ }
+
+ private void checkMatchDate(List<LocalDate> matchDates, String date) {
 	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 	LocalDate formattedDate = LocalDate.parse(date, dtf);
 	if (!matchDates.contains(formattedDate)) {

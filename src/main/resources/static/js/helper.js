@@ -1,133 +1,186 @@
-const MAX_FILE_SIZE_MB = 10; // Max. Dateigröße in MB
-const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024; // in Bytes
 let matchData = [];
+let dynamicFieldId = 0;
+let settingsTeamData = {};
+let matchesPromise = null;
+let allTeamsPromise = null;
+let teamDataPromise = null;
 
 async function saveYouthMatchTemp(game) {
 
     let homeTeam = game.homeTeam.clubName;
     let awayTeam = game.awayTeam.clubName;
     const allTeams = await getAllTeams();
-    if ((!allTeams.includes(homeTeam) || !allTeams.includes(homeTeam)) && game.changedName == null) {
+    if (!allTeams.includes(homeTeam) || !allTeams.includes(awayTeam)) {
         alert("Spiel kann nicht zugeordnet werden. Bitte wähle ein passendes Hauptteam aus!");
     } else {
         game.team = document.getElementById('teamsSelect').value;
         matchData.push(game);
         let bufferedTeams = document.getElementById('bufferedTeams');
         let newItem = document.createElement('li');
-        newItem.innerHTML = homeTeam + ' VS ' + awayTeam;
+        newItem.textContent = homeTeam + ' VS ' + awayTeam;
         bufferedTeams.appendChild(newItem);
     }
 }
 
-async function createMatchdayFile(game) {
-    let oppTeam = game.homeTeam;
-    let comp = game.competition;
-    if (oppTeam === "FSV Treuen") oppTeam = game.awayTeam;
-    const allTeams = await getAllTeams();
-    if (!allTeams.includes(oppTeam)) {
-        alert("Spiel kann nicht zugeordnet werden. Bitte wähle ein passendes Hauptteam aus!");
-    } else {
-        if (game.matchDay === "" && (comp.toLowerCase().includes("liga") || comp.toLowerCase().includes("klasse") || comp.toLowerCase().includes("pokal"))) {
-            alert("Spiel muss einem Spieltag zugeordnet werden!");
-        } else {
-            postMenMatch(game);
-        }
-    }
-}
-
 function addNewTeam(game) {
-    if (game.homeTeam !== "FSV Treuen") {
-        localStorage.setItem('newTeamName', game.homeTeam);
-    } else {
-        localStorage.setItem('newTeamName', game.awayTeam)
-    }
+    const clubName = game.homeTeam.clubName !== "FSV Treuen" ? game.homeTeam.clubName : game.awayTeam.clubName;
+    localStorage.setItem('newTeamName', clubName);
     window.open('/pages/addTeam.html');
 }
 
 function showSaveTemp(match) {
-    document.getElementById('created').innerHTML += match.team + '; ';
+    document.getElementById('created').textContent += match.team + '; ';
 }
 
 async function getAllTeamInformation() {
-    let datalist = document.getElementById("clubs");
-    const allTeams = await getAllTeams();
-    allTeams.forEach(function (club) {
-        let opt = document.createElement("option");
-        opt.value = club;
-        datalist.append(opt);
-    })
-    let idFieldset = document.getElementById("idField");
-    let teamData = await getTeamData();
-    for ([key, value] of Object.entries(teamData)) {
-        let lb = document.createElement("label");
-        lb.innerText = key;
-        idFieldset.appendChild(lb);
+    const datalist = document.getElementById("clubs");
+    const container = document.getElementById("idField");
+    const [allTeams, teamData] = await Promise.all([getAllTeams(), getTeamData()]);
+    settingsTeamData = teamData;
+    const clubOptions = document.createDocumentFragment();
+    allTeams.forEach(club => {
+        const option = document.createElement("option");
+        option.value = club;
+        clubOptions.append(option);
+    });
+    datalist.replaceChildren(clubOptions);
+    container.replaceChildren();
+    const teamCards = document.createDocumentFragment();
+    Object.entries(settingsTeamData)
+        .sort(([left], [right]) => left.localeCompare(right, "de", {numeric: true}))
+        .forEach(([key, value]) => {
+            const card = document.createElement("article");
+            card.className = "team-settings-card";
+            const title = document.createElement("h3");
+            const category = value["category"] || (key === "1" || key === "2" ? "men" : "youth");
+            title.textContent = "Mannschaft " + key + " · " + (category === "men" ? "Herren" : "Kids");
+            card.append(title);
+            card.append(createTeamSettingField("Fussball.de-ID", "inputId" + key, value["club-id"]));
+            card.append(createTeamSettingField("Standard-Spielort", "inputPlace" + key, value["default-place"]));
+            if (value["lastLeagueMatchday"] != null) {
+                card.append(createTeamSettingField("Nächster Liga-Spieltag", "inputLeague" + key, value["lastLeagueMatchday"], "number"));
+            }
+            if (value["lastCupMatchday"] != null) {
+                card.append(createTeamSettingField("Nächste Pokalrunde", "inputCup" + key, value["lastCupMatchday"], "number"));
+            }
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
+            deleteButton.className = "team-delete-button settings-danger";
+            deleteButton.textContent = "Mannschaft löschen";
+            deleteButton.addEventListener("click", () => deleteTeamInformation(key));
+            card.append(deleteButton);
+            teamCards.append(card);
+        });
+    container.append(teamCards);
 
-        let inputId = document.createElement("input");
-        inputId.id = "inputId" + key;
-        inputId.value = value["club-id"];
-        idFieldset.appendChild(inputId);
-
-        let inputPlace = document.createElement("input");
-        inputPlace.id = "inputPlace" + key;
-        inputPlace.value = value["default-place"];
-        idFieldset.appendChild(inputPlace);
-
-        if (value["lastLeagueMatchday"] != null) {
-            let inputLeague = document.createElement("input");
-            inputLeague.id = "inputLeague" + key;
-            inputLeague.value = value["lastLeagueMatchday"];
-            idFieldset.appendChild(inputLeague);
-        }
-
-        if (value["lastCupMatchday"] != null) {
-            let inputCup = document.createElement("input");
-            inputCup.id = "inputCup" + key;
-            inputCup.value = value["lastCupMatchday"];
-            idFieldset.appendChild(inputCup);
-        }
-        idFieldset.appendChild(document.createElement("br"));
-    }
-    let saveButton = document.createElement("input");
+    const saveRow = document.createElement("div");
+    saveRow.className = "settings-save-row";
+    const saveButton = document.createElement("button");
     saveButton.type = "button";
-    saveButton.value = "Speichern";
-    saveButton.addEventListener("click", function () {
-        for ([key, value] of Object.entries(teamData)) {
-            value["club-id"] = document.getElementById("inputId" + key).value;
-            value["default-place"] = document.getElementById("inputPlace" + key).value;
-            let league = document.getElementById("inputLeague" + key);
-            let cup = document.getElementById("inputCup" + key);
-            if (league != null) {
-                value["lastLeagueMatchday"] = league.value;
-            }
-            if (cup != null) {
-                value["lastCupMatchday"] = cup.value;
-            }
-        }
-        updateTeamValues(teamData);
-    })
-    idFieldset.appendChild(saveButton);
+    saveButton.className = "settings-primary";
+    saveButton.textContent = "Mannschaftsdaten speichern";
+    saveButton.addEventListener("click", () => {
+        collectTeamSettings();
+        updateTeamValues(settingsTeamData);
+    });
+    saveRow.append(saveButton);
+    container.append(saveRow);
+}
+
+function createTeamSettingField(labelText, inputId, value, type = "text") {
+    const field = document.createElement("div");
+    field.className = "settings-field";
+    const label = document.createElement("label");
+    label.htmlFor = inputId;
+    label.textContent = labelText;
+    const input = document.createElement("input");
+    input.id = inputId;
+    input.type = type;
+    input.value = value || "";
+    if (type === "number") input.min = "1";
+    field.append(label, input);
+    return field;
+}
+
+function collectTeamSettings() {
+    Object.entries(settingsTeamData).forEach(([key, value]) => {
+        value["club-id"] = document.getElementById("inputId" + key).value.trim();
+        value["default-place"] = document.getElementById("inputPlace" + key).value.trim();
+        const league = document.getElementById("inputLeague" + key);
+        const cup = document.getElementById("inputCup" + key);
+        if (league != null) value["lastLeagueMatchday"] = league.value;
+        if (cup != null) value["lastCupMatchday"] = cup.value;
+    });
+}
+
+async function addTeamInformation() {
+    const keyInput = document.getElementById("newTeamKey");
+    const idInput = document.getElementById("newTeamClubId");
+    const placeInput = document.getElementById("newTeamPlace");
+    const typeInput = document.getElementById("newTeamType");
+    const key = keyInput.value.trim().toUpperCase();
+    const clubId = idInput.value.trim();
+    const place = placeInput.value.trim();
+    if (!/^[A-Z0-9_-]{1,10}$/.test(key)) {
+        alert("Das Kürzel darf nur Buchstaben, Zahlen, - und _ enthalten.");
+        return;
+    }
+    if (settingsTeamData[key] != null) {
+        alert("Eine Mannschaft mit diesem Kürzel existiert bereits.");
+        return;
+    }
+    if (clubId === "" || place === "") {
+        alert("Fussball.de-ID und Standard-Spielort sind erforderlich.");
+        return;
+    }
+    collectTeamSettings();
+    const newTeam = {"club-id": clubId, "default-place": place, "category": typeInput.value};
+    if (typeInput.value === "men") {
+        newTeam["lastLeagueMatchday"] = document.getElementById("newTeamLeague").value || "1";
+        newTeam["lastCupMatchday"] = document.getElementById("newTeamCup").value || "1";
+    }
+    settingsTeamData[key] = newTeam;
+    if (await updateTeamValues(settingsTeamData)) {
+        document.getElementById("newTeamForm").reset();
+        await getAllTeamInformation();
+    } else {
+        delete settingsTeamData[key];
+    }
+}
+
+async function deleteTeamInformation(key) {
+    if (Object.keys(settingsTeamData).length <= 1) {
+        alert("Die letzte Mannschaft kann nicht gelöscht werden.");
+        return;
+    }
+    if (!confirm(`Mannschaft „${key}“ wirklich löschen?`)) return;
+    collectTeamSettings();
+    const deletedTeam = settingsTeamData[key];
+    delete settingsTeamData[key];
+    if (await updateTeamValues(settingsTeamData)) {
+        await getAllTeamInformation();
+    } else {
+        settingsTeamData[key] = deletedTeam;
+    }
 }
 
 async function getTeamIds(categories) {
     const teamIds = await getTeamData();
     let sortedList = Object.keys(teamIds).sort();
-    let select = document.getElementById("teamsSelect");
+    const select = document.getElementById("teamsSelect");
+    select.replaceChildren();
 
     for (const key of sortedList) {
-        let option = document.createElement("option");
+        const option = document.createElement("option");
         option.text = key;
         option.value = key;
-        if (categories === "men") {
-            if (key === "1" || key === "2") {
-                select.append(option);
-            }
-        } else {
-            if (key !== "1" && key !== "2") {
-                select.append(option);
-            }
+        const storedCategory = teamIds[key]["category"];
+        const category = storedCategory || (key === "1" || key === "2" ? "men" : "youth");
+        if (category === categories) {
+            select.append(option);
         }
     }
+    return select.value || null;
 }
 
 function formatDate(input) {
@@ -139,24 +192,27 @@ function formatDate(input) {
 }
 
 function setCharCount() {
-    let charCount =
-        document.getElementById('matchResult').value.length +
-        document.getElementById('headline').value.length +
-        document.getElementById('report').value.length +
-        document.getElementById('future').value.length;
-    document.getElementById('chars').innerHTML = "Zeichen: " + charCount + "/2200";
-}
-
-async function getAllMatches(type, team) {
-    await fetch(window.location.origin + '/getNextMatches', {
-        method: 'GET'
-    })
-        .then(r => r.json())
-        .catch((error) => {
-            alert("Es ist ein Fehler beim Laden aufgetreten: " + error);
-            console.error('Error: ', error);
-        });
-    await showMatches(type, team);
+    const headline = document.getElementById('headline').value.trim();
+    const report = document.getElementById('report').value.trim();
+    let fullReport = '';
+    if (currentMenMatchDetails !== null) {
+        fullReport = currentMenMatchDetails.matchLine.trim();
+    }
+    if (headline) {
+        fullReport = fullReport ? fullReport + '\n\n' + headline : headline;
+    }
+    if (currentMenMatchDetails !== null) {
+        if (currentMenMatchDetails.scorers && currentMenMatchDetails.scorers.trim()) {
+            fullReport = fullReport ? fullReport + '\n\n' + currentMenMatchDetails.scorers.trim() : currentMenMatchDetails.scorers.trim();
+        }
+        if (currentMenMatchDetails.staticText) {
+            fullReport = fullReport ? fullReport + '\n\n' + currentMenMatchDetails.staticText.trim() : currentMenMatchDetails.staticText.trim();
+        }
+    }
+    if (report) {
+        fullReport = fullReport ? fullReport + '\n\n' + report : report;
+    }
+    document.getElementById('chars').textContent = "Zeichen: " + Array.from(fullReport).length + "/2200";
 }
 
 function clearElement(element) {
@@ -167,7 +223,8 @@ function clearElement(element) {
 
 function createGameDetails(date, comp) {
     const details = document.createElement("h3");
-    details.textContent = date + ' (' + comp + '):';
+    details.className = "game-card-title";
+    details.textContent = date + ' · ' + comp;
     return details;
 }
 
@@ -181,24 +238,24 @@ function readGameData(game) {
 }
 
 function createTeamSelection(labelText, game, currentTeam, teamProperty) {
-    const container = document.createDocumentFragment();
-
-    container.appendChild(document.createElement("br"));
+    const container = document.createElement("div");
+    container.className = "inline-form-group";
+    const fieldId = "mainTeam-" + dynamicFieldId++;
+    const listId = "mainTeamList-" + dynamicFieldId++;
 
     const label = document.createElement("label");
-    label.htmlFor = "mainTeams";
-    label.textContent = `${labelText} wählen: `;
+    label.htmlFor = fieldId;
+    label.textContent = labelText;
     container.appendChild(label);
 
     const input = document.createElement("input");
-    input.setAttribute("list", "listMainTeams");
+    input.setAttribute("list", listId);
     input.name = "mainTeams";
-    input.id = "mainTeams";
+    input.id = fieldId;
 
     const dataList = document.createElement("datalist");
     dataList.className = "clubs";
-    dataList.id = "listMainTeams";
-    dataList.name = "listMainTeams";
+    dataList.id = listId;
     fillDataList(dataList);
 
     input.addEventListener("change", () => {
@@ -220,18 +277,19 @@ function createTeamSelection(labelText, game, currentTeam, teamProperty) {
 }
 
 function createMatchdayInput(game) {
-    const matchdayContainer = document.createDocumentFragment();
-
-    matchdayContainer.appendChild(document.createElement("br"));
+    const matchdayContainer = document.createElement("div");
+    matchdayContainer.className = "inline-form-group";
+    const fieldId = "matchday-" + dynamicFieldId++;
 
     const label = document.createElement("label");
-    label.htmlFor = "matchday";
-    label.textContent = "Spieltag: ";
+    label.htmlFor = fieldId;
+    label.textContent = "Spieltag";
     matchdayContainer.appendChild(label);
 
     const input = document.createElement("input");
-    input.type = "text";
-    input.id = "matchday";
+    input.type = "number";
+    input.min = "1";
+    input.id = fieldId;
     input.value = game.matchDay;
     input.addEventListener("change", () => game.matchDay = input.value);
     matchdayContainer.appendChild(input);
@@ -249,7 +307,7 @@ function shouldAddMatchdayInput(type, competition) {
 
 function createTeamDetails(type, game, homeTeam, awayTeam, allTeams) {
     const teamsElement = document.createElement("p");
-    teamsElement.className = "game";
+    teamsElement.className = "game-teams";
 
     teamsElement.appendChild(document.createTextNode(`${homeTeam.clubName} vs ${awayTeam.clubName}`));
     if (shouldAddMatchdayInput(type, game.competition)) {
@@ -267,13 +325,16 @@ function createTeamDetails(type, game, homeTeam, awayTeam, allTeams) {
 
 function createButton(text, onClick) {
     const button = document.createElement("button");
+    button.type = "button";
+    button.className = "primary-action";
     button.innerText = text;
     button.addEventListener("click", onClick);
     return button;
 }
 
 function createActionButtons(type, game) {
-    const container = document.createDocumentFragment();
+    const container = document.createElement("div");
+    container.className = "game-actions";
     if (type === "men") {
         container.appendChild(createButton("Prematch", () => postMenMatch(game)));
     }
@@ -285,7 +346,8 @@ function createActionButtons(type, game) {
 }
 
 function createGameView(type, game, allTeams) {
-    const gameView = document.createElement("div");
+    const gameView = document.createElement("article");
+    gameView.className = "game-card";
     const {date, comp, home, away} = readGameData(game);
 
     gameView.appendChild(createGameDetails(date, comp));
@@ -300,89 +362,108 @@ async function showMatches(type, team) {
     const allMatches = await getMatches();
     const allTeams = await getAllTeams();
 
-    for (const game of allMatches[team]) {
-        const gameView = createGameView(type, game, allTeams);
-        gamesContainer.appendChild(gameView);
+    const fragment = document.createDocumentFragment();
+    for (const game of allMatches[team] || []) {
+        fragment.appendChild(createGameView(type, game, allTeams));
     }
+    gamesContainer.appendChild(fragment);
 }
 
 async function fillDataList(datalist) {
-    const allTeams = await getAllTeams()
-    allTeams.forEach(function (club) {
-        let opt = document.createElement("option");
-        opt.value = club;
-        datalist.append(opt);
-    })
+    const allTeams = await getAllTeams();
+    const fragment = document.createDocumentFragment();
+    allTeams.forEach(club => {
+        const option = document.createElement("option");
+        option.value = club;
+        fragment.append(option);
+    });
+    datalist.replaceChildren(fragment);
 }
 
-async function getMatches() {
-    let allMatches;
-    await fetch(window.location.origin + '/getMatches', {
-        method: 'GET'
-    })
-        .then((result) => result.json())
-        .then((data) => {
-            allMatches = data;
-        })
-        .catch((error) => {
-            alert("Es ist ein Fehler beim Laden aufgetreten: " + error);
-            console.error('Error: ', error);
+function getMatches() {
+    if (matchesPromise == null) {
+        matchesPromise = fetchJson('/getMatches').catch(error => {
+            matchesPromise = null;
+            throw error;
         });
-    return allMatches;
+    }
+    return matchesPromise;
 }
 
-async function getAllTeams() {
-    let allTeams;
-    await fetch(window.location.origin + '/getAllTeams')
-        .then((response) => {
-            return response.json();
-        })
-        .then((data) => {
-            allTeams = data;
-        })
-        .catch((error) => {
-            alert("Es ist ein Fehler beim Laden aufgetreten: " + error);
-            console.error('Error: ', error);
+function getAllTeams() {
+    if (allTeamsPromise == null) {
+        allTeamsPromise = fetchJson('/getAllTeams').catch(error => {
+            allTeamsPromise = null;
+            throw error;
         });
-    return allTeams;
+    }
+    return allTeamsPromise;
 }
 
-async function getTeamData() {
-    let ids;
-    await fetch(window.location.origin + '/getTeamData')
-        .then((response) => {
-            return response.json();
-        })
-        .then((data) => {
-            ids = data
-        })
-        .catch((error) => {
-            alert("Es ist ein Fehler beim Laden aufgetreten: " + error);
-            console.error('Error: ', error);
+function getTeamData() {
+    if (teamDataPromise == null) {
+        teamDataPromise = fetchJson('/getTeamData').catch(error => {
+            teamDataPromise = null;
+            throw error;
         });
-    return ids;
+    }
+    return teamDataPromise;
 }
 
-function updateTeamValues(teamInfo) {
-    let formData = new FormData();
-    formData.append("newData", JSON.stringify(teamInfo));
-    fetch(window.location.origin + '/updateTeamInfo', {
-        method: 'POST',
-        mode: 'cors',
-        cache: 'no-cache',
-        credentials: 'same-origin',
-        redirect: 'follow',
-        referrerPolicy: 'no-referrer',
-        body: formData,
-    })
-        .then((response) => {
-            alert("Erfolgreich gespeichert!");
-            return response;
-        })
-        .catch((error) => {
-            alert("Es ist ein Fehler beim Ändern aufgetreten: " + error);
-            console.error('Error: ', error);
+async function fetchJson(path) {
+    try {
+        const response = await fetch(window.location.origin + path);
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.json();
+    } catch (error) {
+        alert("Es ist ein Fehler beim Laden aufgetreten: " + error);
+        console.error('Error: ', error);
+        throw error;
+    }
+}
+
+function invalidateClubCache() {
+    allTeamsPromise = null;
+}
+
+async function updateAllMatches() {
+    const button = document.getElementById("updateMatchesButton");
+    const status = document.getElementById("updateMatchesStatus");
+    button.disabled = true;
+    status.textContent = "Spiele werden von Fussball.de geladen ...";
+    status.className = "settings-status-pending";
+    try {
+        const response = await fetch(window.location.origin + "/getNextMatches");
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const matches = await response.json();
+        matchesPromise = Promise.resolve(matches);
+        status.textContent = "Spiele erfolgreich aktualisiert · " + new Date().toLocaleTimeString("de-DE", {hour: "2-digit", minute: "2-digit"});
+        status.className = "settings-status-success";
+    } catch (error) {
+        status.textContent = "Aktualisierung fehlgeschlagen. Bitte später erneut versuchen.";
+        status.className = "settings-status-error";
+        console.error("Error: ", error);
+    } finally {
+        button.disabled = false;
+    }
+}
+
+async function updateTeamValues(teamInfo) {
+    try {
+        const response = await fetch(window.location.origin + '/updateTeamInfo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(teamInfo)
         });
+        if (!response.ok) throw new Error(await response.text());
+        teamDataPromise = Promise.resolve(teamInfo);
+        alert("Erfolgreich gespeichert!");
+        return true;
+    } catch (error) {
+        alert("Es ist ein Fehler beim Ändern aufgetreten: " + error);
+        console.error('Error: ', error);
+        return false;
+    }
 }
 
 function postMenMatch(game) {
