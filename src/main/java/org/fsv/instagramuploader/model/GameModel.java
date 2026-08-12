@@ -15,6 +15,7 @@ public class GameModel {
  private ClubModel homeTeam;
  private ClubModel awayTeam;
  private final String team;
+ private String gameUrl;
  
  public GameModel(String competition, LocalDate gameDate, String gameTime, String team) {
 	this.competition = competition;
@@ -54,6 +55,14 @@ public class GameModel {
  public String getGameTime() {
 	return gameTime;
  }
+
+ public String getGameUrl() {
+	return gameUrl;
+ }
+
+ public void setGameUrl(String gameUrl) {
+	this.gameUrl = gameUrl;
+ }
  
  public String getSaveGameDate() {
 	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -86,6 +95,7 @@ public class GameModel {
 	result.put("gameDate", getSaveGameDate());
 	result.put("gameTime", gameTime);
 	result.put("matchDay", matchDay);
+	result.put("gameUrl", gameUrl);
 	return new JSONObject(result);
  }
  

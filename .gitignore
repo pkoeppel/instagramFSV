@@ -55,3 +55,10 @@ Thumbs.db
 /save/youth/
 /save/
 /buffer/
+/data/
+
+# Lokale Docker-Secrets und zusaetzliche Schriftdateien
+/config/*
+!/config/.gitkeep
+/fonts/*
+!/fonts/.gitkeep

@@ -10,7 +10,11 @@ function deleteClub() {
         referrerPolicy: 'no-referrer',
         body: formData,
     })
-        .then(response => response.text())
+        .then(async response => {
+            if (!response.ok) throw new Error(await response.text());
+            invalidateClubCache();
+            return response.text();
+        })
         .catch((error) => {
             alert("Es ist ein Fehler beim Löschen aufgetreten: " + error);
             console.error('Error: ', error);

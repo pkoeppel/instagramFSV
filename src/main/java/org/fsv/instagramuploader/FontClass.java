@@ -3,7 +3,6 @@ package org.fsv.instagramuploader;
 import java.awt.*;
 
 public class FontClass {
- public static final Font scorer = new Font("Calisto MT", Font.PLAIN, 28);
  public static final Font clubMenResult = new Font("Calisto MT", Font.BOLD, 26);
  public static final Font clubMen = new Font("Calisto MT", Font.BOLD, 36);
  public static final Font dateTimeMen = new Font("Calisto MT", Font.BOLD, 40);

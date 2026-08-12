@@ -36,8 +36,35 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Helper {
- static Logger logger = LoggerFactory.getLogger(Helper.class);
- 
+ private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+ private static final Logger logger = LoggerFactory.getLogger(Helper.class);
+ private static Map<String, Map<String, Object>> coordinates;
+
+ static {
+	try {
+	 loadCoordinates();
+	} catch (IOException e) {
+	 logger.error("Failed to load coordinates", e);
+	 coordinates = new HashMap<>();
+	}
+ }
+
+ private static void loadCoordinates() throws IOException {
+	ObjectMapper mapper = OBJECT_MAPPER;
+	File file = new File("src/main/resources/templates/coordinates.json");
+	if (file.exists()) {
+	 Map<String, Object> data = mapper.readValue(file, new TypeReference<Map<String, Object>>() {});
+	 coordinates = (Map<String, Map<String, Object>>) data.get("coordinates");
+	} else {
+	 logger.warn("Coordinates file not found, using empty coordinates");
+	 coordinates = new HashMap<>();
+	}
+ }
+
+ public static void reloadCoordinates() throws IOException {
+	loadCoordinates();
+ }
+
  public static int getC(JSONObject c, String val) {
 	try {
 	 double coord = (double) c.get(val);
@@ -47,7 +74,7 @@ public class Helper {
 	 return Long.valueOf(coord).intValue();
 	}
  }
- 
+
  public static String wrapString(String string, int charWrap) {
 	int lastBreak = 0;
 	int nextBreak = charWrap;
@@ -63,7 +90,7 @@ public class Helper {
 		setString.append(string.substring(lastBreak, nextBreak + 1).trim()).append("\n");
 		lastBreak = nextBreak + 1;
 		nextBreak += charWrap;
-		
+
 	 } while (nextBreak < string.length());
 	 setString.append(string.substring(lastBreak).trim());
 	 return setString.toString();
@@ -71,116 +98,103 @@ public class Helper {
 	 return string;
 	}
  }
- 
+
  public static void pictureOnPicture(BufferedImage background, BufferedImage image, String pos, int fac) {
 	Graphics g = background.getGraphics();
 	int backX = background.getWidth();
 	int backY = background.getHeight();
-	
+
 	int sizeX, sizeY, posX, posY;
-	switch (pos) {
-	 case "logo-left-youth" -> {
-		sizeX = 128;
-		sizeY = 128;
-		posX = 245;
-		posY = fac - 1;
+
+	if (coordinates != null && coordinates.containsKey(pos)) {
+	 Map<String, Object> coord = coordinates.get(pos);
+	 sizeX = ((Number) coord.get("sizeX")).intValue();
+	 sizeY = ((Number) coord.get("sizeY")).intValue();
+	 posX = ((Number) coord.get("posX")).intValue();
+	 posY = ((Number) coord.get("posY")).intValue();
+	 String alignment = coord.containsKey("alignment") ? (String) coord.get("alignment") : "none";
+
+	 String offsetAxis = coord.containsKey("offsetAxis") ? (String) coord.get("offsetAxis") : "";
+	 if ("x".equals(offsetAxis)) {
+		posX += fac;
+	 } else if ("y".equals(offsetAxis)) {
+		posY += fac;
 	 }
-	 case "logo-right-youth" -> {
-		sizeX = 128;
-		sizeY = 128;
-		posX = 940;
-		posY = fac - 1;
+
+	 // Apply alignment overrides
+	 switch (alignment) {
+		 case "center" -> {
+			 posX = (backX - sizeX) / 2;
+			 posY = (backY - sizeY) / 2;
+		 }
+		 case "center-horizontal" -> posX = (backX - sizeX) / 2;
+		 case "center-vertical" -> posY = (backY - sizeY) / 2;
+		 case "top-left" -> {
+			 posX = 0;
+			 posY = 0;
+		 }
+		 case "top-right" -> {
+			 posX = backX - sizeX;
+			 posY = 0;
+		 }
+		 case "bottom-left" -> {
+			 posX = 0;
+			 posY = backY - sizeY;
+		 }
+		 case "bottom-right" -> {
+			 posX = backX - sizeX;
+			 posY = backY - sizeY;
+		 }
+		 case "bottom" -> posY = backY - sizeY;
+		 case "top" -> posY = 0;
+		 case "left" -> posX = 0;
+		 case "right" -> posX = backX - sizeX;
 	 }
-	 case "logo-left-men" -> {
-		sizeX = 345 - fac;
-		sizeY = 345 - fac;
-		posX = (backX / 2 - (190 - fac)) / 2;
-		posY = 1310 + fac / 2;
-	 }
-	 case "logo-right-men" -> {
-		sizeX = 345 - fac;
-		sizeY = 345 - fac;
-		posX = (backX / 2 - (500 - fac)) / 2 + backX / 2;
-		posY = 1310 + fac / 2;
-	 }
-	 case "homeClubResult-men" -> {
-		sizeX = 280 - (fac / 2);
-		sizeY = 280 - (fac / 2);
-		posX = (backX / 2 - (210 - fac / 2)) / 2;
-		posY = 720 + fac / 2;
-	 }
-	 case "awayClubResult-men" -> {
-		sizeX = 280 - (fac / 2);
-		sizeY = 280 - (fac / 2);
-		posX = (backX / 2 - (350 - fac / 2)) / 2 + backX / 2;
-		posY = 720 + fac / 2;
-	 }
-	 case "sponsor-men" -> {
-		sizeX = 300;
-		sizeY = 150;
-		posX = backX - 300;
-		posY = backY - 150;
-	 }
-	 case "bigClub-men" -> {
-		sizeX = 400;
-		sizeY = 400;
-		posX = 4;
-		posY = 715;
-	 }
-	 case "smallClub-men" -> {
-		sizeX = 260;
-		sizeY = 260;
-		posX = 260;
-		posY = 915;
-	 }
-	 case "bigClubResult-men" -> {
-		sizeX = 180;
-		sizeY = 180;
-		posX = 5;
-		posY = 5;
-	 }
-	 case "smallClubResult-men" -> {
-		sizeX = 115;
-		sizeY = 115;
-		posX = 105;
-		posY = 90;
-	 }
-	 case "playerPic-men" -> {
-		sizeX = 560;
-		sizeY = 560;
-		posX = 500;
-		posY = 720;
-	 }
-	 case "template" -> {
-		sizeX = 1080;
-		sizeY = 538;
-		posX = 0;
-		posY = 1350 - sizeY;
-	 }
-	 default -> {
-		sizeX = 0;
-		sizeY = 0;
-		posX = 0;
-		posY = 0;
-	 }
+	} else {
+	 // Fallback to default values if position not found in coordinates
+	 sizeX = 0;
+	 sizeY = 0;
+	 posX = 0;
+	 posY = 0;
+	 logger.warn("Position '{}' not found in coordinates", pos);
 	}
-	g.drawImage(image, posX, posY, sizeX, sizeY, null);
+
+	float opacity = 1.0f;
+	if (coordinates != null && coordinates.containsKey(pos)) {
+	 Object opacityValue = coordinates.get(pos).get("opacity");
+	 if (opacityValue instanceof Number number) {
+		opacity = number.floatValue();
+	 }
+	 opacity = Math.max(0.0f, Math.min(1.0f, opacity));
+	}
+
+	if (opacity < 1.0f && g instanceof Graphics2D g2d) {
+	 Composite oldComposite = g2d.getComposite();
+	 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacity));
+	 g2d.drawImage(image, posX, posY, sizeX, sizeY, null);
+	 g2d.setComposite(oldComposite);
+	} else {
+	 g.drawImage(image, posX, posY, sizeX, sizeY, null);
+	}
+	g.dispose();
  }
- 
+
  public static void writeOnPicture(BufferedImage background, String text, String pos, Font font, Color color, int yStart) {
+	if (coordinates != null && coordinates.containsKey(pos) && "text".equals(coordinates.get(pos).get("type"))) {
+	 drawConfiguredText(background, text, coordinates.get(pos), font, color, yStart);
+	 return;
+	}
 	Graphics g = background.getGraphics();
 	g.setColor(color);
 	g.setFont(font);
 	int width = background.getWidth();
-	
+
 	FontMetrics fm = g.getFontMetrics();
 	int x, y;
 	int border = 35;
 	int splitCount = text.split("\n").length - 1;
 	int textSize = fm.getFont().getSize() + 5;
 	int textPos = splitCount * (textSize / -2);
-	int textPosUp = 0;
-	int shift = 0;
 	for (String line : text.split("\n")) {
 	 switch (pos) {
 		//Matchday men
@@ -217,24 +231,6 @@ public class Helper {
 		 x = (3 * width - 4 * border - 2 * fm.stringWidth(line)) / 4;
 		 y = 1040 + textPos;
 		 textPos += textSize;
-		}
-		case "homeScorer" -> {
-		 if (textPosUp > 230) {
-			textPosUp = 0;
-			shift = 250;
-		 }
-		 x = width - fm.stringWidth(line) - (width / 2 + 20) -  shift;
-		 y = 1120 + textPosUp;
-		 textPosUp += textSize;
-		}
-		case "awayScorer" -> {
-		 if (textPosUp > 230) {
-			textPosUp = 0;
-			shift = 250;
-		 }
-		 x = width / 2 + 20 + shift;
-		 y = 1120 + textPosUp;
-		 textPosUp += textSize;
 		}
 		case "head" -> {
 		 x = (width - fm.stringWidth(line)) / 2;
@@ -295,9 +291,62 @@ public class Helper {
 	 }
 	 g.drawString(line, x, y + yStart);
 	}
-	
+	g.dispose();
  }
- 
+
+ private static void drawConfiguredText(BufferedImage background, String text, Map<String, Object> block, Font fallbackFont, Color fallbackColor, int offset) {
+	Graphics2D graphics = background.createGraphics();
+	String fontFamily = String.valueOf(block.getOrDefault("fontFamily", fallbackFont.getFamily()));
+	String fontStyle = String.valueOf(block.getOrDefault("fontStyle", "plain"));
+	int style = switch (fontStyle) {
+	 case "bold" -> Font.BOLD;
+	 case "italic" -> Font.ITALIC;
+	 case "bold-italic" -> Font.BOLD | Font.ITALIC;
+	 default -> Font.PLAIN;
+	};
+	int fontSize = ((Number) block.getOrDefault("fontSize", fallbackFont.getSize())).intValue();
+	Font font = FontRegistry.createFont(fontFamily, style, fontSize, fallbackFont);
+	Color color = fallbackColor;
+	try {
+	 color = Color.decode(String.valueOf(block.getOrDefault("textColor", "#000000")));
+	} catch (NumberFormatException e) {
+	 logger.warn("Invalid text color '{}'", block.get("textColor"));
+	}
+	graphics.setFont(font);
+	graphics.setColor(color);
+	graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+	FontMetrics metrics = graphics.getFontMetrics();
+	int posX = ((Number) block.get("posX")).intValue();
+	int posY = ((Number) block.get("posY")).intValue();
+	int sizeX = ((Number) block.get("sizeX")).intValue();
+	int sizeY = ((Number) block.get("sizeY")).intValue();
+	if ("x".equals(block.get("offsetAxis"))) {
+	 posX += offset;
+	} else if ("y".equals(block.get("offsetAxis"))) {
+	 posY += offset;
+	}
+	String[] lines = text.split("\\n", -1);
+	int textHeight = lines.length * metrics.getHeight();
+	String verticalAlignment = String.valueOf(block.getOrDefault("verticalAlignment", "middle"));
+	int baseline = switch (verticalAlignment) {
+	 case "top" -> posY + metrics.getAscent();
+	 case "bottom" -> posY + sizeY - textHeight + metrics.getAscent();
+	 default -> posY + (sizeY - textHeight) / 2 + metrics.getAscent();
+	};
+	String alignment = String.valueOf(block.getOrDefault("alignment", "center"));
+	for (String line : lines) {
+	 int textWidth = metrics.stringWidth(line);
+	 int x = switch (alignment) {
+		case "left" -> posX;
+		case "right" -> posX + sizeX - textWidth;
+		default -> posX + (sizeX - textWidth) / 2;
+	 };
+	 graphics.drawString(line, x, baseline);
+	 baseline += metrics.getHeight();
+	}
+	graphics.dispose();
+ }
+
  public static String createMatchdaysHead(BufferedImage background, List<LocalDate> md) {
 	LocalDate lastThu = md.get(0);
 	if (!lastThu.getDayOfWeek().equals(DayOfWeek.THURSDAY)) {
@@ -316,44 +365,36 @@ public class Helper {
 	writeOnPicture(background, headDay, "head", FontClass.headYouth1, Color.BLACK, 0);
 	return lastThu.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
  }
- 
+
  public static void deleteTempTxt(JSONObject delMatch, String file) throws IOException {
-	JSONArray ja = new JSONArray();
-	JSONObject curObj;
-	try {
-	 InputStreamReader reader = new InputStreamReader(new FileInputStream("src/main/resources/templates/" + file + ".json"), StandardCharsets.UTF_8);
-	 ja = (JSONArray) new JSONParser().parse(reader);
-	 for (int i = 0; i < ja.size(); i++) {
-		curObj = (JSONObject) ja.get(i);
-		if (curObj.equals(delMatch)) {
-		 ja.remove(i);
-		 break;
-		}
-	 }
-	 ja.remove(delMatch);
-	} catch (ParseException ignored) {
+	String filePath = "src/main/resources/templates/" + file + ".json";
+	JSONArray matches;
+	try (InputStreamReader reader = new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8)) {
+	 matches = (JSONArray) new JSONParser().parse(reader);
+	} catch (ParseException e) {
+	 throw new IOException("Could not parse " + filePath, e);
 	}
-	try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream("src/main/resources/templates/" + file + ".json"), StandardCharsets.UTF_8)) {
-	 writer.write(ja.toJSONString());
+	matches.remove(delMatch);
+	try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8)) {
+	 writer.write(matches.toJSONString());
 	}
  }
- 
+
  public static JSONObject parser(String match) throws ParseException {
 	JSONParser jp = new JSONParser();
 	return (JSONObject) jp.parse(match);
  }
- 
+
  public static void savePicture(BufferedImage img, String pathURL, String fileName) throws IOException {
 	File dir = new File(pathURL);
-	if (!dir.exists()) {
-	 if (!dir.mkdirs()) {
-		logger.error("Error creating directory: {}", dir.getAbsolutePath());
-	 }
+	if (!dir.exists() && !dir.mkdirs()) {
+	 throw new IOException("Could not create directory: " + dir.getAbsolutePath());
 	}
-	File fileToSafe = new File(dir + "/" + fileName + ".jpeg");
+	File fileToSafe = new File(dir, fileName + ".jpeg");
 	ImageIO.write(img, "jpeg", fileToSafe);
+	logger.debug("Saved picture '{}'", fileToSafe.getAbsolutePath());
  }
- 
+
  public static boolean isNumeric(String str) {
 	try {
 	 Double.parseDouble(str);
@@ -362,11 +403,12 @@ public class Helper {
 	 return false;
 	}
  }
- 
+
  public static void updateNextMatchesFromFBDE() throws IOException, URISyntaxException {
 	Map<String, List<JSONObject>> allGames = new HashMap<>();
-	Map<String, Map<String, String>> teams = new ObjectMapper().readValue(new File("src/main/resources/templates/teamInfo.json"), new TypeReference<>() {
+	Map<String, Map<String, String>> teams = OBJECT_MAPPER.readValue(new File("src/main/resources/templates/teamInfo.json"), new TypeReference<>() {
 	});
+	logger.info("Updating next matches from Fussball.de for {} teams", teams.size());
 	try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
 	 for (Map.Entry<String, Map<String, String>> entry : teams.entrySet()) {
 		String key = entry.getKey();
@@ -380,24 +422,24 @@ public class Helper {
 		 int statusCode = response.getCode();
 		 if (statusCode == 200 && response.getEntity() != null) {
 			String html = EntityUtils.toString(response.getEntity());
-			games = parseGames(html, team);
+			games = parseGames(html, team, httpClient);
 		 } else {
-			logger.error("Request failed with status code: {}", response.getCode());
+			logger.warn("Fussball.de match list request for team '{}' (id={}) failed with status {}", key, teamId, statusCode);
 		 }
-		} catch (java.text.ParseException | org.apache.hc.core5.http.ParseException | ParseException | IOException e) {
-		 throw new RuntimeException(e);
+		} catch (java.text.ParseException | org.apache.hc.core5.http.ParseException | ParseException e) {
+		 throw new IOException("Could not parse matches for team " + key, e);
 		}
 		allGames.put(key, games);
 	 }
 	}
 	JSONObject jo = new JSONObject(allGames);
-	
+	logger.info("Persisting {} team schedules to allMatches.json", allGames.size());
 	try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream("src/main/resources/templates/allMatches.json"), StandardCharsets.UTF_8)) {
 	 writer.write(jo.toJSONString());
 	}
  }
- 
- private static List<JSONObject> parseGames(String html, Map<String, String> team) throws IOException, ParseException, java.text.ParseException, URISyntaxException {
+
+ private static List<JSONObject> parseGames(String html, Map<String, String> team, CloseableHttpClient httpClient) throws IOException, ParseException, java.text.ParseException, URISyntaxException {
 	Long leagueMatchday = null, cupMatchday = null;
 	if (team.get("lastLeagueMatchday") != null) {
 	 leagueMatchday = Long.valueOf(team.get("lastLeagueMatchday"));
@@ -405,24 +447,25 @@ public class Helper {
 	if (team.get("lastCupMatchday") != null) {
 	 cupMatchday = Long.valueOf(team.get("lastCupMatchday"));
 	}
-	
+
 	List<JSONObject> result = new ArrayList<>();
 	String gamesRegex = "<tr class=\"row-headline visible-small\">.*?</tr>.*?<tr class=\"odd row-competition hidden-small\">.*?</tr>.*?<tr class=\"odd\">.*?</tr>";
 	Matcher gamesMatcher = Pattern.compile(gamesRegex, Pattern.DOTALL).matcher(html);
-	
+
 	while (gamesMatcher.find()) {
-	 
+
 	 String gameRegex = "<td colspan=\"6\">.*?, (.*?) - (.*?) Uhr \\| (.*?)</td>.*?<td class=\"column-club\">.*?<div class=\"club-name\">(.*?)</div>.*?<div class=\"club-name\">(.*?)</div>.*?<td class=\"column-detail\">.*?<a href=\"(.*?)\">.*?</td>";
 	 Matcher gameMatcher = Pattern.compile(gameRegex, Pattern.DOTALL).matcher(gamesMatcher.group(0));
-	 
+
 	 while (gameMatcher.find()) {
 		String dateStr = gameMatcher.group(1);
 		LocalDate date = parseDate(dateStr);
 		String time = gameMatcher.group(2);
 		String competition = gameMatcher.group(3);
+		String competitionLower = competition.toLowerCase(Locale.ROOT);
 		String homeTeam = StringEscapeUtils.unescapeHtml4(gameMatcher.group(4)).replace("\u200B", "").trim();
 		String awayTeam = StringEscapeUtils.unescapeHtml4(gameMatcher.group(5)).replace("\u200B", "").trim();
-		
+
 		String gameId;
 		if (competition.contains("Kinder")) {
 		 gameId = gameMatcher.group(6).trim().split("/-/staffel/")[1];
@@ -431,11 +474,13 @@ public class Helper {
 		 gameId = gameMatcher.group(6).trim().split("/-/spiel/")[1];
 		}
 		GameModel newGame = new GameModel(competition, date, time, null);
+		newGame.setGameUrl(createGameUrl(gameMatcher.group(6)));
 		ClubModel homeClub = checkForOwnClub(homeTeam);
 		ClubModel awayClub = checkForOwnClub(awayTeam);
-		if (competition.contains("liga") || competition.contains("klasse")) {
-		 Matcher stats = teamStats(gameId);
-		 
+		if (competitionLower.contains("liga") || competitionLower.contains("klasse")) {
+		 leagueMatchday = setMatchDay(newGame, leagueMatchday);
+		 Matcher stats = teamStats(gameId, httpClient);
+
 		 if (stats != null) {
 			String homePlace = stats.group(1);
 			String awayPlace = stats.group(2);
@@ -445,18 +490,13 @@ public class Helper {
 			String awayScore = stats.group(6);
 			String homeTrend = stats.group(7);
 			String awayTrend = stats.group(8);
-			
+
 			homeClub.setClubStats("\nPlatz " + homePlace + " (" + homePoints + " / " + homeScore + ")\nTrend: " + homeTrend);
 			awayClub.setClubStats("\nPlatz " + awayPlace + " (" + awayPoints + " / " + awayScore + ")\nTrend: " + awayTrend);
-			if (leagueMatchday != null) {
-			 newGame.setMatchDay(String.valueOf(leagueMatchday));
-			 leagueMatchday++;
-			}
 		 }
 		}
-		if (competition.contains("pokal") && cupMatchday != null) {
-		 newGame.setMatchDay(String.valueOf(cupMatchday));
-		 cupMatchday++;
+		if (competitionLower.contains("pokal")) {
+		 cupMatchday = setMatchDay(newGame, cupMatchday);
 		}
 		newGame.setHomeTeam(homeClub);
 		newGame.setAwayTeam(awayClub);
@@ -465,12 +505,34 @@ public class Helper {
 	}
 	return result;
  }
- 
+
+ static Long setMatchDay(GameModel game, Long matchDay) {
+	if (matchDay == null) {
+	 return null;
+	}
+	game.setMatchDay(String.valueOf(matchDay));
+	return matchDay + 1;
+ }
+
+ private static String createGameUrl(String gameUrl) {
+	String result = StringEscapeUtils.unescapeHtml4(gameUrl.trim());
+	if (result.startsWith("//")) {
+	 return "https:" + result;
+	}
+	if (result.startsWith("/")) {
+	 return "https://www.fussball.de" + result;
+	}
+	if (result.startsWith("http://www.fussball.de/")) {
+	 return "https://" + result.substring("http://".length());
+	}
+	return result;
+ }
+
  private static LocalDate parseDate(String dateStr) {
 	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 	return LocalDate.parse(dateStr, formatter);
  }
- 
+
  private static ClubModel checkForOwnClub(String teamName) {
 	if (!teamName.equals("FSV Treuen") && teamName.contains("FSV Treuen")) {
 	 return new ClubModel("FSV Treuen", null, null, null, null, teamName);
@@ -480,53 +542,60 @@ public class Helper {
 	}
 	return new ClubModel(teamName, null, null, null, null, null);
  }
- 
- private static Matcher teamStats(String gameId) throws IOException, URISyntaxException {
+
+ private static Matcher teamStats(String gameId, CloseableHttpClient httpClient) throws IOException, URISyntaxException {
 	HttpGet getMatches = new HttpGet("https://www.fussball.de/ajax.season.stats/-/mode/PAGE/spiel/" + gameId);
-	try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-	 URI uri = getMatches.getUri();
-	 HttpHost host = new HttpHost(uri.getScheme(), uri.getHost(), uri.getPort());
-	 try (ClassicHttpResponse response = httpClient.executeOpen(host, getMatches, HttpClientContext.create())) {
-		if (response.getCode() == 200) {
-		 if (response.getEntity() != null) {
-			String html = EntityUtils.toString(response.getEntity());
-			
-			String statsRegex = "<td.*?>(.*?)</td>.*?<td>Aktuelle Platzierung</td>.*?<td.*?>(.*?)</td>.*?<td.*?>(.*?)</td>.*?<td>Aktuelle Punktzahl</td>.*?<td.*?>(.*?)</td>.*?<td.*?>(.*?)</td>.*?<td>Aktuelles Torverhältnis</td>.*?<td.*?>(.*?)</td>.*?<td.*?><span.*?>(.*?)</span>.*?</td>.*?<td>Aktueller Trend</td>.*?<td.*?>.*?<span.*?>(.*?)</span>.*?</td>";
-			Matcher gamesMatcher = Pattern.compile(statsRegex, Pattern.DOTALL).matcher(html);
-			if (gamesMatcher.find()) {
-			 return gamesMatcher;
-			}
-		 } else {
-			logger.error("Request failed with status code: {}", response.getCode());
-		 }
+	URI uri = getMatches.getUri();
+	HttpHost host = new HttpHost(uri.getScheme(), uri.getHost(), uri.getPort());
+	try (ClassicHttpResponse response = httpClient.executeOpen(host, getMatches, HttpClientContext.create())) {
+	 if (response.getCode() == 200 && response.getEntity() != null) {
+		try {
+		 String html = EntityUtils.toString(response.getEntity());
+		 String statsRegex = "<td.*?>(.*?)</td>.*?<td>Aktuelle Platzierung</td>.*?<td.*?>(.*?)</td>.*?<td.*?>(.*?)</td>.*?<td>Aktuelle Punktzahl</td>.*?<td.*?>(.*?)</td>.*?<td.*?>(.*?)</td>.*?<td>Aktuelles Torverh\u00e4ltnis</td>.*?<td.*?>(.*?)</td>.*?<td.*?><span.*?>(.*?)</span>.*?</td>.*?<td>Aktueller Trend</td>.*?<td.*?>.*?<span.*?>(.*?)</span>.*?</td>";
+		 Matcher gamesMatcher = Pattern.compile(statsRegex, Pattern.DOTALL).matcher(html);
+		 return gamesMatcher.find() ? gamesMatcher : null;
+		} catch (org.apache.hc.core5.http.ParseException e) {
+		 throw new IOException("Could not parse team statistics", e);
 		}
-	 } catch (org.apache.hc.core5.http.ParseException e) {
-		throw new RuntimeException(e);
 	 }
+	 logger.warn("Fussball.de statistics request for gameId '{}' failed with status {}", gameId, response.getCode());
+	 return null;
 	}
-	return null;
  }
- 
+
  public static void updateMatchdayValue(String team, String matchType) throws IOException {
-	Map<String, Map<String, String>> allTeams = new ObjectMapper().readValue(new File("src/main/resources/templates/teamInfo.json"), new TypeReference<>() {
+	Map<String, Map<String, String>> allTeams = OBJECT_MAPPER.readValue(new File("src/main/resources/templates/teamInfo.json"), new TypeReference<>() {
 	});
 	Map<String, String> teamData = allTeams.get(team);
-	long leagueMatchday = Long.parseLong(teamData.get("lastLeagueMatchday"));
-	long cupMatchday = Long.parseLong(teamData.get("lastCupMatchday"));
-	
+	if (teamData == null) {
+		logger.warn("Cannot update matchday because team '{}' does not exist", team);
+		return;
+	}
+
 	String matchTypeLower = matchType.toLowerCase(Locale.ROOT);
-	
+
 	if (matchTypeLower.contains("pokal")) {
-	 teamData.remove("lastCupMatchday");
-	 teamData.put("lastCupMatchday", String.valueOf(cupMatchday + 1));
+		String cupMatchday = teamData.get("lastCupMatchday");
+		if (cupMatchday == null || cupMatchday.isBlank()) {
+			logger.warn("Cannot increment cup matchday for team '{}'; value is missing", team);
+		} else {
+			teamData.put("lastCupMatchday", String.valueOf(Long.parseLong(cupMatchday) + 1));
+			logger.debug("Incremented cup matchday for team '{}' to {}", team, teamData.get("lastCupMatchday"));
+		}
 	}
 	if (matchTypeLower.contains("liga") || matchTypeLower.contains("klasse")) {
-	 teamData.remove("lastLeagueMatchday");
-	 teamData.put("lastLeagueMatchday", String.valueOf(leagueMatchday + 1));
+		String leagueMatchday = teamData.get("lastLeagueMatchday");
+		if (leagueMatchday == null || leagueMatchday.isBlank()) {
+			logger.warn("Cannot increment league matchday for team '{}'; value is missing", team);
+		} else {
+			teamData.put("lastLeagueMatchday", String.valueOf(Long.parseLong(leagueMatchday) + 1));
+			logger.debug("Incremented league matchday for team '{}' to {}", team, teamData.get("lastLeagueMatchday"));
+		}
 	}
-	new ObjectMapper().writeValue(new File("src/main/resources/templates/teamInfo.json"), allTeams);
+	OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(new File("src/main/resources/templates/teamInfo.json"), allTeams);
+	logger.info("Updated matchday counters for team '{}' (type='{}')", team, matchType);
  }
- 
+
  public static int isOwnClub(ClubModel club) {
 	if (club.getClubName().equals("FSV Treuen")) {
 	 return 0;

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,7 +24,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class GoogleDriveService {
- Logger logger = LoggerFactory.getLogger(GoogleDriveService.class);
+ private static final Logger logger = LoggerFactory.getLogger(GoogleDriveService.class);
  private static final GsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
  private static final String SERVICE_ACCOUNT_KEY_PATH = getPathToGoogleCredentials();
  
@@ -31,11 +32,18 @@ public class GoogleDriveService {
  private String targetFolderId;
  
  public GoogleDriveService(String folderName) {
+	Path credentialsPath = Paths.get(SERVICE_ACCOUNT_KEY_PATH);
+	if (!Files.isRegularFile(credentialsPath)) {
+	 logger.warn("Google credentials not found at '{}'; Drive upload is disabled", credentialsPath);
+	 return;
+	}
 	try {
-	 GoogleCredentials credentials = GoogleCredentials
-					 .fromStream(Files.newInputStream(Paths.get(SERVICE_ACCOUNT_KEY_PATH)))
-					 .createScoped(Collections.singleton(DriveScopes.DRIVE));
-	 
+	 GoogleCredentials credentials;
+	 try (InputStream input = Files.newInputStream(credentialsPath)) {
+		credentials = GoogleCredentials.fromStream(input)
+						.createScoped(Collections.singleton(DriveScopes.DRIVE));
+	 }
+
 	 drive = new Drive.Builder(
 					 GoogleNetHttpTransport.newTrustedTransport(),
 					 JSON_FACTORY,
@@ -50,7 +58,7 @@ public class GoogleDriveService {
 	 }
 	 targetFolderId = teamFolderId;
 	} catch (IOException | GeneralSecurityException e) {
-	 logger.error("Error creating Google Drive service");
+	 logger.error("Error creating Google Drive service", e);
 	}
  }
  
@@ -63,10 +71,10 @@ public class GoogleDriveService {
 	 com.google.api.services.drive.model.File file = drive.files().create(fileMetadata)
 					 .setFields("id")
 					 .execute();
-	 logger.info("Folder ID: {}", file.getId());
+	 logger.info("Created Google Drive folder '{}': id={}", folderName, file.getId());
 	 return file.getId();
 	} catch (GoogleJsonResponseException e) {
-	 logger.error("Unable to create folder: {}", e.getDetails());
+	 logger.error("Could not create Google Drive folder '{}' under parent '{}': {}", folderName, folderId, e.getDetails(), e);
 	}
 	return "";
  }
@@ -89,6 +97,10 @@ public class GoogleDriveService {
  }
  
  public void uploadFileToFolder(File file) {
+	if (drive == null || targetFolderId == null || targetFolderId.isBlank()) {
+	 logger.debug("Skipping Google Drive upload because the service is unavailable");
+	 return;
+	}
 	com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
 	fileMetadata.setParents(Collections.singletonList(targetFolderId));
 	fileMetadata.setName(file.getName());
@@ -97,16 +109,19 @@ public class GoogleDriveService {
 	 com.google.api.services.drive.model.File uploadedFile = drive.files().create(fileMetadata, mediaContent)
 					 .setFields("id").execute();
 	 String imageUrl = "https://drive.google.com/uc?export=view&id=" + uploadedFile.getId();
-	 logger.info("IMAGE URL: {}", imageUrl);
-	 
+	 logger.info("Uploaded image to Google Drive: fileName='{}', id='{}'", file.getName(), uploadedFile.getId());
+
 	} catch (IOException e) {
-	 logger.error("Error by upload");
+	 logger.error("Could not upload image '{}' to Google Drive folder '{}'", file.getName(), targetFolderId, e);
 	}
  }
  
  private static String getPathToGoogleCredentials() {
+	String configuredPath = System.getenv("GOOGLE_CREDENTIALS_FILE");
+	if (configuredPath != null && !configuredPath.isBlank()) {
+	 return configuredPath;
+	}
 	String currentDirectory = System.getProperty("user.dir");
-	Path filePath = Paths.get(currentDirectory, "src/main/resources/templates/googleCred.json");
-	return filePath.toString();
+	return Paths.get(currentDirectory, "src/main/resources/templates/googleCred.json").toString();
  }
 }
