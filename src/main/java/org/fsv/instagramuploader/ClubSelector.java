@@ -25,16 +25,52 @@ public class ClubSelector {
  }
 
  public static ClubModel getClubDetails(ClubModel club) throws IOException, ParseException {
-	JSONObject clubData = (JSONObject) loadClubs().get(club.getClubName());
-	if (clubData == null) {
+	JSONObject clubsData = loadClubs();
+	Object rawData = clubsData.get(club.getClubName());
+	if (rawData == null) {
+	 rawData = findBestClubMatch(clubsData, club.getClubName());
+	}
+	if (!(rawData instanceof JSONObject)) {
 	 logger.error("Club '{}' not found", club.getClubName());
 	 return null;
 	}
-	String saveName = clubData.get("fileName").toString();
-	club.setClubPlace(clubData.get("place").toString());
+	JSONObject clubData = (JSONObject) rawData;
+	Object fileName = clubData.get("fileName");
+	if (fileName == null) {
+	 logger.error("Club '{}' has no fileName", club.getClubName());
+	 return null;
+	}
+	String saveName = fileName.toString();
+	Object place = clubData.get("place");
+	club.setClubPlace(place != null ? place.toString() : null);
 	club.setClubLogoDir(LOGO_DIRECTORY + saveName + ".png");
 	club.setSaveName(saveName);
 	return club;
+ }
+
+ private static Object findBestClubMatch(JSONObject clubsData, String clubName) {
+	if (clubName == null || clubName.isBlank()) {
+	 return null;
+	}
+	String normalized = normalize(clubName);
+	for (Object key : clubsData.keySet()) {
+	 String candidate = key.toString();
+	 if (normalize(candidate).equals(normalized)) {
+		return clubsData.get(key);
+	 }
+	}
+	for (Object key : clubsData.keySet()) {
+	 String candidate = key.toString();
+	 String candidateNorm = normalize(candidate);
+	 if (candidateNorm.contains(normalized) || normalized.contains(candidateNorm)) {
+		return clubsData.get(key);
+	 }
+	}
+	return null;
+ }
+
+ private static String normalize(String value) {
+	return value.toLowerCase().replaceAll("[^a-z0-9]", "");
  }
 
  public static ClubModel searchClubDetails(String club) throws IOException, ParseException {

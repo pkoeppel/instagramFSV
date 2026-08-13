@@ -77,8 +77,8 @@ public class ResultCreator {
 	String homeClubName = (homeClub.getChangedName() != null) ? homeClub.getChangedName() : homeClub.getClubName();
 	String awayClubName = (awayClub.getChangedName() != null) ? awayClub.getChangedName() : awayClub.getClubName();
 	MatchDetails matchDetails = loadMatchDetails((String) m.get("gameUrl"), homeClubName, awayClubName);
-	String headline = m.get("headline") == null ? "" : m.get("headline").toString().trim();
-	String report = m.get("report") == null ? "" : m.get("report").toString().trim();
+	String headline = match.get("headline") == null ? "" : match.get("headline").toString().trim();
+	String report = match.get("report") == null ? "" : match.get("report").toString().trim();
 	StringBuilder fullReportBuilder = new StringBuilder();
 	fullReportBuilder.append(matchDetails.matchLine().trim());
 	if (!headline.isEmpty()) {
@@ -160,10 +160,25 @@ public class ResultCreator {
  }
 
  private MatchDetails loadMatchDetails(String gameUrl, String homeClubName, String awayClubName) throws IOException {
+	if (gameUrl == null || gameUrl.isBlank()) {
+	 logger.warn("No Fussball.de game URL provided, returning empty match details");
+	 return unknownMatchDetails(homeClubName, awayClubName);
+	}
+	Matcher urlMatcher = GAME_URL_PATTERN.matcher(gameUrl);
+	if (!urlMatcher.matches()) {
+	 logger.warn("Invalid Fussball.de game URL '{}', returning empty match details", gameUrl);
+	 return unknownMatchDetails(homeClubName, awayClubName);
+	}
 	Scorers scorers = loadScorers(gameUrl);
 	String result = scorers.home().size() + ":" + scorers.away().size();
 	String matchLine = homeClubName + " : " + awayClubName + " (" + result + ")";
 	return new MatchDetails(result, matchLine, formatScorers(homeClubName, awayClubName, scorers));
+ }
+
+ private MatchDetails unknownMatchDetails(String homeClubName, String awayClubName) {
+	String result = "?:?";
+	String matchLine = homeClubName + " : " + awayClubName + " (" + result + ")";
+	return new MatchDetails(result, matchLine, "");
  }
 
  private String formatScorers(String homeClubName, String awayClubName, Scorers scorers) {

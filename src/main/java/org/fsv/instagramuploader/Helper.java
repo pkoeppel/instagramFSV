@@ -303,6 +303,9 @@ public class Helper {
  }
 
  private static void drawConfiguredText(BufferedImage background, String text, Map<String, Object> block, Font fallbackFont, Color fallbackColor, int offset) {
+	if (text == null) {
+	 text = "";
+	}
 	Graphics2D graphics = background.createGraphics();
 	String fontFamily = String.valueOf(block.getOrDefault("fontFamily", fallbackFont.getFamily()));
 	String fontStyle = String.valueOf(block.getOrDefault("fontStyle", "plain"));

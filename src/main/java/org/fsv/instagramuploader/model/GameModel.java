@@ -27,16 +27,39 @@ public class GameModel {
  @Getter
  private String gameUrl;
  
- public GameModel(String competition, LocalDate gameDate, String gameTime, String team) {
+ public GameModel(JSONObject game, String team) {
+	this.gameId = game.containsKey("id") && game.get("id") != null ? game.get("id").toString()
+			: game.containsKey("gameId") && game.get("gameId") != null ? game.get("gameId").toString() : null;
+	this.competition = game.containsKey("competition") && game.get("competition") != null ? game.get("competition").toString() : null;
+	String dateStr = game.containsKey("gameDate") && game.get("gameDate") != null ? game.get("gameDate").toString() : null;
+	this.gameDate = dateStr != null ? LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd")) : null;
+	this.gameTime = game.containsKey("gameTime") && game.get("gameTime") != null ? game.get("gameTime").toString() : null;
+	String teamFromGame = game.containsKey("team") && game.get("team") != null ? game.get("team").toString() : null;
+	this.team = team != null ? team : teamFromGame;
+	if (game.containsKey("matchDay") && game.get("matchDay") != null) {
+		this.matchDay = game.get("matchDay").toString();
+	}
+	if (game.containsKey("homeTeam") && game.get("homeTeam") instanceof Map<?, ?> ht) {
+		this.homeTeam = new ClubModel(ht);
+	}
+	if (game.containsKey("awayTeam") && game.get("awayTeam") instanceof Map<?, ?> at) {
+		this.awayTeam = new ClubModel(at);
+	}
+	if (game.containsKey("gameUrl") && game.get("gameUrl") != null) {
+		this.gameUrl = game.get("gameUrl").toString();
+	}
+ }
+
+ public GameModel(String gameId, String competition, LocalDate gameDate, String gameTime, String team) {
+	this.gameId = gameId;
 	this.competition = competition;
 	this.gameDate = gameDate;
 	this.gameTime = gameTime;
 	this.team = team;
-  this.gameId = (String) game.get("gameId");
  }
   
   public ClubModel getHomeTeam() {
-	return new ClubModel(homeTeam);
+	return homeTeam != null ? new ClubModel(homeTeam) : null;
  }
  
  public void setHomeTeam(ClubModel homeTeam) {
@@ -44,7 +67,7 @@ public class GameModel {
  }
  
  public ClubModel getAwayTeam() {
-	return new ClubModel(awayTeam);
+	return awayTeam != null ? new ClubModel(awayTeam) : null;
  }
  
  public void setAwayTeam(ClubModel awayTeam) {
@@ -52,16 +75,19 @@ public class GameModel {
  }
   
   public String getSaveGameDate() {
+	if (gameDate == null) return null;
 	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	return gameDate.format(formatter);
  }
  
  public String getPrintDate() {
+	if (gameDate == null) return null;
 	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 	return gameDate.format(formatter);
  }
  
  public String fullMatchDate() {
+	if (gameDate == null) return null;
 	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EE, dd.MM.yyyy");
 	return gameDate.format(formatter);
  }

@@ -15,7 +15,8 @@ public record ResultModel(JSONObject id, String result, String homeStats, String
  }
  
  public String getValue(String val) {
-	return id().get(val).toString();
+	Object value = id().get(val);
+	return value != null ? value.toString() : null;
  }
  
  public String getClubName(String val) {

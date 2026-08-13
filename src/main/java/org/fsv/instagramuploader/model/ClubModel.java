@@ -23,15 +23,20 @@ public class ClubModel {
  }
  
  public ClubModel(ClubModel clubModel) {
-	this.clubName = clubModel.clubName;
-	this.clubStats = clubModel.clubStats;
-	this.clubPlace = clubModel.clubPlace;
-	this.clubLogoDir = clubModel.clubLogoDir;
-	this.saveName = clubModel.saveName;
-	this.changedName = clubModel.changedName;
+	if (clubModel != null) {
+	 this.clubName = clubModel.clubName;
+	 this.clubStats = clubModel.clubStats;
+	 this.clubPlace = clubModel.clubPlace;
+	 this.clubLogoDir = clubModel.clubLogoDir;
+	 this.saveName = clubModel.saveName;
+	 this.changedName = clubModel.changedName;
+	}
  }
  
- public ClubModel(JSONObject club) {
+ public ClubModel(Map<?, ?> club) {
+	if (club == null) {
+	 return;
+	}
 	if (club.containsKey("clubName") && club.get("clubName") != null) {
 	 this.clubName = club.get("clubName").toString();
 	}
@@ -105,6 +110,7 @@ public class ClubModel {
 	resultMap.put("clubStats", clubStats);
 	resultMap.put("clubPlace", clubPlace);
 	resultMap.put("clubLogoDir", clubLogoDir);
+	resultMap.put("saveName", saveName);
 	resultMap.put("changedName", changedName);
 	return new JSONObject(resultMap);
  }

@@ -198,14 +198,15 @@ public class Controller {
  }
 
  @RequestMapping("/postMatchMen")
- public ResponseEntity<String> postMatchMen(@RequestBody GameModel match) {
+ public ResponseEntity<String> postMatchMen(@RequestBody Map<String, Object> matchData) {
 	try {
+	 GameModel match = new GameModel(new JSONObject(matchData), stringValue(matchData.get("team")));
 	 logger.info("Creating men matchday preview: team={}, date={}, competition={}", match.getTeam(), match.getSaveGameDate(), match.getCompetition());
 	 String result = mc.createMatch(match);
 	 logger.info("Men matchday preview created at '{}'", result);
 	 return new ResponseEntity<>(result, HttpStatus.OK);
 	} catch (IOException | ParseException e) {
-	 logger.error("Could not create men matchday preview: team={}, date={}", match.getTeam(), match.getSaveGameDate(), e);
+	 logger.error("Could not create men matchday preview: team={}, date={}", matchData.get("team"), matchData.get("gameDate"), e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
  }
@@ -391,14 +392,18 @@ public class Controller {
  }
 
  @RequestMapping("/postMatchFilesYouth")
- public ResponseEntity<?> postMatchFilesYouth(@RequestBody ArrayList<GameModel> mmArr) {
+ public ResponseEntity<?> postMatchFilesYouth(@RequestBody List<Map<String, Object>> matchList) {
 	try {
+	 ArrayList<GameModel> mmArr = new ArrayList<>();
+	 for (Map<String, Object> m : matchList) {
+		mmArr.add(new GameModel(new JSONObject(m), stringValue(m.get("team"))));
+	 }
 	 logger.info("Creating youth matchday package for {} matches", mmArr.size());
 	 Map<String, Integer> result = msc.createMatches(mmArr);
 	 logger.info("Youth matchday package created: {}", result);
 	 return new ResponseEntity<>(result, HttpStatus.OK);
 	} catch (IOException | ParseException e) {
-	 logger.error("Could not create youth matchday package for {} matches", mmArr.size(), e);
+	 logger.error("Could not create youth matchday package for {} matches", matchList != null ? matchList.size() : 0, e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
  }
@@ -416,16 +421,30 @@ public class Controller {
  }
 
  @RequestMapping("/postYouthResults")
- public ResponseEntity<?> postYouthResult(@RequestBody ArrayList<ResultModel> rmArr) {
+ public ResponseEntity<?> postYouthResult(@RequestBody List<Map<String, Object>> resultList) {
 	try {
+	 ArrayList<ResultModel> rmArr = new ArrayList<>();
+	 for (Map<String, Object> m : resultList) {
+		Object idValue = m.get("id");
+		JSONObject id = idValue instanceof Map ? new JSONObject((Map<?, ?>) idValue) : new JSONObject();
+		rmArr.add(new ResultModel(id,
+				stringValue(m.get("result")),
+				stringValue(m.get("homeStats")),
+				stringValue(m.get("awayStats")),
+				stringValue(m.get("text"))));
+	 }
 	 logger.info("Creating youth result package for {} games", rmArr.size());
 	 Map<String, Integer> result = rsc.createResults(rmArr);
 	 logger.info("Youth result package created: {}", result);
 	 return new ResponseEntity<>(result, HttpStatus.OK);
 	} catch (IOException | ParseException e) {
-	 logger.error("Could not create youth result package for {} games", rmArr.size(), e);
+	 logger.error("Could not create youth result package for {} games", resultList != null ? resultList.size() : 0, e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
+ }
+
+ private static String stringValue(Object value) {
+	return value != null ? value.toString() : null;
  }
 
  private Object readJsonFile(String fileName) throws IOException, ParseException {
