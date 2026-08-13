@@ -1,5 +1,7 @@
 package org.fsv.instagramuploader.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.json.simple.JSONObject;
 
 import java.time.LocalDate;
@@ -8,47 +10,32 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GameModel {
- private final String gameId;
+  private final String gameId;
+  @Getter
  private final String competition;
  private final LocalDate gameDate;
+ @Getter
  private final String gameTime;
+ @Getter
+ @Setter
  private String matchDay;
  private ClubModel homeTeam;
  private ClubModel awayTeam;
+ @Getter
  private final String team;
+ @Setter
+ @Getter
+ private String gameUrl;
  
- public GameModel(JSONObject game, String team) {
-	this.competition = game.get("competition").toString();
-	this.gameDate = LocalDate.parse(game.get("gameDate").toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-	this.gameTime = game.get("gameTime").toString();
-	this.matchDay = game.get("matchDay").toString();
-	this.homeTeam = new ClubModel((JSONObject) game.get("homeTeam"));
-	this.awayTeam = new ClubModel((JSONObject) game.get("awayTeam"));
-	this.team = team;
-	this.gameId = (String) game.get("gameId");
- }
- 
- public GameModel(String gameId, String competition, LocalDate gameDate, String gameTime, String team) {
-	this.gameId = gameId;
+ public GameModel(String competition, LocalDate gameDate, String gameTime, String team) {
 	this.competition = competition;
 	this.gameDate = gameDate;
 	this.gameTime = gameTime;
 	this.team = team;
+  this.gameId = (String) game.get("gameId");
  }
- 
- public String getCompetition() {
-	return competition;
- }
- 
- public String getMatchDay() {
-	return matchDay;
- }
- 
- public void setMatchDay(String matchDay) {
-	this.matchDay = matchDay;
- }
- 
- public ClubModel getHomeTeam() {
+  
+  public ClubModel getHomeTeam() {
 	return new ClubModel(homeTeam);
  }
  
@@ -63,12 +50,8 @@ public class GameModel {
  public void setAwayTeam(ClubModel awayTeam) {
 	this.awayTeam = new ClubModel(awayTeam);
  }
- 
- public String getGameTime() {
-	return gameTime;
- }
- 
- public String getSaveGameDate() {
+  
+  public String getSaveGameDate() {
 	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	return gameDate.format(formatter);
  }
@@ -99,11 +82,9 @@ public class GameModel {
 	result.put("gameDate", getSaveGameDate());
 	result.put("gameTime", gameTime);
 	result.put("matchDay", matchDay);
+	result.put("gameUrl", gameUrl);
 	result.put("id", gameId);
 	return new JSONObject(result);
  }
  
- public String getTeam() {
-	return team;
- }
 }
