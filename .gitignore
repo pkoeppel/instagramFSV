@@ -60,5 +60,3 @@ Thumbs.db
 # Lokale Docker-Secrets und zusaetzliche Schriftdateien
 /config/*
 !/config/.gitkeep
-/fonts/*
-!/fonts/.gitkeep
