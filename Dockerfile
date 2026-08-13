@@ -14,14 +14,32 @@ ENV TZ=Europe/Berlin \
 
 WORKDIR /app
 
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        fontconfig \
+        fonts-dejavu-core \
+        fonts-liberation2 \
+        fonts-noto-core && \
+    rm -rf /var/lib/apt/lists/*
+
+# Optional: Microsoft Core Fonts (Arial, Times New Roman, Comic Sans etc.).
+# Kann fehlschlagen, wenn der Download von SourceForge blockiert ist.
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        cabextract wget && \
+    echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections && \
+    (apt-get install -y ttf-mscorefonts-installer || true) && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN useradd --system --uid 10001 --create-home --home-dir /home/instagram instagram
 
-COPY --from=build /workspace/target/*.jar /app/app.jar
-COPY --from=build /workspace/src/main/resources /app/src/main/resources
-COPY docker/defaults/ /app/src/main/resources/
+COPY --from=build --chown=instagram:instagram /workspace/target/*.jar /app/app.jar
+COPY --from=build --chown=instagram:instagram /workspace/src/main/resources /app/src/main/resources
+COPY --chown=instagram:instagram docker/defaults/ /app/src/main/resources/
+COPY --chown=instagram:instagram fonts/ /app/fonts/
 
-RUN mkdir -p /app/src/main/resources/save/youth /app/fonts /app/config \
-    && chown -R instagram:instagram /app /home/instagram
+RUN mkdir -p /app/src/main/resources/save/youth /app/config \
+    && chown -R instagram:instagram /app/src/main/resources/save /app/config /home/instagram
 
 USER instagram
 
