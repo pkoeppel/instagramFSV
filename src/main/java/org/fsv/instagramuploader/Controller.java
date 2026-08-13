@@ -10,6 +10,7 @@ import org.fsv.instagramuploader.model.GameModel;
 import org.fsv.instagramuploader.model.ResultModel;
 import org.fsv.instagramuploader.youth.MatchdaysCreator;
 import org.fsv.instagramuploader.youth.ResultsCreator;
+import org.fsv.instagramuploader.bot.TelegramBot;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,11 +42,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 @RestController
 public class Controller {
  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
  private static final Logger logger = LoggerFactory.getLogger(Controller.class);
+
+ @Autowired
+ private TelegramBot telegramBot;
 
  MatchdaysCreator msc;
  ResultsCreator rsc;
@@ -77,8 +85,69 @@ public class Controller {
 	 logger.info("Scheduled Fussball.de match update started");
 	 Helper.updateNextMatchesFromFBDE();
 	 logger.info("Scheduled Fussball.de match update completed in {} ms", System.currentTimeMillis() - startedAt);
+	 sendAutomaticHerrenMatchHints();
 	} catch (IOException | URISyntaxException e) {
 	 logger.error("Scheduled update of allMatches.json failed", e);
+	}
+ }
+
+ private void sendAutomaticHerrenMatchHints() {
+	try {
+	 JSONObject allMatches = (JSONObject) readJsonFile("allMatches.json");
+	 ZoneId berlin = ZoneId.of("Europe/Berlin");
+	 LocalDate previewDate = LocalDate.now(berlin).plusDays(2);
+	 DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+	 int sentHints = 0;
+	 for (Object teamObj : allMatches.keySet()) {
+		String team = teamObj.toString();
+		Object gamesObj = allMatches.get(teamObj);
+		if (!(gamesObj instanceof JSONArray games)) {
+		 continue;
+		}
+		for (Object gameObj : games) {
+		 if (!(gameObj instanceof JSONObject game)) {
+			continue;
+		 }
+		 Object gameDateObj = game.get("gameDate");
+		 if (gameDateObj == null) {
+			continue;
+		 }
+		 try {
+			LocalDate gameDate = LocalDate.parse(gameDateObj.toString());
+			if (previewDate.equals(gameDate)) {
+			 String home = "?";
+			 Object homeTeamObj = game.get("homeTeam");
+			 if (homeTeamObj instanceof Map<?, ?> homeMap) {
+				Object homeName = homeMap.get("clubName");
+				home = homeName != null ? homeName.toString() : "?";
+			 }
+			 String away = "?";
+			 Object awayTeamObj = game.get("awayTeam");
+			 if (awayTeamObj instanceof Map<?, ?> awayMap) {
+				Object awayName = awayMap.get("clubName");
+				away = awayName != null ? awayName.toString() : "?";
+			 }
+			 Object timeObj = game.get("gameTime");
+			 String time = timeObj != null ? timeObj.toString() : "";
+			 Object competitionObj = game.get("competition");
+			 String competition = competitionObj != null ? competitionObj.toString() : "";
+			 String message = String.format("Erinnerung: In 2 Tagen findet ein Herren-Spiel statt:%n%n%s | %s Uhr | %s%n%s - %s",
+					 gameDate.format(dateFormatter), time, competition, home, away);
+			 if (telegramBot != null) {
+				telegramBot.sendAutomaticMatchHint(message);
+				sentHints++;
+			 } else {
+				logger.warn("TelegramBot not available; cannot send automatic match hint");
+			 }
+			}
+		 } catch (Exception e) {
+			logger.error("Could not process game for team '{}' during automatic match hint check", team, e);
+		 }
+		}
+	 }
+	 logger.info("Sent {} automatic Herren match hint(s)", sentHints);
+	} catch (Exception e) {
+	 logger.error("Automatic Herren match hint check failed", e);
 	}
  }
 

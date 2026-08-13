@@ -37,7 +37,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ResultCreator {
- private static final String STATIC_REPORT_TEXT = "🔴⚪\n\n📸: @arminvogtland @netti_1909";
+ private static final String CLUB_CIRCLES = "🔴⚪";
+ private static final String PHOTO_CREDITS = "📸: @arminvogtland @netti_1909";
  private static final Pattern GAME_URL_PATTERN = Pattern.compile("^https://www\\.fussball\\.de/spiel/.+/-/spiel/([A-Z0-9]+)(?:#!/)?$", Pattern.CASE_INSENSITIVE);
  private static final Pattern EVENT_PATTERN = Pattern.compile("<div class=\"row-event (event-left|event-right)[^\"]*\">(.*?)(?=<div class=\"row-event |<div class=\"row-time\")", Pattern.DOTALL);
  private static final Pattern MINUTE_PATTERN = Pattern.compile("<div class=\"valign-inner\">(.*?)</div>", Pattern.DOTALL);
@@ -81,13 +82,13 @@ public class ResultCreator {
 	String report = match.get("report") == null ? "" : match.get("report").toString().trim();
 	StringBuilder fullReportBuilder = new StringBuilder();
 	fullReportBuilder.append(matchDetails.matchLine().trim());
-	if (!headline.isEmpty()) {
-	 fullReportBuilder.append("\n\n").append(headline);
-	}
 	if (!matchDetails.scorers().isEmpty()) {
 	 fullReportBuilder.append("\n\n").append(matchDetails.scorers());
 	}
-	fullReportBuilder.append("\n\n").append(STATIC_REPORT_TEXT);
+	fullReportBuilder.append("\n\n").append(PHOTO_CREDITS);
+	if (!headline.isEmpty()) {
+	 fullReportBuilder.append("\n\n").append(headline).append(CLUB_CIRCLES);
+	}
 	if (!report.isEmpty()) {
 	 fullReportBuilder.append("\n\n").append(report);
 	}
@@ -154,7 +155,7 @@ public class ResultCreator {
 	Map<String, String> result = new HashMap<>();
 	result.put("result", details.result());
 	result.put("matchLine", details.matchLine());
-	result.put("staticText", STATIC_REPORT_TEXT);
+	result.put("staticText", PHOTO_CREDITS);
 	result.put("scorers", details.scorers());
 	return new JSONObject(result);
  }
@@ -295,11 +296,28 @@ public class ResultCreator {
  }
 
  public void savePicture(JSONObject c, MultipartFile file) throws IOException {
-	 targetImg = new BufferedImage(1080, 1350, BufferedImage.TYPE_INT_RGB);
 	 BufferedImage image = ImageIO.read(file.getInputStream());
+	 savePicture(c, image);
+ }
+
+ public void addImage(BufferedImage image) throws IOException {
+	 JSONObject c = new JSONObject();
+	 c.put("x", 0.0);
+	 c.put("y", 0.0);
+	 c.put("w", (double) image.getWidth());
+	 c.put("h", (double) image.getHeight());
+	 savePicture(c, image);
+ }
+
+ public void savePicture(JSONObject c, BufferedImage image) throws IOException {
+	 targetImg = new BufferedImage(1080, 1350, BufferedImage.TYPE_INT_RGB);
 	 BufferedImage subImg = image.getSubimage(Helper.getC(c, "x"), Helper.getC(c, "y"), Helper.getC(c, "w"), Helper.getC(c, "h"));
 	 Graphics2D g2 = targetImg.createGraphics();
-	 g2.drawImage(subImg, 0, 0, 1080, 1350, null);
+	 try {
+		 g2.drawImage(subImg, 0, 0, 1080, 1350, null);
+	 } finally {
+		 g2.dispose();
+	 }
 	 allImg.add(targetImg);
  }
 }

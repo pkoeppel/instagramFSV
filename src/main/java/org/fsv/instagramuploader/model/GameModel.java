@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GameModel {
-  private final String gameId;
   @Getter
  private final String competition;
  private final LocalDate gameDate;
@@ -26,10 +25,11 @@ public class GameModel {
  @Setter
  @Getter
  private String gameUrl;
+ @Setter
+ @Getter
+ private String savePath;
  
  public GameModel(JSONObject game, String team) {
-	this.gameId = game.containsKey("id") && game.get("id") != null ? game.get("id").toString()
-			: game.containsKey("gameId") && game.get("gameId") != null ? game.get("gameId").toString() : null;
 	this.competition = game.containsKey("competition") && game.get("competition") != null ? game.get("competition").toString() : null;
 	String dateStr = game.containsKey("gameDate") && game.get("gameDate") != null ? game.get("gameDate").toString() : null;
 	this.gameDate = dateStr != null ? LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd")) : null;
@@ -48,10 +48,12 @@ public class GameModel {
 	if (game.containsKey("gameUrl") && game.get("gameUrl") != null) {
 		this.gameUrl = game.get("gameUrl").toString();
 	}
+	if (game.containsKey("savePath") && game.get("savePath") != null) {
+		this.savePath = game.get("savePath").toString();
+	}
  }
 
- public GameModel(String gameId, String competition, LocalDate gameDate, String gameTime, String team) {
-	this.gameId = gameId;
+ public GameModel(String competition, LocalDate gameDate, String gameTime, String team) {
 	this.competition = competition;
 	this.gameDate = gameDate;
 	this.gameTime = gameTime;
@@ -109,7 +111,7 @@ public class GameModel {
 	result.put("gameTime", gameTime);
 	result.put("matchDay", matchDay);
 	result.put("gameUrl", gameUrl);
-	result.put("id", gameId);
+	result.put("savePath", savePath);
 	return new JSONObject(result);
  }
  

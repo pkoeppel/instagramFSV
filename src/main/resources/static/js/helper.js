@@ -198,9 +198,6 @@ function setCharCount() {
     if (currentMenMatchDetails !== null) {
         fullReport = currentMenMatchDetails.matchLine.trim();
     }
-    if (headline) {
-        fullReport = fullReport ? fullReport + '\n\n' + headline : headline;
-    }
     if (currentMenMatchDetails !== null) {
         if (currentMenMatchDetails.scorers && currentMenMatchDetails.scorers.trim()) {
             fullReport = fullReport ? fullReport + '\n\n' + currentMenMatchDetails.scorers.trim() : currentMenMatchDetails.scorers.trim();
@@ -208,6 +205,9 @@ function setCharCount() {
         if (currentMenMatchDetails.staticText) {
             fullReport = fullReport ? fullReport + '\n\n' + currentMenMatchDetails.staticText.trim() : currentMenMatchDetails.staticText.trim();
         }
+    }
+    if (headline) {
+        fullReport = fullReport ? fullReport + '\n\n' + headline + '🔴⚪' : headline + '🔴⚪';
     }
     if (report) {
         fullReport = fullReport ? fullReport + '\n\n' + report : report;
