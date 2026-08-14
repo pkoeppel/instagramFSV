@@ -74,6 +74,10 @@ public class Helper {
 	}
  }
 
+ public static Map<String, Object> getCoordinateBlock(String key) {
+	return coordinates != null ? coordinates.get(key) : null;
+ }
+
  public static String wrapString(String string, int charWrap) {
 	int lastBreak = 0;
 	int nextBreak = charWrap;
@@ -148,6 +152,9 @@ public class Helper {
 		 case "top" -> posY = 0;
 		 case "left" -> posX = 0;
 		 case "right" -> posX = backX - sizeX;
+		 default -> {
+			 // no alignment adjustment
+		 }
 	 }
 
 	 // If fac is not used as an axis offset, treat it as a shrink factor

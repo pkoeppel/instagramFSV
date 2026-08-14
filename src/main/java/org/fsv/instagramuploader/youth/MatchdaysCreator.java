@@ -2,6 +2,7 @@ package org.fsv.instagramuploader.youth;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.fsv.instagramuploader.ClubSelector;
 import org.fsv.instagramuploader.FontClass;
 import org.fsv.instagramuploader.Helper;
@@ -26,6 +27,7 @@ public class MatchdaysCreator {
  private static final String tmpURL = "src/main/resources/pictures/template/youth/matchdayTemp.jpg";
  private static final Logger logger = LoggerFactory.getLogger(MatchdaysCreator.class);
  
+ @SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "Anonymous TypeReference is standard Jackson pattern")
  public Map<String, Integer> createMatches(ArrayList<GameModel> mmArr) throws IOException, ParseException {
 	logger.info("Creating youth matchday images for {} matches", mmArr.size());
 	List<LocalDate> matchDates = new ArrayList<>();

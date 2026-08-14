@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.servlet.http.HttpServletResponse;
+import org.fsv.instagramuploader.men.LineupCreator;
 import org.fsv.instagramuploader.men.MatchdayCreator;
 import org.fsv.instagramuploader.men.ResultCreator;
 import org.fsv.instagramuploader.model.GameModel;
@@ -58,12 +59,14 @@ public class Controller {
  ResultsCreator rsc;
  MatchdayCreator mc;
  ResultCreator rc;
+ LineupCreator lineupCreator;
 
  public Controller() {
 	this.msc = new MatchdaysCreator();
 	this.rsc = new ResultsCreator();
 	this.mc = new MatchdayCreator();
 	this.rc = new ResultCreator();
+	this.lineupCreator = new LineupCreator();
  }
 
  @GetMapping("/getMatches")
@@ -91,6 +94,7 @@ public class Controller {
 	}
  }
 
+ @SuppressFBWarnings(value = "WMI_WRONG_MAP_ITERATOR", justification = "JSONObject is a raw Map; keySet iteration with get is safe")
  private void sendAutomaticHerrenMatchHints() {
 	try {
 	 JSONObject allMatches = (JSONObject) readJsonFile("allMatches.json");
@@ -140,13 +144,13 @@ public class Controller {
 				logger.warn("TelegramBot not available; cannot send automatic match hint");
 			 }
 			}
-		 } catch (Exception e) {
+		 } catch (RuntimeException e) {
 			logger.error("Could not process game for team '{}' during automatic match hint check", team, e);
 		 }
 		}
 	 }
 	 logger.info("Sent {} automatic Herren match hint(s)", sentHints);
-	} catch (Exception e) {
+	} catch (IOException | ParseException | RuntimeException e) {
 	 logger.error("Automatic Herren match hint check failed", e);
 	}
  }
@@ -243,6 +247,7 @@ public class Controller {
 	}
  }
 
+ @SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "Anonymous TypeReference is standard Jackson pattern")
  @DeleteMapping("/deleteClub")
  public ResponseEntity<String> deleteClub(@RequestParam("club") String currentClub) {
 	try {
@@ -317,6 +322,26 @@ public class Controller {
 	}
  }
 
+ private boolean isValidPlayersData(Map<String, Object> playersData) {
+	if (playersData == null || !(playersData.get("players") instanceof List<?> players)) {
+	 return false;
+	}
+	for (Object entry : players) {
+	 if (!(entry instanceof Map<?, ?> player)) {
+		return false;
+	 }
+	 Object number = player.get("number");
+	 if (number == null || !Helper.isNumeric(number.toString()) || number.toString().isBlank()) {
+		return false;
+	 }
+	 Object name = player.get("name");
+	 if (name == null || name.toString().isBlank()) {
+		return false;
+	 }
+	}
+	return true;
+ }
+
  private boolean isValidTeamData(Map<String, Map<String, String>> teamData) {
 	if (teamData == null || teamData.isEmpty()) {
 	 return false;
@@ -359,6 +384,53 @@ public class Controller {
 	 return new ResponseEntity<>(result, HttpStatus.OK);
 	} catch (IOException | ParseException e) {
 	 logger.error("Could not load clubs.json", e);
+	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+	}
+ }
+
+ @GetMapping("/getPlayers")
+ public ResponseEntity<JSONObject> getPlayers() {
+	try {
+	 JSONObject result = (JSONObject) readJsonFile("players.json");
+	 logger.debug("Loaded players list");
+	 return new ResponseEntity<>(result, HttpStatus.OK);
+	} catch (IOException | ParseException e) {
+	 logger.error("Could not load players.json", e);
+	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+	}
+ }
+
+ @PostMapping("/updatePlayers")
+ public ResponseEntity<String> updatePlayers(@RequestBody Map<String, Object> playersData) {
+	logger.info("Updating players list");
+	if (!isValidPlayersData(playersData)) {
+	 logger.warn("Rejected invalid players data");
+	 return new ResponseEntity<>("Invalid players data", HttpStatus.BAD_REQUEST);
+	}
+	try {
+	 OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(new File("src/main/resources/templates/players.json"), playersData);
+	 logger.info("Players list updated successfully");
+	 return new ResponseEntity<>("Success", HttpStatus.OK);
+	} catch (IOException e) {
+	 logger.error("Could not update players.json", e);
+	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+	}
+ }
+
+ @PostMapping("/postMenLineup")
+ public ResponseEntity<String> postMenLineup(
+		 @RequestParam("match") String matchJson,
+		 @RequestParam("players") String playersJson,
+		 @RequestParam(value = "trainer", required = false) String trainer) {
+	try {
+	 logger.info("Creating men lineup image");
+	 String savePath = lineupCreator.createLineup(matchJson, playersJson, trainer);
+	 if (savePath == null) {
+		return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+	 }
+	 return new ResponseEntity<>(savePath, HttpStatus.OK);
+	} catch (IOException | ParseException e) {
+	 logger.error("Could not create men lineup image", e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
  }
@@ -626,6 +698,7 @@ public class Controller {
 	String imagePath = switch (selectedTemplate) {
 	 case "men", "men-matchday" -> "src/main/resources/pictures/template/men/matchdayTemp.png";
 	 case "men-result" -> "src/main/resources/pictures/template/men/resultTemp.png";
+	 case "men-lineup" -> "src/main/resources/pictures/template/men/teamTemp.png";
 	 case "youth", "youth-matchday" -> "src/main/resources/pictures/template/youth/matchdayTemp.jpg";
 	 case "youth-result" -> "src/main/resources/pictures/template/youth/resultTemp.jpg";
 	 default -> null;

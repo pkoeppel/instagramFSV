@@ -13,6 +13,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class ClubSelector {
  private static final Logger logger = LoggerFactory.getLogger(ClubSelector.class);
@@ -48,6 +51,7 @@ public class ClubSelector {
 	return club;
  }
 
+ @SuppressFBWarnings(value = "WMI_WRONG_MAP_ITERATOR", justification = "JSONObject is a raw Map; keySet iteration with get is safe")
  private static Object findBestClubMatch(JSONObject clubsData, String clubName) {
 	if (clubName == null || clubName.isBlank()) {
 	 return null;
@@ -70,7 +74,7 @@ public class ClubSelector {
  }
 
  private static String normalize(String value) {
-	return value.toLowerCase().replaceAll("[^a-z0-9]", "");
+	return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
  }
 
  public static ClubModel searchClubDetails(String club) throws IOException, ParseException {
