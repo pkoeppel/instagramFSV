@@ -5,19 +5,25 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.fsv.instagramuploader.ClubSelector;
 import org.fsv.instagramuploader.Controller;
 import org.fsv.instagramuploader.Helper;
+import org.fsv.instagramuploader.men.LineupCreator;
 import org.fsv.instagramuploader.men.MatchdayCreator;
 import org.fsv.instagramuploader.men.ResultCreator;
 import org.fsv.instagramuploader.model.ClubModel;
 import org.fsv.instagramuploader.model.GameModel;
+import org.fsv.instagramuploader.model.PlayerModel;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -32,6 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
@@ -53,12 +60,20 @@ public class TelegramBot extends TelegramLongPollingBot {
     private GameModel pendingMatchdayGame;
     private BufferedImage pendingMatchdayPhoto;
     private String pendingMatchdayAction;
+    private final LineupCreator lineupCreator;
+    private GameModel pendingLineupGame;
+    private String pendingLineupAction;
+    private List<PlayerModel> pendingLineupPlayers;
+    private int pendingLineupIndex;
+    private String pendingLineupTrainer;
+    private Integer pendingLineupMessageId;
 
     public TelegramBot(String botName, String botToken) {
         super(botToken);
         this.botName = botName;
         this.botToken = botToken;
         controller = new Controller();
+        lineupCreator = new LineupCreator();
     }
 
     @Override
@@ -72,7 +87,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (update.hasCallbackQuery()) {
                 Long chatId = update.getCallbackQuery().getMessage().getChatId();
                 if (allowedChatIds.contains(chatId)) {
-                    handleCallbackQuery(chatId.toString(), update.getCallbackQuery().getData());
+                    handleCallbackQuery(chatId.toString(), update.getCallbackQuery());
                 } else {
                     log.error("Unallowed user: {}", chatId);
                 }
@@ -96,7 +111,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void handleCallbackQuery(String chatId, String lastCall) throws IOException, ParseException, URISyntaxException {
+    private void handleCallbackQuery(String chatId, CallbackQuery callbackQuery) throws IOException, ParseException, URISyntaxException {
+        if (callbackQuery == null) {
+            return;
+        }
+        try {
+            execute(AnswerCallbackQuery.builder().callbackQueryId(callbackQuery.getId()).build());
+        } catch (TelegramApiException e) {
+            log.error("Could not answer callback query", e);
+        }
+        String lastCall = callbackQuery.getData();
         if ("createPreview".equals(lastCall)) {
             resetResultFlow();
             resetMatchdayPreview();
@@ -109,14 +133,25 @@ public class TelegramBot extends TelegramLongPollingBot {
             startTeamSelection(chatId, "createResult");
             return;
         }
+        if ("createLineup".equals(lastCall)) {
+            resetResultFlow();
+            resetMatchdayPreview();
+            startTeamSelection(chatId, "createLineup");
+            return;
+        }
         if ("cancel".equals(lastCall)) {
             resetResultFlow();
             resetMatchdayPreview();
+            resetLineupFlow();
             sendStartMsg(chatId, "Ok!");
             return;
         }
+        if (lastCall != null && lastCall.startsWith("lineup_role_") && "lineup_role".equals(pendingLineupAction)) {
+            handleLineupRoleCallback(chatId, lastCall.substring("lineup_role_".length()));
+            return;
+        }
         String[] paths = lastCall.split("_");
-        if (paths.length < 2 || (!"createPreview".equals(paths[0]) && !"createResult".equals(paths[0]))) {
+        if (paths.length < 2 || (!"createPreview".equals(paths[0]) && !"createResult".equals(paths[0]) && !"createLineup".equals(paths[0]))) {
             return;
         }
         String mode = paths[0];
@@ -182,6 +217,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             gameModel.setAwayTeam(away);
             if ("createResult".equals(mode)) {
                 startResultInput(chatId, gameModel, lastCall);
+            } else if ("createLineup".equals(mode)) {
+                startLineupInput(chatId, gameModel, lastCall);
             } else {
                 startMatchdayPhotoRequest(chatId, gameModel);
             }
@@ -401,14 +438,18 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         row1.add(createInlineButton("Spieltagsvorschau erstellen", "createPreview"));
         keyboard.add(row1);
-
+        
         List<InlineKeyboardButton> row2 = new ArrayList<>();
-        row2.add(createInlineButton("Spieltagsergebnis erstellen", "createResult"));
+        row2.add(createInlineButton("Startaufstellung erstellen", "createLineup"));
         keyboard.add(row2);
-
+        
         List<InlineKeyboardButton> row3 = new ArrayList<>();
-        row3.add(createInlineButton("Abbruch", "cancel"));
+        row3.add(createInlineButton("Spieltagsergebnis erstellen", "createResult"));
         keyboard.add(row3);
+        
+        List<InlineKeyboardButton> row4 = new ArrayList<>();
+        row4.add(createInlineButton("Abbruch", "cancel"));
+        keyboard.add(row4);
 
         inlineKeyboardMarkup.setKeyboard(keyboard);
         sendMsg(chatId, msg, inlineKeyboardMarkup);
@@ -423,15 +464,525 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendSimpleMsg(chatId, "Schreibe deine Headline!");
     }
 
+    private void startLineupInput(String chatId, GameModel gameModel, String lastCall) {
+        resetResultFlow();
+        resetMatchdayPreview();
+        resetLineupFlow();
+        this.pendingLineupGame = gameModel;
+        try {
+            this.pendingLineupPlayers = loadPlayersFromJson();
+        } catch (IOException | ParseException e) {
+            log.error("Could not load players.json", e);
+            sendSimpleMsg(chatId, "Spielerliste konnte nicht geladen werden.");
+            return;
+        }
+        this.pendingLineupIndex = 0;
+        this.pendingLineupTrainer = null;
+        this.pendingLineupAction = "lineup_role";
+        askRoleForCurrentPlayer(chatId);
+    }
+
+    private List<PlayerModel> loadPlayersFromJson() throws IOException, ParseException {
+        JSONObject data = (JSONObject) new JSONParser().parse(new InputStreamReader(new FileInputStream("src/main/resources/templates/players.json"), StandardCharsets.UTF_8));
+        JSONArray arr = (JSONArray) data.get("players");
+        List<PlayerModel> players = new ArrayList<>();
+        if (arr == null) {
+            return players;
+        }
+        for (Object o : arr) {
+            JSONObject p = (JSONObject) o;
+            PlayerModel player = new PlayerModel();
+            player.setNumber(((Number) p.get("number")).intValue());
+            player.setName(p.get("name") != null ? p.get("name").toString() : "");
+            player.setRole("absent");
+            player.setGoalkeeper(false);
+            player.setCaptain(false);
+            players.add(player);
+        }
+        return players;
+    }
+
+    private void askRoleForCurrentPlayer(String chatId) {
+        if (pendingLineupPlayers == null || pendingLineupIndex >= pendingLineupPlayers.size()) {
+            pendingLineupAction = "lineup_add";
+            String doneText = "Alle Spieler abgefragt.\n\nWeiteren Spieler hinzufügen? Format: <Nummer>, <Name>, <Start/Bank>\nOder 'Fertig' zum Fortfahren.";
+            if (pendingLineupMessageId != null) {
+                editMessageText(chatId, pendingLineupMessageId, doneText, null);
+            } else {
+                sendSimpleMsg(chatId, doneText);
+            }
+            return;
+        }
+        PlayerModel p = pendingLineupPlayers.get(pendingLineupIndex);
+        String text = String.format("Spieler %d/%d: %d %s", pendingLineupIndex + 1, pendingLineupPlayers.size(), p.getNumber(), p.getName());
+        InlineKeyboardMarkup keyboard = createRoleKeyboard();
+        if (pendingLineupMessageId != null) {
+            editMessageText(chatId, pendingLineupMessageId, text, keyboard);
+        } else {
+            SendMessage message = SendMessage.builder().chatId(chatId).text(text).replyMarkup(keyboard).build();
+            try {
+                Message sent = execute(message);
+                pendingLineupMessageId = sent.getMessageId();
+            } catch (TelegramApiException e) {
+                log.error("Could not send role selection message", e);
+            }
+        }
+    }
+
+    private InlineKeyboardMarkup createRoleKeyboard() {
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        row.add(createInlineButton("Start", "lineup_role_start"));
+        row.add(createInlineButton("Bank", "lineup_role_bench"));
+        row.add(createInlineButton("Abwesend", "lineup_role_absent"));
+        keyboard.add(row);
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(keyboard);
+        return markup;
+    }
+
+    private void handleLineupRoleCallback(String chatId, String roleInput) {
+        String role = normalizeRole(roleInput);
+        if (role == null) {
+            editMessageText(chatId, pendingLineupMessageId, "Ungültige Auswahl. Bitte erneut versuchen.", createRoleKeyboard());
+            return;
+        }
+        PlayerModel current = pendingLineupPlayers.get(pendingLineupIndex);
+        current.setRole(role);
+        pendingLineupIndex++;
+        askRoleForCurrentPlayer(chatId);
+    }
+
+    private void editMessageText(String chatId, Integer messageId, String text, InlineKeyboardMarkup keyboard) {
+        if (messageId == null) {
+            sendSimpleMsg(chatId, text);
+            return;
+        }
+        try {
+            EditMessageText edit = EditMessageText.builder()
+                    .chatId(chatId)
+                    .messageId(messageId)
+                    .text(text)
+                    .replyMarkup(keyboard)
+                    .build();
+            execute(edit);
+        } catch (TelegramApiException e) {
+            log.error("Could not edit message", e);
+            sendSimpleMsg(chatId, text);
+        }
+    }
+
+    private void handleLineupInput(String chatId, String text) {
+        if (text == null) {
+            return;
+        }
+        String input = text.trim();
+        switch (pendingLineupAction) {
+            case "lineup_role" -> handleLineupRoleInput(chatId, input);
+            case "lineup_add" -> handleLineupAddInput(chatId, input);
+            case "lineup_summary" -> handleLineupSummaryInput(chatId, input);
+            case "lineup_keepers" -> handleLineupKeepersInput(chatId, input);
+            case "lineup_captain" -> handleLineupCaptainInput(chatId, input);
+            case "lineup_trainer" -> handleLineupTrainerInput(chatId, input);
+            default -> sendSimpleMsg(chatId, "Unbekannter Schritt im Aufstellungs-Flow.");
+        }
+    }
+
+    private void handleLineupRoleInput(String chatId, String input) {
+        String role = normalizeRole(input);
+        if (role == null) {
+            sendSimpleMsg(chatId, "Ungültige Eingabe. Antworte 'Start', 'Bank' oder 'Abwesend'.");
+            return;
+        }
+        PlayerModel current = pendingLineupPlayers.get(pendingLineupIndex);
+        current.setRole(role);
+        pendingLineupIndex++;
+        askRoleForCurrentPlayer(chatId);
+    }
+
+    private String normalizeRole(String input) {
+        if ("start".equalsIgnoreCase(input) || "startelf".equalsIgnoreCase(input) || "start11".equalsIgnoreCase(input) || "elf".equalsIgnoreCase(input)) {
+            return "start";
+        }
+        if ("bench".equalsIgnoreCase(input) || "bank".equalsIgnoreCase(input)) {
+            return "bench";
+        }
+        if ("absent".equalsIgnoreCase(input) || "abwesend".equalsIgnoreCase(input) || "nicht".equalsIgnoreCase(input) || "none".equalsIgnoreCase(input)) {
+            return "absent";
+        }
+        return null;
+    }
+
+    private void handleLineupAddInput(String chatId, String input) {
+        if (isDone(input)) {
+            if (!hasSelectedPlayers()) {
+                sendSimpleMsg(chatId, "Bitte wähle mindestens einen Spieler für die Aufstellung aus.");
+                return;
+            }
+            sendSummary(chatId);
+            return;
+        }
+        PlayerModel player = parseAddPlayerInput(input);
+        if (player == null) {
+            sendSimpleMsg(chatId, "Ungültiges Format. Beispiel: 25, Max Mustermann, Start\nOder 'Fertig' zum Fortfahren.");
+            return;
+        }
+        pendingLineupPlayers.add(player);
+        sendSimpleMsg(chatId, String.format("%s (%d) hinzugefügt. Nächsten Spieler senden oder 'Fertig'.", player.getName(), player.getNumber()));
+    }
+
+    private boolean isDone(String input) {
+        return "fertig".equalsIgnoreCase(input) || "ok".equalsIgnoreCase(input) || "weiter".equalsIgnoreCase(input) || "done".equalsIgnoreCase(input);
+    }
+
+    private boolean hasSelectedPlayers() {
+        return pendingLineupPlayers != null && pendingLineupPlayers.stream().anyMatch(p -> "start".equalsIgnoreCase(p.getRole()) || "bench".equalsIgnoreCase(p.getRole()));
+    }
+
+    private PlayerModel parseAddPlayerInput(String input) {
+        String[] parts = input.split(",");
+        if (parts.length != 3) {
+            return null;
+        }
+        try {
+            int number = Integer.parseInt(parts[0].trim());
+            if (number < 1) {
+                return null;
+            }
+            String name = parts[1].trim();
+            if (name.isBlank()) {
+                return null;
+            }
+            String role = normalizeRole(parts[2].trim());
+            if (role == null || "absent".equalsIgnoreCase(role)) {
+                return null;
+            }
+            PlayerModel player = new PlayerModel();
+            player.setNumber(number);
+            player.setName(name);
+            player.setRole(role);
+            return player;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private boolean isKeeperFlag(String flag) {
+        return "tw".equalsIgnoreCase(flag) || "torwart".equalsIgnoreCase(flag) || "keeper".equalsIgnoreCase(flag) || "goalkeeper".equalsIgnoreCase(flag);
+    }
+
+    private boolean isCaptainFlag(String flag) {
+        return "c".equalsIgnoreCase(flag) || "captain".equalsIgnoreCase(flag) || "kapitän".equalsIgnoreCase(flag) || "k".equalsIgnoreCase(flag);
+    }
+
+    private void sendSummary(String chatId) {
+        pendingLineupAction = "lineup_summary";
+        String summary = buildSummaryMessage();
+        sendSimpleMsg(chatId, summary);
+        sendSimpleMsg(chatId, "Sende 'OK' zum Fortfahren oder kopiere die vorherige Nachricht, ändere Werte und sende sie zurück.\nFormat pro Zeile: Nummer;Name;Rolle (Start, Bank, Abwesend)\nTrainer am Ende: trainer;Name");
+    }
+
+    private String buildSummaryMessage() {
+        StringBuilder sb = new StringBuilder();
+        for (PlayerModel p : pendingLineupPlayers) {
+            sb.append(p.getNumber()).append(";").append(p.getName()).append(";").append(formatRole(p.getRole())).append("\n");
+        }
+        String trainer = pendingLineupTrainer != null && !pendingLineupTrainer.isBlank() ? pendingLineupTrainer : "Toni Seidel";
+        sb.append("trainer;").append(trainer);
+        return sb.toString();
+    }
+
+    private String formatRole(String role) {
+        if ("start".equalsIgnoreCase(role)) {
+            return "Start";
+        }
+        if ("bench".equalsIgnoreCase(role)) {
+            return "Bank";
+        }
+        if ("absent".equalsIgnoreCase(role)) {
+            return "Abwesend";
+        }
+        return role;
+    }
+
+    private void handleLineupSummaryInput(String chatId, String input) {
+        if (isConfirmation(input)) {
+            if (!hasSelectedPlayers()) {
+                sendSimpleMsg(chatId, "Bitte wähle mindestens einen Spieler aus.");
+                return;
+            }
+            pendingLineupAction = "lineup_keepers";
+            sendKeepersPrompt(chatId);
+            return;
+        }
+        List<PlayerModel> parsed = parseSummaryInput(input);
+        if (parsed == null) {
+            sendSimpleMsg(chatId, "Ungültiges Format. Bitte verwende das gezeigte Format.");
+            return;
+        }
+        pendingLineupPlayers = parsed;
+        sendSummary(chatId);
+    }
+
+    private boolean isConfirmation(String input) {
+        return "ok".equalsIgnoreCase(input) || "ja".equalsIgnoreCase(input) || "fertig".equalsIgnoreCase(input) || "weiter".equalsIgnoreCase(input);
+    }
+
+    private List<PlayerModel> parseSummaryInput(String input) {
+        List<PlayerModel> parsed = new ArrayList<>();
+        String[] lines = input.split("\\r?\\n");
+        for (String line : lines) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            if (trimmed.toLowerCase().startsWith("trainer")) {
+                String[] parts = trimmed.split(";", 2);
+                if (parts.length > 1) {
+                    pendingLineupTrainer = parts[1].trim();
+                } else {
+                    pendingLineupTrainer = null;
+                }
+                continue;
+            }
+            String[] parts = trimmed.split(";");
+            if (parts.length < 3) {
+                return null;
+            }
+            try {
+                int number = Integer.parseInt(parts[0].trim());
+                if (number < 1) {
+                    return null;
+                }
+                String name = parts[1].trim();
+                String role = normalizeRole(parts[2].trim());
+                if (role == null) {
+                    return null;
+                }
+                PlayerModel player = new PlayerModel();
+                player.setNumber(number);
+                player.setName(name);
+                player.setRole(role);
+                if (parts.length >= 4 && isKeeperFlag(parts[3].trim())) {
+                    player.setGoalkeeper(true);
+                }
+                if (parts.length >= 5 && isCaptainFlag(parts[4].trim())) {
+                    player.setCaptain(true);
+                }
+                parsed.add(player);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return parsed;
+    }
+
+    private void sendKeepersPrompt(String chatId) {
+        List<Integer> keepers = pendingLineupPlayers.stream()
+                .filter(this::isSelected)
+                .filter(PlayerModel::isGoalkeeper)
+                .map(PlayerModel::getNumber)
+                .toList();
+        String current = keepers.isEmpty() ? "keine" : keepers.stream().map(String::valueOf).collect(Collectors.joining(", "));
+        sendSimpleMsg(chatId, "Aktuelle Torwarte: " + current + ".\nGib alle Keeper-Nummern ein (Komma-getrennt) oder 'OK'.");
+    }
+
+    private boolean isSelected(PlayerModel p) {
+        return "start".equalsIgnoreCase(p.getRole()) || "bench".equalsIgnoreCase(p.getRole());
+    }
+
+    private void handleLineupKeepersInput(String chatId, String input) {
+        if (!isConfirmation(input)) {
+            Set<Integer> numbers = parseNumberList(input);
+            if (numbers == null) {
+                sendSimpleMsg(chatId, "Ungültige Eingabe. Bitte gib Keeper-Nummern ein (Komma-getrennt) oder 'OK'.");
+                return;
+            }
+            for (Integer number : numbers) {
+                boolean found = pendingLineupPlayers.stream()
+                        .filter(this::isSelected)
+                        .anyMatch(p -> p.getNumber() == number);
+                if (!found) {
+                    sendSimpleMsg(chatId, "Nummer " + number + " ist nicht in der Aufstellung.");
+                    return;
+                }
+            }
+            pendingLineupPlayers.forEach(p -> {
+                if (isSelected(p)) {
+                    p.setGoalkeeper(numbers.contains(p.getNumber()));
+                } else {
+                    p.setGoalkeeper(false);
+                }
+            });
+        }
+        pendingLineupAction = "lineup_captain";
+        sendCaptainPrompt(chatId);
+    }
+
+    private Set<Integer> parseNumberList(String input) {
+        Set<Integer> numbers = new LinkedHashSet<>();
+        if (input == null || input.isBlank()) {
+            return numbers;
+        }
+        String[] parts = input.split(",");
+        for (String part : parts) {
+            try {
+                int number = Integer.parseInt(part.trim());
+                if (number < 1) {
+                    return null;
+                }
+                numbers.add(number);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return numbers;
+    }
+
+    private void sendCaptainPrompt(String chatId) {
+        Optional<PlayerModel> captain = pendingLineupPlayers.stream()
+                .filter(this::isSelected)
+                .filter(PlayerModel::isCaptain)
+                .findFirst();
+        String current = captain.map(p -> p.getNumber() + " " + p.getName()).orElse("keiner");
+        sendSimpleMsg(chatId, "Aktueller Kapitän: " + current + ".\nGib die Kapitänsnummer ein oder 'OK'.");
+    }
+
+    private void handleLineupCaptainInput(String chatId, String input) {
+        if (!isConfirmation(input)) {
+            try {
+                int number = Integer.parseInt(input.trim());
+                boolean found = pendingLineupPlayers.stream()
+                        .filter(this::isSelected)
+                        .anyMatch(p -> p.getNumber() == number);
+                if (!found) {
+                    sendSimpleMsg(chatId, "Nummer " + number + " ist nicht in der Aufstellung.");
+                    return;
+                }
+                pendingLineupPlayers.forEach(p -> p.setCaptain(false));
+                pendingLineupPlayers.stream()
+                        .filter(p -> p.getNumber() == number)
+                        .findFirst()
+                        .ifPresent(p -> p.setCaptain(true));
+            } catch (NumberFormatException e) {
+                sendSimpleMsg(chatId, "Ungültige Eingabe. Bitte gib die Kapitänsnummer ein oder 'OK'.");
+                return;
+            }
+        }
+        pendingLineupAction = "lineup_trainer";
+        sendTrainerPrompt(chatId);
+    }
+
+    private void sendTrainerPrompt(String chatId) {
+        String trainer = pendingLineupTrainer != null && !pendingLineupTrainer.isBlank() ? pendingLineupTrainer : "Toni Seidel";
+        sendSimpleMsg(chatId, "Aktueller Trainer: " + trainer + ".\nRichtig? Sende 'ja' oder einen neuen Trainer.");
+    }
+
+    private void handleLineupTrainerInput(String chatId, String input) {
+        String trainer = pendingLineupTrainer != null && !pendingLineupTrainer.isBlank() ? pendingLineupTrainer : "Toni Seidel";
+        if (isConfirmation(input)) {
+            generateLineupImage(chatId, trainer);
+            return;
+        }
+        if (input.isBlank()) {
+            sendSimpleMsg(chatId, "Bitte gib einen Trainer ein oder 'ja'.");
+            return;
+        }
+        pendingLineupTrainer = input;
+        sendTrainerPrompt(chatId);
+    }
+
+    private void generateLineupImage(String chatId, String trainer) {
+        if (pendingLineupGame == null) {
+            sendSimpleMsg(chatId, "Kein Spiel ausgewählt. Bitte starte erneut.");
+            resetLineupFlow();
+            return;
+        }
+        try {
+            String playersJson = buildPlayersJson(pendingLineupPlayers);
+            JSONObject matchJson = new JSONObject();
+            matchJson.put("matchDate", pendingLineupGame.getSaveGameDate());
+            matchJson.put("competition", pendingLineupGame.getCompetition());
+            matchJson.put("savePath", pendingLineupGame.getSavePath());
+            matchJson.put("team", pendingLineupGame.getTeam());
+            ClubModel home = pendingLineupGame.getHomeTeam();
+            ClubModel away = pendingLineupGame.getAwayTeam();
+            if (home != null) {
+                matchJson.put("homeClub", home.toJSON());
+            }
+            if (away != null) {
+                matchJson.put("awayClub", away.toJSON());
+            }
+
+            String savePath = lineupCreator.createLineup(matchJson.toJSONString(), playersJson, trainer);
+            if (savePath == null) {
+                sendSimpleMsg(chatId, "Aufstellung konnte nicht erstellt werden.");
+            } else {
+                sendLineupImage(chatId, savePath);
+                sendStartMsg(chatId, "Aufstellung erstellt!");
+            }
+            resetLineupFlow();
+        } catch (ParseException | IOException e) {
+            log.error("Could not create lineup in Telegram flow", e);
+            sendSimpleMsg(chatId, "Fehler beim Erstellen der Aufstellung: " + e.getMessage());
+        }
+    }
+
+    private String buildPlayersJson(List<PlayerModel> players) {
+        JSONArray arr = new JSONArray();
+        for (PlayerModel player : players) {
+            JSONObject obj = new JSONObject();
+            obj.put("number", player.getNumber());
+            obj.put("name", player.getName());
+            obj.put("role", player.getRole());
+            obj.put("goalkeeper", player.isGoalkeeper());
+            obj.put("captain", player.isCaptain());
+            arr.add(obj);
+        }
+        return arr.toJSONString();
+    }
+
+    private void sendLineupImage(String chatId, String fileDir) {
+        Path filePath = Paths.get("src/main/resources/save", fileDir, "Lineup.jpeg");
+        java.io.File file = filePath.toFile();
+        if (!file.exists()) {
+            sendSimpleMsg(chatId, "Aufstellung erstellt, aber Bild konnte nicht gefunden werden.");
+            return;
+        }
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(chatId);
+        sendPhoto.setPhoto(new InputFile(file));
+        try {
+            execute(sendPhoto);
+        } catch (TelegramApiException e) {
+            log.error("Could not send lineup image", e);
+            sendSimpleMsg(chatId, "Aufstellung erstellt, aber Bild konnte nicht gesendet werden.");
+        }
+    }
+
+    private void resetLineupFlow() {
+        pendingLineupGame = null;
+        pendingLineupAction = null;
+        pendingLineupPlayers = null;
+        pendingLineupIndex = 0;
+        pendingLineupTrainer = null;
+        pendingLineupMessageId = null;
+    }
+
     private void handleTextMessage(String chatId, String text) throws IOException, ParseException {
         if ("abbruch".equalsIgnoreCase(text) || "abbrechen".equalsIgnoreCase(text)) {
             resetResultFlow();
             resetMatchdayPreview();
+            resetLineupFlow();
             sendStartMsg(chatId, "Abbruch.");
             return;
         }
         if ("photo".equals(pendingMatchdayAction) && "fertig".equalsIgnoreCase(text)) {
             finalizeMatchdayPreview(chatId);
+            return;
+        }
+        if (pendingLineupAction != null && pendingLineupAction.startsWith("lineup")) {
+            handleLineupInput(chatId, text);
             return;
         }
         if (pendingMatchdayAction != null) {
