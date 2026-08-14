@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Herren Aufstellung</title>
+    <link href="../../style.css" rel="stylesheet">
+    <script src="../../js/helper.js" defer></script>
+    <script src="../../js/navigation.js" defer></script>
+    <style>
+        .lineup-match-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        #playersContainer {
+            display: grid;
+            gap: 10px;
+        }
+
+        .lineup-player-row {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto auto;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        .player-number {
+            font-weight: bold;
+            min-width: 2.2rem;
+            text-align: center;
+            color: #7f1018;
+        }
+
+        input.player-number {
+            width: 3.5rem;
+            padding: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .player-name {
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .player-role label,
+        .player-tag label {
+            display: block;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 2px;
+        }
+
+        .player-role select {
+            font-size: 14px;
+            padding: 4px;
+        }
+
+        .player-tag {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .player-tag input {
+            margin: 0;
+        }
+
+        .add-player-row {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 10px;
+            align-items: end;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 700px) {
+            .lineup-match-row {
+                grid-template-columns: 1fr;
+            }
+
+            .lineup-player-row {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .player-number {
+                grid-column: 1;
+            }
+
+            .player-name {
+                grid-column: 2;
+            }
+
+            .player-role {
+                grid-column: 1 / -1;
+            }
+
+            .player-tag {
+                grid-column: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+<header class="app-header" data-active="men-lineup"></header>
+<main class="page-shell">
+    <div class="page-heading">
+        <h1>Aufstellung Herren</h1>
+        <p>Spiel wählen, Startelf, Bank und Trainer zusammenstellen.</p>
+    </div>
+    <section class="content-card">
+        <div class="lineup-match-row">
+            <div class="mobile-field">
+                <label for="matchSelect">Spiel</label>
+                <select id="matchSelect"></select>
+            </div>
+            <div class="mobile-field">
+                <label for="trainerInput">Trainer</label>
+                <input id="trainerInput" type="text">
+            </div>
+        </div>
+    </section>
+    <section class="content-card">
+        <h2>Spieler</h2>
+        <div id="playersContainer"></div>
+    </section>
+    <section class="content-card">
+        <h2>Weiteren Spieler hinzufügen</h2>
+        <div class="add-player-row">
+            <div class="mobile-field">
+                <label for="newPlayerNumber">Nummer</label>
+                <input id="newPlayerNumber" type="number" min="1">
+            </div>
+            <div class="mobile-field">
+                <label for="newPlayerName">Name</label>
+                <input id="newPlayerName" type="text">
+            </div>
+            <button class="primary-action" type="button" onclick="addPlayer()">Hinzufügen</button>
+        </div>
+    </section>
+    <div class="button-stack">
+        <button class="primary-action" id="createLineupBtn" onclick="createLineup()">Aufstellung erstellen</button>
+    </div>
+</main>
+
+<script>
+    let playersData = [];
+    let matchesData = [];
+
+    async function init() {
+        try {
+            const [matches, playersResponse] = await Promise.all([
+                fetchJson('/getAllMenMatches'),
+                fetchJson('/getPlayers')
+            ]);
+            matchesData = matches || [];
+            playersData = (playersResponse && playersResponse.players) ? playersResponse.players : [];
+            renderMatches();
+            renderPlayers();
+        } catch (error) {
+            console.error('Error loading data: ', error);
+        }
+    }
+
+    function renderMatches() {
+        const select = document.getElementById('matchSelect');
+        select.replaceChildren();
+        if (matchesData.length === 0) {
+            const option = document.createElement('option');
+            option.textContent = 'Keine gespeicherten Spiele vorhanden';
+            option.value = '';
+            select.appendChild(option);
+            return;
+        }
+        const fragment = document.createDocumentFragment();
+        matchesData.forEach(match => {
+            const option = document.createElement('option');
+            option.textContent = `${match.matchDate}, ${match.homeClub.clubName} VS ${match.awayClub.clubName}, ${match.competition}`;
+            option.value = JSON.stringify(match);
+            fragment.appendChild(option);
+        });
+        select.appendChild(fragment);
+    }
+
+    function createPlayerRow(player, index) {
+        const row = document.createElement('div');
+        row.className = 'lineup-player-row';
+        row.innerHTML = `
+            <input class="player-number" type="number" min="1" id="number-${index}" value="${player.number}">
+            <span class="player-name">${player.name}</span>
+            <div class="player-role">
+                <label for="role-${index}">Einsatz</label>
+                <select id="role-${index}" onchange="updateRole(${index})">
+                    <option value="absent" selected>Nicht dabei</option>
+                    <option value="start">Startelf</option>
+                    <option value="bench">Bank</option>
+                </select>
+            </div>
+            <div class="player-tag">
+                <label for="gk-${index}">TW</label>
+                <input type="radio" name="goalkeeper" id="gk-${index}" value="${index}" disabled>
+            </div>
+            <div class="player-tag">
+                <label for="cap-${index}">C</label>
+                <input type="radio" name="captain" id="cap-${index}" value="${index}" disabled>
+            </div>
+        `;
+        return row;
+    }
+
+    function renderPlayers() {
+        const container = document.getElementById('playersContainer');
+        container.replaceChildren();
+        if (playersData.length === 0) {
+            container.textContent = 'Keine Spieler in players.json hinterlegt.';
+            return;
+        }
+        const fragment = document.createDocumentFragment();
+        playersData.forEach((player, index) => {
+            fragment.appendChild(createPlayerRow(player, index));
+        });
+        container.appendChild(fragment);
+    }
+
+    function addPlayer() {
+        const numberInput = document.getElementById('newPlayerNumber');
+        const nameInput = document.getElementById('newPlayerName');
+        const number = parseInt(numberInput.value, 10);
+        const name = nameInput.value.trim();
+
+        if (isNaN(number) || number < 1) {
+            alert('Bitte eine gültige Spielernummer eingeben.');
+            return;
+        }
+        if (!name) {
+            alert('Bitte einen Spielernamen eingeben.');
+            return;
+        }
+
+        playersData.push({ number, name });
+        const container = document.getElementById('playersContainer');
+        if (playersData.length === 1) {
+            renderPlayers();
+        } else {
+            container.appendChild(createPlayerRow({ number, name }, playersData.length - 1));
+        }
+
+        numberInput.value = '';
+        nameInput.value = '';
+        nameInput.focus();
+    }
+
+    function updateRole(index) {
+        const role = document.getElementById(`role-${index}`).value;
+        const gk = document.getElementById(`gk-${index}`);
+        const captain = document.getElementById(`cap-${index}`);
+        if (role === 'absent') {
+            gk.disabled = true;
+            gk.checked = false;
+            captain.disabled = true;
+            captain.checked = false;
+        } else {
+            gk.disabled = false;
+            captain.disabled = false;
+        }
+    }
+
+    function createLineup() {
+        const matchSelect = document.getElementById('matchSelect');
+        if (!matchSelect.value) {
+            alert('Bitte ein Spiel auswählen.');
+            return;
+        }
+        const gkIndex = document.querySelector('input[name="goalkeeper"]:checked')?.value;
+        const captainIndex = document.querySelector('input[name="captain"]:checked')?.value;
+        const selectedPlayers = [];
+        playersData.forEach((player, index) => {
+            const role = document.getElementById(`role-${index}`).value;
+            if (role === 'absent') {
+                return;
+            }
+            const numberInput = document.getElementById(`number-${index}`);
+            if (numberInput) {
+                const enteredNumber = parseInt(numberInput.value, 10);
+                if (!isNaN(enteredNumber) && enteredNumber >= 1) {
+                    player.number = enteredNumber;
+                }
+            }
+            selectedPlayers.push({
+                number: player.number,
+                name: player.name,
+                role: role,
+                goalkeeper: String(index) === gkIndex,
+                captain: String(index) === captainIndex
+            });
+        });
+        if (selectedPlayers.length === 0) {
+            alert('Bitte mindestens einen Spieler auswählen.');
+            return;
+        }
+        const startCount = selectedPlayers.filter(p => p.role === 'start').length;
+        if (startCount !== 11 && !confirm(`Die Startelf enthält ${startCount} Spieler. Trotzdem fortfahren?`)) {
+            return;
+        }
+        const trainer = document.getElementById('trainerInput').value || '';
+        const formData = new FormData();
+        formData.append('match', matchSelect.value);
+        formData.append('players', JSON.stringify(selectedPlayers));
+        formData.append('trainer', trainer);
+        fetch(window.location.origin + '/postMenLineup', {
+            method: 'POST',
+            mode: 'cors',
+            cache: 'no-cache',
+            credentials: 'same-origin',
+            redirect: 'follow',
+            referrerPolicy: 'no-referrer',
+            body: formData
+        })
+            .then(async response => {
+                if (!response.ok) throw new Error(await response.text());
+                return response.text();
+            })
+            .then(savePath => {
+                window.open(window.location.origin + '/download/' + savePath + '/Lineup.jpeg');
+            })
+            .catch(error => {
+                alert('Es ist ein Fehler beim Erstellen aufgetreten: ' + error);
+                console.error('Error: ', error);
+            });
+    }
+
+    window.addEventListener('load', init);
+</script>
+</body>
+</html>

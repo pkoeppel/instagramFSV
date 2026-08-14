@@ -4,12 +4,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.servlet.http.HttpServletResponse;
+import org.fsv.instagramuploader.men.LineupCreator;
 import org.fsv.instagramuploader.men.MatchdayCreator;
 import org.fsv.instagramuploader.men.ResultCreator;
 import org.fsv.instagramuploader.model.GameModel;
 import org.fsv.instagramuploader.model.ResultModel;
 import org.fsv.instagramuploader.youth.MatchdaysCreator;
 import org.fsv.instagramuploader.youth.ResultsCreator;
+import org.fsv.instagramuploader.bot.TelegramBot;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -19,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,22 +43,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 @RestController
 public class Controller {
  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
  private static final Logger logger = LoggerFactory.getLogger(Controller.class);
 
+ @Autowired
+ private TelegramBot telegramBot;
+
  MatchdaysCreator msc;
  ResultsCreator rsc;
  MatchdayCreator mc;
  ResultCreator rc;
+ LineupCreator lineupCreator;
 
  public Controller() {
 	this.msc = new MatchdaysCreator();
 	this.rsc = new ResultsCreator();
 	this.mc = new MatchdayCreator();
 	this.rc = new ResultCreator();
+	this.lineupCreator = new LineupCreator();
  }
 
  @GetMapping("/getMatches")
@@ -77,8 +88,70 @@ public class Controller {
 	 logger.info("Scheduled Fussball.de match update started");
 	 Helper.updateNextMatchesFromFBDE();
 	 logger.info("Scheduled Fussball.de match update completed in {} ms", System.currentTimeMillis() - startedAt);
+	 sendAutomaticHerrenMatchHints();
 	} catch (IOException | URISyntaxException e) {
 	 logger.error("Scheduled update of allMatches.json failed", e);
+	}
+ }
+
+ @SuppressFBWarnings(value = "WMI_WRONG_MAP_ITERATOR", justification = "JSONObject is a raw Map; keySet iteration with get is safe")
+ private void sendAutomaticHerrenMatchHints() {
+	try {
+	 JSONObject allMatches = (JSONObject) readJsonFile("allMatches.json");
+	 ZoneId berlin = ZoneId.of("Europe/Berlin");
+	 LocalDate previewDate = LocalDate.now(berlin).plusDays(2);
+	 DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+	 int sentHints = 0;
+	 for (Object teamObj : allMatches.keySet()) {
+		String team = teamObj.toString();
+		Object gamesObj = allMatches.get(teamObj);
+		if (!(gamesObj instanceof JSONArray games)) {
+		 continue;
+		}
+		for (Object gameObj : games) {
+		 if (!(gameObj instanceof JSONObject game)) {
+			continue;
+		 }
+		 Object gameDateObj = game.get("gameDate");
+		 if (gameDateObj == null) {
+			continue;
+		 }
+		 try {
+			LocalDate gameDate = LocalDate.parse(gameDateObj.toString());
+			if (previewDate.equals(gameDate)) {
+			 String home = "?";
+			 Object homeTeamObj = game.get("homeTeam");
+			 if (homeTeamObj instanceof Map<?, ?> homeMap) {
+				Object homeName = homeMap.get("clubName");
+				home = homeName != null ? homeName.toString() : "?";
+			 }
+			 String away = "?";
+			 Object awayTeamObj = game.get("awayTeam");
+			 if (awayTeamObj instanceof Map<?, ?> awayMap) {
+				Object awayName = awayMap.get("clubName");
+				away = awayName != null ? awayName.toString() : "?";
+			 }
+			 Object timeObj = game.get("gameTime");
+			 String time = timeObj != null ? timeObj.toString() : "";
+			 Object competitionObj = game.get("competition");
+			 String competition = competitionObj != null ? competitionObj.toString() : "";
+			 String message = String.format("Erinnerung: In 2 Tagen findet ein Herren-Spiel statt:%n%n%s | %s Uhr | %s%n%s - %s",
+					 gameDate.format(dateFormatter), time, competition, home, away);
+			 if (telegramBot != null) {
+				telegramBot.sendAutomaticMatchHint(message);
+				sentHints++;
+			 } else {
+				logger.warn("TelegramBot not available; cannot send automatic match hint");
+			 }
+			}
+		 } catch (RuntimeException e) {
+			logger.error("Could not process game for team '{}' during automatic match hint check", team, e);
+		 }
+		}
+	 }
+	 logger.info("Sent {} automatic Herren match hint(s)", sentHints);
+	} catch (IOException | ParseException | RuntimeException e) {
+	 logger.error("Automatic Herren match hint check failed", e);
 	}
  }
 
@@ -174,6 +247,7 @@ public class Controller {
 	}
  }
 
+ @SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "Anonymous TypeReference is standard Jackson pattern")
  @DeleteMapping("/deleteClub")
  public ResponseEntity<String> deleteClub(@RequestParam("club") String currentClub) {
 	try {
@@ -197,15 +271,24 @@ public class Controller {
 	}
  }
 
- @RequestMapping("/postMatchMen")
- public ResponseEntity<String> postMatchMen(@RequestBody GameModel match) {
+ @PostMapping("/postMatchMen")
+ public ResponseEntity<String> postMatchMen(
+		 @RequestParam("match") String matchJson,
+		 @RequestParam(value = "image", required = false) MultipartFile image,
+		 @RequestParam(value = "venue", required = false) String venue) {
 	try {
+	 JSONObject matchData = (JSONObject) new JSONParser().parse(matchJson);
+	 GameModel match = new GameModel(matchData, stringValue(matchData.get("team")));
 	 logger.info("Creating men matchday preview: team={}, date={}, competition={}", match.getTeam(), match.getSaveGameDate(), match.getCompetition());
-	 String result = mc.createMatch(match);
+	 BufferedImage userImage = null;
+	 if (image != null && !image.isEmpty()) {
+		 userImage = ImageIO.read(image.getInputStream());
+	 }
+	 String result = mc.createMatch(match, userImage, venue);
 	 logger.info("Men matchday preview created at '{}'", result);
 	 return new ResponseEntity<>(result, HttpStatus.OK);
 	} catch (IOException | ParseException e) {
-	 logger.error("Could not create men matchday preview: team={}, date={}", match.getTeam(), match.getSaveGameDate(), e);
+	 logger.error("Could not create men matchday preview", e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
  }
@@ -237,6 +320,26 @@ public class Controller {
 	 logger.error("Could not update teamInfo.json", e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
+ }
+
+ private boolean isValidPlayersData(Map<String, Object> playersData) {
+	if (playersData == null || !(playersData.get("players") instanceof List<?> players)) {
+	 return false;
+	}
+	for (Object entry : players) {
+	 if (!(entry instanceof Map<?, ?> player)) {
+		return false;
+	 }
+	 Object number = player.get("number");
+	 if (number == null || !Helper.isNumeric(number.toString()) || number.toString().isBlank()) {
+		return false;
+	 }
+	 Object name = player.get("name");
+	 if (name == null || name.toString().isBlank()) {
+		return false;
+	 }
+	}
+	return true;
  }
 
  private boolean isValidTeamData(Map<String, Map<String, String>> teamData) {
@@ -281,6 +384,53 @@ public class Controller {
 	 return new ResponseEntity<>(result, HttpStatus.OK);
 	} catch (IOException | ParseException e) {
 	 logger.error("Could not load clubs.json", e);
+	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+	}
+ }
+
+ @GetMapping("/getPlayers")
+ public ResponseEntity<JSONObject> getPlayers() {
+	try {
+	 JSONObject result = (JSONObject) readJsonFile("players.json");
+	 logger.debug("Loaded players list");
+	 return new ResponseEntity<>(result, HttpStatus.OK);
+	} catch (IOException | ParseException e) {
+	 logger.error("Could not load players.json", e);
+	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+	}
+ }
+
+ @PostMapping("/updatePlayers")
+ public ResponseEntity<String> updatePlayers(@RequestBody Map<String, Object> playersData) {
+	logger.info("Updating players list");
+	if (!isValidPlayersData(playersData)) {
+	 logger.warn("Rejected invalid players data");
+	 return new ResponseEntity<>("Invalid players data", HttpStatus.BAD_REQUEST);
+	}
+	try {
+	 OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(new File("src/main/resources/templates/players.json"), playersData);
+	 logger.info("Players list updated successfully");
+	 return new ResponseEntity<>("Success", HttpStatus.OK);
+	} catch (IOException e) {
+	 logger.error("Could not update players.json", e);
+	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+	}
+ }
+
+ @PostMapping("/postMenLineup")
+ public ResponseEntity<String> postMenLineup(
+		 @RequestParam("match") String matchJson,
+		 @RequestParam("players") String playersJson,
+		 @RequestParam(value = "trainer", required = false) String trainer) {
+	try {
+	 logger.info("Creating men lineup image");
+	 String savePath = lineupCreator.createLineup(matchJson, playersJson, trainer);
+	 if (savePath == null) {
+		return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+	 }
+	 return new ResponseEntity<>(savePath, HttpStatus.OK);
+	} catch (IOException | ParseException e) {
+	 logger.error("Could not create men lineup image", e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
  }
@@ -391,14 +541,18 @@ public class Controller {
  }
 
  @RequestMapping("/postMatchFilesYouth")
- public ResponseEntity<?> postMatchFilesYouth(@RequestBody ArrayList<GameModel> mmArr) {
+ public ResponseEntity<?> postMatchFilesYouth(@RequestBody List<Map<String, Object>> matchList) {
 	try {
+	 ArrayList<GameModel> mmArr = new ArrayList<>();
+	 for (Map<String, Object> m : matchList) {
+		mmArr.add(new GameModel(new JSONObject(m), stringValue(m.get("team"))));
+	 }
 	 logger.info("Creating youth matchday package for {} matches", mmArr.size());
 	 Map<String, Integer> result = msc.createMatches(mmArr);
 	 logger.info("Youth matchday package created: {}", result);
 	 return new ResponseEntity<>(result, HttpStatus.OK);
 	} catch (IOException | ParseException e) {
-	 logger.error("Could not create youth matchday package for {} matches", mmArr.size(), e);
+	 logger.error("Could not create youth matchday package for {} matches", matchList != null ? matchList.size() : 0, e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
  }
@@ -416,16 +570,30 @@ public class Controller {
  }
 
  @RequestMapping("/postYouthResults")
- public ResponseEntity<?> postYouthResult(@RequestBody ArrayList<ResultModel> rmArr) {
+ public ResponseEntity<?> postYouthResult(@RequestBody List<Map<String, Object>> resultList) {
 	try {
+	 ArrayList<ResultModel> rmArr = new ArrayList<>();
+	 for (Map<String, Object> m : resultList) {
+		Object idValue = m.get("id");
+		JSONObject id = idValue instanceof Map ? new JSONObject((Map<?, ?>) idValue) : new JSONObject();
+		rmArr.add(new ResultModel(id,
+				stringValue(m.get("result")),
+				stringValue(m.get("homeStats")),
+				stringValue(m.get("awayStats")),
+				stringValue(m.get("text"))));
+	 }
 	 logger.info("Creating youth result package for {} games", rmArr.size());
 	 Map<String, Integer> result = rsc.createResults(rmArr);
 	 logger.info("Youth result package created: {}", result);
 	 return new ResponseEntity<>(result, HttpStatus.OK);
 	} catch (IOException | ParseException e) {
-	 logger.error("Could not create youth result package for {} games", rmArr.size(), e);
+	 logger.error("Could not create youth result package for {} games", resultList != null ? resultList.size() : 0, e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
+ }
+
+ private static String stringValue(Object value) {
+	return value != null ? value.toString() : null;
  }
 
  private Object readJsonFile(String fileName) throws IOException, ParseException {
@@ -528,8 +696,9 @@ public class Controller {
 	 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 	}
 	String imagePath = switch (selectedTemplate) {
-	 case "men", "men-matchday" -> "src/main/resources/pictures/template/men/matchdayTemp.jpg";
-	 case "men-result" -> "src/main/resources/pictures/template/men/ResultTemplate.jpg";
+	 case "men", "men-matchday" -> "src/main/resources/pictures/template/men/matchdayTemp.png";
+	 case "men-result" -> "src/main/resources/pictures/template/men/resultTemp.png";
+	 case "men-lineup" -> "src/main/resources/pictures/template/men/teamTemp.png";
 	 case "youth", "youth-matchday" -> "src/main/resources/pictures/template/youth/matchdayTemp.jpg";
 	 case "youth-result" -> "src/main/resources/pictures/template/youth/resultTemp.jpg";
 	 default -> null;

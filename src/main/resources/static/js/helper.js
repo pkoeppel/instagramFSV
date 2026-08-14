@@ -198,9 +198,6 @@ function setCharCount() {
     if (currentMenMatchDetails !== null) {
         fullReport = currentMenMatchDetails.matchLine.trim();
     }
-    if (headline) {
-        fullReport = fullReport ? fullReport + '\n\n' + headline : headline;
-    }
     if (currentMenMatchDetails !== null) {
         if (currentMenMatchDetails.scorers && currentMenMatchDetails.scorers.trim()) {
             fullReport = fullReport ? fullReport + '\n\n' + currentMenMatchDetails.scorers.trim() : currentMenMatchDetails.scorers.trim();
@@ -208,6 +205,9 @@ function setCharCount() {
         if (currentMenMatchDetails.staticText) {
             fullReport = fullReport ? fullReport + '\n\n' + currentMenMatchDetails.staticText.trim() : currentMenMatchDetails.staticText.trim();
         }
+    }
+    if (headline) {
+        fullReport = fullReport ? fullReport + '\n\n' + headline + '🔴⚪' : headline + '🔴⚪';
     }
     if (report) {
         fullReport = fullReport ? fullReport + '\n\n' + report : report;
@@ -468,24 +468,9 @@ async function updateTeamValues(teamInfo) {
 
 function postMenMatch(game) {
     game.team = document.getElementById('teamsSelect').value;
-    fetch(window.location.origin + '/postMatchMen', {
-        method: 'POST',
-        mode: 'cors',
-        cache: 'no-cache',
-        credentials: 'same-origin',
-        headers: {'Content-Type': 'application/json',},
-        redirect: 'follow',
-        referrerPolicy: 'no-referrer',
-        body: JSON.stringify(game)
-    })
-        .then(response => {
-            let status = response.status;
-            if (status === 200) {
-                response.text().then(data => window.open(window.location.origin + '/download/' + data + '/Matchday.jpeg'))
-            }
-        })
-        .catch((error) => {
-            alert("Es ist ein Fehler beim Erstellen aufgetreten: " + error);
-            console.error('Error: ', error);
-        });
+    if (typeof openMatchdayPreview === 'function') {
+        openMatchdayPreview(game);
+    } else {
+        alert("Vorschau-Dialog nicht verfügbar.");
+    }
 }

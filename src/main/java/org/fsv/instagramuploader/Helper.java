@@ -74,6 +74,10 @@ public class Helper {
 	}
  }
 
+ public static Map<String, Object> getCoordinateBlock(String key) {
+	return coordinates != null ? coordinates.get(key) : null;
+ }
+
  public static String wrapString(String string, int charWrap) {
 	int lastBreak = 0;
 	int nextBreak = charWrap;
@@ -148,6 +152,9 @@ public class Helper {
 		 case "top" -> posY = 0;
 		 case "left" -> posX = 0;
 		 case "right" -> posX = backX - sizeX;
+		 default -> {
+			 // no alignment adjustment
+		 }
 	 }
 
 	 // If fac is not used as an axis offset, treat it as a shrink factor
@@ -303,6 +310,9 @@ public class Helper {
  }
 
  private static void drawConfiguredText(BufferedImage background, String text, Map<String, Object> block, Font fallbackFont, Color fallbackColor, int offset) {
+	if (text == null) {
+	 text = "";
+	}
 	Graphics2D graphics = background.createGraphics();
 	String fontFamily = String.valueOf(block.getOrDefault("fontFamily", fallbackFont.getFamily()));
 	String fontStyle = String.valueOf(block.getOrDefault("fontStyle", "plain"));
@@ -459,7 +469,6 @@ public class Helper {
 	List<JSONObject> result = new ArrayList<>();
 	String gamesRegex = "<tr class=\"row-headline visible-small\">.*?</tr>.*?<tr class=\"odd row-competition hidden-small\">.*?</tr>.*?<tr class=\"odd\">.*?</tr>";
 	Matcher gamesMatcher = Pattern.compile(gamesRegex, Pattern.DOTALL).matcher(html);
-
 	while (gamesMatcher.find()) {
 
 	 String gameRegex = "<td colspan=\"6\">.*?, (.*?) - (.*?) Uhr \\| (.*?)</td>.*?<td class=\"column-club\">.*?<div class=\"club-name\">(.*?)</div>.*?<div class=\"club-name\">(.*?)</div>.*?<td class=\"column-detail\">.*?<a href=\"(.*?)\">.*?</td>";
@@ -608,6 +617,6 @@ public class Helper {
 	if (club.getClubName().equals("FSV Treuen")) {
 	 return 0;
 	}
-	return 80;
+	return 50;
  }
 }

@@ -37,7 +37,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ResultCreator {
- private static final String STATIC_REPORT_TEXT = "🔴⚪\n\n📸: @arminvogtland @netti_1909";
+ private static final String CLUB_CIRCLES = "🔴⚪";
+ private static final String PHOTO_CREDITS = "📸: @arminvogtland @netti_1909";
  private static final Pattern GAME_URL_PATTERN = Pattern.compile("^https://www\\.fussball\\.de/spiel/.+/-/spiel/([A-Z0-9]+)(?:#!/)?$", Pattern.CASE_INSENSITIVE);
  private static final Pattern EVENT_PATTERN = Pattern.compile("<div class=\"row-event (event-left|event-right)[^\"]*\">(.*?)(?=<div class=\"row-event |<div class=\"row-time\")", Pattern.DOTALL);
  private static final Pattern MINUTE_PATTERN = Pattern.compile("<div class=\"valign-inner\">(.*?)</div>", Pattern.DOTALL);
@@ -77,17 +78,17 @@ public class ResultCreator {
 	String homeClubName = (homeClub.getChangedName() != null) ? homeClub.getChangedName() : homeClub.getClubName();
 	String awayClubName = (awayClub.getChangedName() != null) ? awayClub.getChangedName() : awayClub.getClubName();
 	MatchDetails matchDetails = loadMatchDetails((String) m.get("gameUrl"), homeClubName, awayClubName);
-	String headline = m.get("headline") == null ? "" : m.get("headline").toString().trim();
-	String report = m.get("report") == null ? "" : m.get("report").toString().trim();
+	String headline = match.get("headline") == null ? "" : match.get("headline").toString().trim();
+	String report = match.get("report") == null ? "" : match.get("report").toString().trim();
 	StringBuilder fullReportBuilder = new StringBuilder();
 	fullReportBuilder.append(matchDetails.matchLine().trim());
-	if (!headline.isEmpty()) {
-	 fullReportBuilder.append("\n\n").append(headline);
-	}
 	if (!matchDetails.scorers().isEmpty()) {
 	 fullReportBuilder.append("\n\n").append(matchDetails.scorers());
 	}
-	fullReportBuilder.append("\n\n").append(STATIC_REPORT_TEXT);
+	fullReportBuilder.append("\n\n").append(PHOTO_CREDITS);
+	if (!headline.isEmpty()) {
+	 fullReportBuilder.append("\n\n").append(headline).append(CLUB_CIRCLES);
+	}
 	if (!report.isEmpty()) {
 	 fullReportBuilder.append("\n\n").append(report);
 	}
@@ -108,12 +109,13 @@ public class ResultCreator {
 	String folderName = homeGame ? awayClub.getSaveName() : homeClub.getSaveName();
 	GoogleDriveService googleService = new GoogleDriveService(folderName);
 	if (!allImg.isEmpty()) {
-	 for (BufferedImage image : allImg) {
+	 for (int i = 1; i < allImg.size(); i++) {
+		BufferedImage image = allImg.get(i);
 		Helper.pictureOnPicture(image, opponentClubLogo, "smallClubResult-men", 0);
 		Helper.pictureOnPicture(image, ownClubLogo, "bigClubResult-men", 0);
 	 }
 	 BufferedImage firstImg = allImg.get(0);
-	 BufferedImage template = ImageIO.read(new File("src/main/resources/pictures/template/men/ResultTemplate.jpg"));
+	 BufferedImage template = ImageIO.read(new File("src/main/resources/pictures/template/men/resultTemp.png"));
 	 Helper.pictureOnPicture(firstImg, template, "template", 0);
 	 Helper.pictureOnPicture(firstImg, homeClubLogo, "homeClubLogoResult-men", Helper.isOwnClub(homeClub));
 	 Helper.pictureOnPicture(firstImg, awayClubLogo, "awayClubLogoResult-men", Helper.isOwnClub(awayClub));
@@ -154,16 +156,31 @@ public class ResultCreator {
 	Map<String, String> result = new HashMap<>();
 	result.put("result", details.result());
 	result.put("matchLine", details.matchLine());
-	result.put("staticText", STATIC_REPORT_TEXT);
+	result.put("staticText", PHOTO_CREDITS);
 	result.put("scorers", details.scorers());
 	return new JSONObject(result);
  }
 
  private MatchDetails loadMatchDetails(String gameUrl, String homeClubName, String awayClubName) throws IOException {
+	if (gameUrl == null || gameUrl.isBlank()) {
+	 logger.warn("No Fussball.de game URL provided, returning empty match details");
+	 return unknownMatchDetails(homeClubName, awayClubName);
+	}
+	Matcher urlMatcher = GAME_URL_PATTERN.matcher(gameUrl);
+	if (!urlMatcher.matches()) {
+	 logger.warn("Invalid Fussball.de game URL '{}', returning empty match details", gameUrl);
+	 return unknownMatchDetails(homeClubName, awayClubName);
+	}
 	Scorers scorers = loadScorers(gameUrl);
 	String result = scorers.home().size() + ":" + scorers.away().size();
 	String matchLine = homeClubName + " : " + awayClubName + " (" + result + ")";
 	return new MatchDetails(result, matchLine, formatScorers(homeClubName, awayClubName, scorers));
+ }
+
+ private MatchDetails unknownMatchDetails(String homeClubName, String awayClubName) {
+	String result = "?:?";
+	String matchLine = homeClubName + " : " + awayClubName + " (" + result + ")";
+	return new MatchDetails(result, matchLine, "");
  }
 
  private String formatScorers(String homeClubName, String awayClubName, Scorers scorers) {
@@ -280,11 +297,28 @@ public class ResultCreator {
  }
 
  public void savePicture(JSONObject c, MultipartFile file) throws IOException {
-	 targetImg = new BufferedImage(1080, 1350, BufferedImage.TYPE_INT_RGB);
 	 BufferedImage image = ImageIO.read(file.getInputStream());
+	 savePicture(c, image);
+ }
+
+ public void addImage(BufferedImage image) throws IOException {
+	 JSONObject c = new JSONObject();
+	 c.put("x", 0.0);
+	 c.put("y", 0.0);
+	 c.put("w", (double) image.getWidth());
+	 c.put("h", (double) image.getHeight());
+	 savePicture(c, image);
+ }
+
+ public void savePicture(JSONObject c, BufferedImage image) throws IOException {
+	 targetImg = new BufferedImage(1080, 1350, BufferedImage.TYPE_INT_RGB);
 	 BufferedImage subImg = image.getSubimage(Helper.getC(c, "x"), Helper.getC(c, "y"), Helper.getC(c, "w"), Helper.getC(c, "h"));
 	 Graphics2D g2 = targetImg.createGraphics();
-	 g2.drawImage(subImg, 0, 0, 1080, 1350, null);
+	 try {
+		 g2.drawImage(subImg, 0, 0, 1080, 1350, null);
+	 } finally {
+		 g2.dispose();
+	 }
 	 allImg.add(targetImg);
  }
 }

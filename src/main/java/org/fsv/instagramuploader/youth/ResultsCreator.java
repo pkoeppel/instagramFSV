@@ -52,13 +52,14 @@ public class ResultsCreator {
 	 ClubModel homeClub = ClubSelector.searchClubDetails(rm.getClubName("homeTeam"));
 	 ClubModel awayClub = ClubSelector.searchClubDetails(rm.getClubName("awayTeam"));
 	 if (homeClub != null && awayClub != null) {
-		if (rm.text().equals("Abgesagt")) {
+		if ("Abgesagt".equals(rm.text())) {
 		 logger.debug("Rendering cancelled youth game: team={}, date={}", rm.getValue("team"), rm.getValue("date"));
 		 Helper.pictureOnPicture(background, ImageIO.read(new File(homeClub.getClubLogoDir())), "logo-left-youth", blockStart);
 		 Helper.pictureOnPicture(background, ImageIO.read(new File(awayClub.getClubLogoDir())), "logo-right-youth", blockStart);
 		 Helper.writeOnPicture(background, "Abgesagt!", "center-point-stats", FontClass.clubOwnYouth, Color.BLACK, blockStart);
 		} else {
-		 String matchTypeLower = rm.getValue("matchType").toLowerCase(Locale.ROOT);
+		 String matchType = rm.getValue("matchType");
+		 String matchTypeLower = matchType != null ? matchType.toLowerCase(Locale.ROOT) : "";
 		 
 		 if (matchTypeLower.contains("kinder")) {
 			logger.debug("Rendering youth festival result: team={}, date={}", rm.getValue("team"), rm.getValue("date"));

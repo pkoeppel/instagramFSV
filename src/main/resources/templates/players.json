@@ -1,0 +1,29 @@
+{
+  "players" : [
+    { "number" : 1, "name" : "Kai Gröller" },
+    { "number" : 3, "name" : "Tim Seifert" },
+    { "number" : 4, "name" : "Cedric Groß" },
+    { "number" : 6, "name" : "Lennart Dietrich" },
+    { "number" : 7, "name" : "Mark Wöllner" },
+    { "number" : 8, "name" : "Tim Steglich" },
+    { "number" : 9, "name" : "Jonas Unger" },
+    { "number" : 10, "name" : "Nils Rausch" },
+    { "number" : 11, "name" : "Chris Vogel" },
+    { "number" : 13, "name" : "Louis Schlosser" },
+    { "number" : 15, "name" : "Yannick Linnemann" },
+    { "number" : 16, "name" : "Pascal Köppel" },
+    { "number" : 17, "name" : "Björn Pauleck" },
+    { "number" : 18, "name" : "Jonas Gruschwitz" },
+    { "number" : 19, "name" : "Moritz Mayer" },
+    { "number" : 20, "name" : "Jonas Heyn" },
+    { "number" : 22, "name" : "Jan Süß" },
+    { "number" : 27, "name" : "Liam Kittelmann" },
+    { "number" : 28, "name" : "Luca Jung" },
+    { "number" : 33, "name" : "Marc Zimmermann" },
+    { "number" : 44, "name" : "Moritz Seidel" },
+    { "number" : 47, "name" : "Julian Bauch" },
+    { "number" : 77, "name" : "Andre Herold" },
+    { "number" : 97, "name" : "Luca Bodenbinder" },
+    { "number" : 99, "name" : "Lennox Reinsch" }
+  ]
+}

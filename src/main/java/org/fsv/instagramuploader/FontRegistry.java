@@ -116,7 +116,11 @@ public final class FontRegistry {
  }
 
  private static boolean isFontFile(Path path) {
-	String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
+	Path fileName = path.getFileName();
+	if (fileName == null) {
+	 return false;
+	}
+	String name = fileName.toString().toLowerCase(Locale.ROOT);
 	return name.endsWith(".ttf") || name.endsWith(".otf");
  }
 
