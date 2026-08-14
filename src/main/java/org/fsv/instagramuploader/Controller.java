@@ -625,7 +625,7 @@ public class Controller {
 	}
 	String imagePath = switch (selectedTemplate) {
 	 case "men", "men-matchday" -> "src/main/resources/pictures/template/men/matchdayTemp.png";
-	 case "men-result" -> "src/main/resources/pictures/template/men/ResultTemplate.jpg";
+	 case "men-result" -> "src/main/resources/pictures/template/men/resultTemp.png";
 	 case "youth", "youth-matchday" -> "src/main/resources/pictures/template/youth/matchdayTemp.jpg";
 	 case "youth-result" -> "src/main/resources/pictures/template/youth/resultTemp.jpg";
 	 default -> null;

@@ -28,11 +28,11 @@
       "height" : 1920
     },
     "men-result" : {
-      "backgroundHeight" : 538,
+      "backgroundHeight" : 1350,
       "backgroundWidth" : 1080,
       "width" : 1080,
       "backgroundX" : 0,
-      "backgroundY" : 812,
+      "backgroundY" : 0,
       "label" : "Herren - Ergebnis",
       "height" : 1350
     }
@@ -40,15 +40,15 @@
   "coordinates" : {
     "template" : {
       "posX" : 0,
-      "posY" : 812,
+      "posY" : 0,
       "sizeX" : 1080,
       "previewColor" : "#455a64",
-      "templates" : [ "men-result" ],
+      "templates" : [ ],
       "label" : "Ergebnis-Vorlage",
       "type" : "image",
       "alignment" : "none",
-      "opacity" : 0.3,
-      "sizeY" : 538
+      "opacity" : 0.7,
+      "sizeY" : 1350
     },
     "bigClubResult-men" : {
       "posX" : 5,
@@ -62,15 +62,15 @@
       "sizeY" : 180
     },
     "awayClubLogoResult-men" : {
-      "posX" : 635,
-      "posY" : 720,
-      "sizeX" : 280,
+      "posX" : 725,
+      "posY" : 920,
+      "sizeX" : 270,
       "previewColor" : "#7b1fa2",
       "templates" : [ "men-result" ],
       "label" : "Vereinslogos rechts",
       "type" : "image",
       "alignment" : "none",
-      "sizeY" : 280
+      "sizeY" : 270
     },
     "matchType" : {
       "previewColor" : "#c62828",
@@ -131,15 +131,16 @@
       "label" : "Ergebnis-Schrift",
       "type" : "text",
       "fontStyle" : "bold",
-      "textColor" : "#000000",
-      "posX" : 390,
-      "posY" : 850,
-      "sizeX" : 300,
-      "fontFamily" : "Calisto MT",
-      "fontSize" : 123,
+      "textColor" : "#ffffff",
+      "posX" : 340,
+      "posY" : 940,
+      "sizeX" : 400,
+      "fontFamily" : "Modern No. 20",
+      "fontSize" : 265,
       "alignment" : "center",
-      "sizeY" : 190,
-      "verticalAlignment" : "middle"
+      "sizeY" : 250,
+      "verticalAlignment" : "middle",
+      "sampleText" : "5:5"
     },
     "head" : {
       "previewColor" : "#5d4037",
@@ -268,15 +269,16 @@
       "label" : "Vereinsnamen links",
       "type" : "text",
       "fontStyle" : "bold",
-      "textColor" : "#000000",
-      "posX" : 35,
-      "posY" : 990,
-      "sizeX" : 540,
-      "fontFamily" : "Calisto MT",
-      "fontSize" : 26,
-      "alignment" : "center",
-      "sizeY" : 100,
-      "verticalAlignment" : "middle"
+      "textColor" : "#ffffff",
+      "posX" : 0,
+      "posY" : 1270,
+      "sizeX" : 490,
+      "fontFamily" : "Modern No. 20",
+      "fontSize" : 38,
+      "alignment" : "right",
+      "sizeY" : 80,
+      "verticalAlignment" : "middle",
+      "sampleText" : ""
     },
     "club-name-away" : {
       "previewColor" : "#8e24aa",
@@ -415,15 +417,15 @@
       "sampleText" : "SV Germania\nPlatz 2 (4:2) Trend: -"
     },
     "homeClubLogoResult-men" : {
-      "posX" : 165,
-      "posY" : 720,
-      "sizeX" : 280,
+      "posX" : 85,
+      "posY" : 920,
+      "sizeX" : 270,
       "previewColor" : "#388e3c",
       "templates" : [ "men-result" ],
       "label" : "Vereinslogos links",
       "type" : "image",
       "alignment" : "none",
-      "sizeY" : 280
+      "sizeY" : 270
     },
     "awayClubResult-men" : {
       "previewColor" : "#fbc02d",
@@ -431,15 +433,16 @@
       "label" : "Vereinsnamen rechts",
       "type" : "text",
       "fontStyle" : "bold",
-      "textColor" : "#000000",
-      "posX" : 505,
-      "posY" : 990,
-      "sizeX" : 540,
-      "fontFamily" : "Calisto MT",
-      "fontSize" : 26,
-      "alignment" : "center",
-      "sizeY" : 100,
-      "verticalAlignment" : "middle"
+      "textColor" : "#ffffff",
+      "posX" : 590,
+      "posY" : 1270,
+      "sizeX" : 490,
+      "fontFamily" : "Modern No. 20",
+      "fontSize" : 38,
+      "alignment" : "left",
+      "sizeY" : 80,
+      "verticalAlignment" : "middle",
+      "sampleText" : ""
     },
     "smallClubResult-men" : {
       "posX" : 105,

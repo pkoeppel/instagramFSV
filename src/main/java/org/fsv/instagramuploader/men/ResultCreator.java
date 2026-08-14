@@ -109,12 +109,13 @@ public class ResultCreator {
 	String folderName = homeGame ? awayClub.getSaveName() : homeClub.getSaveName();
 	GoogleDriveService googleService = new GoogleDriveService(folderName);
 	if (!allImg.isEmpty()) {
-	 for (BufferedImage image : allImg) {
+	 for (int i = 1; i < allImg.size(); i++) {
+		BufferedImage image = allImg.get(i);
 		Helper.pictureOnPicture(image, opponentClubLogo, "smallClubResult-men", 0);
 		Helper.pictureOnPicture(image, ownClubLogo, "bigClubResult-men", 0);
 	 }
 	 BufferedImage firstImg = allImg.get(0);
-	 BufferedImage template = ImageIO.read(new File("src/main/resources/pictures/template/men/ResultTemplate.jpg"));
+	 BufferedImage template = ImageIO.read(new File("src/main/resources/pictures/template/men/resultTemp.png"));
 	 Helper.pictureOnPicture(firstImg, template, "template", 0);
 	 Helper.pictureOnPicture(firstImg, homeClubLogo, "homeClubLogoResult-men", Helper.isOwnClub(homeClub));
 	 Helper.pictureOnPicture(firstImg, awayClubLogo, "awayClubLogoResult-men", Helper.isOwnClub(awayClub));
