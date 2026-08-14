@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Herren Spieltag</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery-jcrop/0.9.15/css/jquery.Jcrop.min.css" rel="stylesheet"/>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-jcrop/0.9.15/js/jquery.Jcrop.min.js"></script>
     <script src="../../js/helper.js" defer></script>
     <script src="../../js/navigation.js" defer></script>
     <link href="../../style.css" rel="stylesheet">
@@ -23,7 +26,148 @@
     </section>
     <section id="games" class="games-grid" aria-live="polite"></section>
 </main>
+
+<dialog id="matchdayPreviewDialog" class="preview-dialog">
+    <h2>Spieltagsvorschau erstellen</h2>
+    <p id="matchdayDialogMatch"></p>
+    <div class="mobile-field" id="matchdayVenueField">
+        <label for="matchdayVenue">Spielort</label>
+        <select id="matchdayVenue">
+            <option value="Friedrich-Ludwig-Jahn Stadion" selected>Friedrich-Ludwig-Jahn Stadion</option>
+            <option value="Ausweichplatz Treuen">Ausweichplatz Treuen</option>
+        </select>
+    </div>
+    <div class="mobile-field">
+        <label for="matchdayFile">Bild für die obere Hälfte</label>
+        <input accept="image/*" id="matchdayFile" onchange="loadMatchdayImage(event)" type="file">
+    </div>
+    <div id="matchdayCropContainer"></div>
+    <div class="button-stack">
+        <button class="primary-action" id="matchdayCreate" onclick="createMatchdayPreview()" disabled>Vorschau erstellen</button>
+        <button class="danger-action" onclick="closeMatchdayPreview()" type="button">Abbrechen</button>
+    </div>
+</dialog>
 <script>
+    let currentMatchdayGame = null;
+    let currentMatchdayImage = null;
+    let matchdayCropSelection = null;
+
+    function openMatchdayPreview(game) {
+        currentMatchdayGame = game;
+        document.getElementById('matchdayDialogMatch').textContent = game.homeTeam.clubName + ' vs ' + game.awayTeam.clubName;
+        const venueField = document.getElementById('matchdayVenueField');
+        const venueSelect = document.getElementById('matchdayVenue');
+        if (game.homeTeam && game.homeTeam.clubName === 'FSV Treuen') {
+            venueField.style.display = 'block';
+            venueSelect.value = 'Friedrich-Ludwig-Jahn Stadion';
+        } else {
+            venueField.style.display = 'none';
+        }
+        document.getElementById('matchdayFile').value = '';
+        document.getElementById('matchdayCreate').disabled = true;
+        document.getElementById('matchdayCropContainer').innerHTML = '';
+        currentMatchdayImage = null;
+        matchdayCropSelection = null;
+        document.getElementById('matchdayPreviewDialog').showModal();
+    }
+
+    function closeMatchdayPreview() {
+        document.getElementById('matchdayPreviewDialog').close();
+    }
+
+    function loadMatchdayImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const container = document.getElementById('matchdayCropContainer');
+        container.innerHTML = '';
+        matchdayCropSelection = null;
+        document.getElementById('matchdayCreate').disabled = true;
+
+        const img = document.createElement('img');
+        img.id = 'matchday-crop-target';
+        img.style.display = 'block';
+        img.style.maxWidth = '100%';
+        img.style.maxHeight = '500px';
+        container.appendChild(img);
+
+        let displayW, displayH;
+        let loaded = false;
+        img.onload = function () {
+            if (loaded) return;
+            loaded = true;
+            displayW = img.width;
+            displayH = img.height;
+            $('#matchday-crop-target').Jcrop({
+                aspectRatio: 1,
+                onSelect: function (coOrdinates) {
+                    const scaleX = img.naturalWidth / displayW;
+                    const scaleY = img.naturalHeight / displayH;
+                    matchdayCropSelection = {
+                        x: coOrdinates.x * scaleX,
+                        y: coOrdinates.y * scaleY,
+                        w: coOrdinates.w * scaleX,
+                        h: coOrdinates.h * scaleY
+                    };
+                    document.getElementById('matchdayCreate').disabled = false;
+                }
+            });
+        };
+
+        img.src = URL.createObjectURL(file);
+        currentMatchdayImage = img;
+    }
+
+    function createMatchdayPreview() {
+        if (!currentMatchdayGame || !matchdayCropSelection || !currentMatchdayImage) {
+            alert('Bitte wähle zuerst einen quadratischen Bildausschnitt.');
+            return;
+        }
+        const naturalW = currentMatchdayImage.naturalWidth;
+        const naturalH = currentMatchdayImage.naturalHeight;
+        let sx = Math.max(0, Math.min(Math.round(matchdayCropSelection.x), naturalW - 1));
+        let sy = Math.max(0, Math.min(Math.round(matchdayCropSelection.y), naturalH - 1));
+        let sw = Math.max(1, Math.min(Math.round(matchdayCropSelection.w), naturalW - sx));
+        let sh = Math.max(1, Math.min(Math.round(matchdayCropSelection.h), naturalH - sy));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1080;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 1080, 1080);
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(currentMatchdayImage, sx, sy, sw, sh, 0, 0, 1080, 1080);
+
+        currentMatchdayGame.team = document.getElementById('teamsSelect').value;
+        const formData = new FormData();
+        formData.append('match', JSON.stringify(currentMatchdayGame));
+        formData.append('venue', document.getElementById('matchdayVenue').value || '');
+        canvas.toBlob(function (blob) {
+            formData.append('image', blob, 'matchday.jpg');
+            fetch(window.location.origin + '/postMatchMen', {
+                method: 'POST',
+                mode: 'cors',
+                cache: 'no-cache',
+                credentials: 'same-origin',
+                redirect: 'follow',
+                referrerPolicy: 'no-referrer',
+                body: formData
+            })
+                .then(response => {
+                    if (response.status === 200) return response.text();
+                    throw new Error('HTTP ' + response.status);
+                })
+                .then(data => {
+                    window.open(window.location.origin + '/download/' + data + '/Matchday.jpeg');
+                    closeMatchdayPreview();
+                })
+                .catch((error) => {
+                    alert('Es ist ein Fehler beim Erstellen aufgetreten: ' + error);
+                    console.error('Error: ', error);
+                });
+        }, 'image/jpeg', 0.95);
+    }
+
     window.addEventListener('load', async () => {
         const selectedTeam = await getTeamIds('men');
         if (selectedTeam != null) await showMatches('men', selectedTeam);

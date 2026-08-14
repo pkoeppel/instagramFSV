@@ -90,6 +90,23 @@
       "verticalAlignment" : "middle",
       "sampleText" : "Kinderfest!"
     },
+    "location-men" : {
+      "previewColor" : "#1976d2",
+      "templates" : [ "men-matchday" ],
+      "label" : "Spielort",
+      "type" : "text",
+      "fontStyle" : "bold",
+      "textColor" : "#ffffff",
+      "posX" : 340,
+      "posY" : 1598,
+      "sizeX" : 700,
+      "fontFamily" : "Calibri",
+      "fontSize" : 38,
+      "alignment" : "left",
+      "sizeY" : 94,
+      "verticalAlignment" : "middle",
+      "sampleText" : "Friedrich-Ludwig-Jahn Stadion"
+    },
     "awayclub-men" : {
       "previewColor" : "#fbc02d",
       "templates" : [ "men-matchday" ],
@@ -97,13 +114,13 @@
       "type" : "text",
       "fontStyle" : "bold",
       "textColor" : "#ffffff",
-      "posX" : 540,
-      "posY" : 1655,
-      "sizeX" : 490,
-      "fontFamily" : "Calisto MT",
+      "posX" : 570,
+      "posY" : 1275,
+      "sizeX" : 440,
+      "fontFamily" : "Calibri",
       "fontSize" : 36,
       "alignment" : "center",
-      "sizeY" : 220,
+      "sizeY" : 140,
       "verticalAlignment" : "top",
       "sampleText" : ""
     },
@@ -160,15 +177,15 @@
       "sampleText" : "3:1"
     },
     "logo-right-men" : {
-      "posX" : 585,
-      "posY" : 1290,
-      "sizeX" : 345,
+      "posX" : 620,
+      "posY" : 960,
+      "sizeX" : 300,
       "previewColor" : "#7b1fa2",
-      "templates" : [ "men-matchday" ],
+      "templates" : [ "youth-matchday", "men-matchday" ],
       "label" : "Vereinslogo rechts",
       "type" : "image",
       "alignment" : "none",
-      "sizeY" : 345
+      "sizeY" : 300
     },
     "center-point" : {
       "previewColor" : "#d84315",
@@ -286,15 +303,15 @@
       "type" : "text",
       "fontStyle" : "bold",
       "textColor" : "#ffffff",
-      "posX" : 645,
-      "posY" : 485,
-      "sizeX" : 300,
-      "fontFamily" : "Calisto MT",
-      "fontSize" : 40,
-      "alignment" : "center",
-      "sizeY" : 300,
+      "posX" : 340,
+      "posY" : 1490,
+      "sizeX" : 700,
+      "fontFamily" : "Calibri",
+      "fontSize" : 38,
+      "alignment" : "left",
+      "sizeY" : 93,
       "verticalAlignment" : "middle",
-      "sampleText" : "11.08.2026 15:00 Uhr"
+      "sampleText" : "Sonntag, 16.08.2026 | 15:00 Uhr"
     },
     "homeclub-men" : {
       "previewColor" : "#f57c00",
@@ -303,15 +320,15 @@
       "type" : "text",
       "fontStyle" : "bold",
       "textColor" : "#ffffff",
-      "posX" : 50,
-      "posY" : 1655,
-      "sizeX" : 490,
-      "fontFamily" : "Calisto MT",
+      "posX" : 70,
+      "posY" : 1275,
+      "sizeX" : 440,
+      "fontFamily" : "Calibri",
       "fontSize" : 36,
       "alignment" : "center",
-      "sizeY" : 220,
+      "sizeY" : 140,
       "verticalAlignment" : "top",
-      "sampleText" : ""
+      "sampleText" : "FSV Treuen Platz 1 (0 / 0:0) Trend: -"
     },
     "logo-left-youth" : {
       "posX" : 245,
@@ -454,15 +471,15 @@
       "sampleText" : "FSV Treuen"
     },
     "logo-left-men" : {
-      "posX" : 155,
-      "posY" : 1290,
-      "sizeX" : 345,
+      "posX" : 160,
+      "posY" : 960,
+      "sizeX" : 300,
       "previewColor" : "#388e3c",
       "templates" : [ "men-matchday" ],
       "label" : "Vereinslogo links",
       "type" : "image",
       "alignment" : "none",
-      "sizeY" : 345
+      "sizeY" : 300
     }
   }
 }

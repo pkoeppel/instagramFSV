@@ -7,6 +7,7 @@ import org.json.simple.JSONObject;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class GameModel {
@@ -91,6 +92,12 @@ public class GameModel {
  public String fullMatchDate() {
 	if (gameDate == null) return null;
 	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EE, dd.MM.yyyy");
+	return gameDate.format(formatter);
+ }
+ 
+ public String getFullMatchDate() {
+	if (gameDate == null) return null;
+	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE, dd.MM.yyyy", Locale.GERMAN);
 	return gameDate.format(formatter);
  }
  

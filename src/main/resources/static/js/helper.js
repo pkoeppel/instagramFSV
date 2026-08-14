@@ -468,24 +468,9 @@ async function updateTeamValues(teamInfo) {
 
 function postMenMatch(game) {
     game.team = document.getElementById('teamsSelect').value;
-    fetch(window.location.origin + '/postMatchMen', {
-        method: 'POST',
-        mode: 'cors',
-        cache: 'no-cache',
-        credentials: 'same-origin',
-        headers: {'Content-Type': 'application/json',},
-        redirect: 'follow',
-        referrerPolicy: 'no-referrer',
-        body: JSON.stringify(game)
-    })
-        .then(response => {
-            let status = response.status;
-            if (status === 200) {
-                response.text().then(data => window.open(window.location.origin + '/download/' + data + '/Matchday.jpeg'))
-            }
-        })
-        .catch((error) => {
-            alert("Es ist ein Fehler beim Erstellen aufgetreten: " + error);
-            console.error('Error: ', error);
-        });
+    if (typeof openMatchdayPreview === 'function') {
+        openMatchdayPreview(game);
+    } else {
+        alert("Vorschau-Dialog nicht verfügbar.");
+    }
 }

@@ -50,6 +50,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private String resultHeadline;
     private String resultReport;
     private String pendingAction;
+    private GameModel pendingMatchdayGame;
+    private BufferedImage pendingMatchdayPhoto;
+    private String pendingMatchdayAction;
 
     public TelegramBot(String botName, String botToken) {
         super(botToken);
@@ -96,16 +99,19 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleCallbackQuery(String chatId, String lastCall) throws IOException, ParseException, URISyntaxException {
         if ("createPreview".equals(lastCall)) {
             resetResultFlow();
+            resetMatchdayPreview();
             startTeamSelection(chatId, "createPreview");
             return;
         }
         if ("createResult".equals(lastCall)) {
             resetResultFlow();
+            resetMatchdayPreview();
             startTeamSelection(chatId, "createResult");
             return;
         }
         if ("cancel".equals(lastCall)) {
             resetResultFlow();
+            resetMatchdayPreview();
             sendStartMsg(chatId, "Ok!");
             return;
         }
@@ -177,7 +183,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if ("createResult".equals(mode)) {
                 startResultInput(chatId, gameModel, lastCall);
             } else {
-                getMatchdayFile(chatId, gameModel);
+                startMatchdayPhotoRequest(chatId, gameModel);
             }
             return;
         }
@@ -313,9 +319,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMsg(chatId, "Wähle ein Spiel aus!", createKeyboard(1, lastCall, keyboardValues));
     }
 
-    public synchronized void getMatchdayFile(String chatId, GameModel gameModel) throws IOException, ParseException {
+    public synchronized void getMatchdayFile(String chatId, GameModel gameModel, BufferedImage photo) throws IOException, ParseException {
         MatchdayCreator mc = new MatchdayCreator();
-        String savePath = mc.createMatch(gameModel);
+        String savePath = mc.createMatch(gameModel, photo);
         Path filePath = Paths.get("src/main/resources/save", savePath, "/Matchday.jpeg");
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setPhoto(new InputFile(filePath.toFile()));
@@ -325,9 +331,32 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
-        sendStartMsg(chatId, "Prozess abgeschlossen! Nächster Prozess kann gestartet werden!");
     }
 
+    private void startMatchdayPhotoRequest(String chatId, GameModel gameModel) {
+        resetResultFlow();
+        pendingMatchdayGame = gameModel;
+        pendingMatchdayPhoto = null;
+        pendingMatchdayAction = "photo";
+        sendSimpleMsg(chatId, "Sende ein quadratisches Bild (1:1) für die obere Hälfte. Wenn du fertig bist, sende 'Fertig'.");
+    }
+
+    private void resetMatchdayPreview() {
+        pendingMatchdayGame = null;
+        pendingMatchdayPhoto = null;
+        pendingMatchdayAction = null;
+    }
+
+    private void finalizeMatchdayPreview(String chatId) throws IOException, ParseException {
+        if (pendingMatchdayGame == null || pendingMatchdayPhoto == null || !"photo".equals(pendingMatchdayAction)) {
+            sendSimpleMsg(chatId, "Kein Bild vorhanden. Bitte starte den Vorgang erneut.");
+            resetMatchdayPreview();
+            return;
+        }
+        getMatchdayFile(chatId, pendingMatchdayGame, pendingMatchdayPhoto);
+        resetMatchdayPreview();
+        sendStartMsg(chatId, "Vorschau erstellt!");
+    }
     public synchronized void sendMsg(String chatId, String msg, InlineKeyboardMarkup keyboard) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setParseMode(ParseMode.MARKDOWN);
@@ -397,7 +426,16 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleTextMessage(String chatId, String text) throws IOException, ParseException {
         if ("abbruch".equalsIgnoreCase(text) || "abbrechen".equalsIgnoreCase(text)) {
             resetResultFlow();
+            resetMatchdayPreview();
             sendStartMsg(chatId, "Abbruch.");
+            return;
+        }
+        if ("photo".equals(pendingMatchdayAction) && "fertig".equalsIgnoreCase(text)) {
+            finalizeMatchdayPreview(chatId);
+            return;
+        }
+        if (pendingMatchdayAction != null) {
+            sendSimpleMsg(chatId, "Bitte sende ein Bild oder 'Fertig', um fortzufahren.");
             return;
         }
         if ("headline".equals(pendingAction)) {
@@ -417,10 +455,31 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendStartMsg(chatId, text);
         }
     }
-
     private void handlePhotoMessage(String chatId, List<PhotoSize> photos) throws IOException, TelegramApiException {
+        if ("photo".equals(pendingMatchdayAction)) {
+            PhotoSize largest = photos.stream()
+                    .max(Comparator.comparingInt(p -> p.getFileSize() != null ? p.getFileSize() : 0))
+                    .orElse(null);
+            if (largest == null) {
+                return;
+            }
+            GetFile getFile = new GetFile(largest.getFileId());
+            org.telegram.telegrambots.meta.api.objects.File tgFile = execute(getFile);
+            String fileUrl = "https://api.telegram.org/file/bot" + botToken + "/" + tgFile.getFilePath();
+            try (InputStream is = new URL(fileUrl).openStream()) {
+                BufferedImage image = ImageIO.read(is);
+                if (image == null) {
+                    sendSimpleMsg(chatId, "Bild konnte nicht geladen werden.");
+                    return;
+                }
+                pendingMatchdayPhoto = image;
+                sendSimpleMsg(chatId, "Bild erhalten. Sende 'Fertig', um die Vorschau zu erstellen, oder ein neues Bild zum Ersetzen.");
+            }
+            return;
+        }
+
         if (!"photos".equals(pendingAction) || resultCreator == null) {
-            sendSimpleMsg(chatId, "Bitte starte zuerst den Ergebnis-Flow.");
+            sendSimpleMsg(chatId, "Bitte starte zuerst einen Prozess.");
             return;
         }
         PhotoSize largest = photos.stream()
@@ -442,7 +501,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendSimpleMsg(chatId, "Bild erhalten. Nächstes Bild oder 'Fertig'.");
         }
     }
-
     private void resetResultFlow() {
         pendingAction = null;
         resultCreator = null;

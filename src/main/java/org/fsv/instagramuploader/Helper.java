@@ -610,6 +610,6 @@ public class Helper {
 	if (club.getClubName().equals("FSV Treuen")) {
 	 return 0;
 	}
-	return 80;
+	return 50;
  }
 }

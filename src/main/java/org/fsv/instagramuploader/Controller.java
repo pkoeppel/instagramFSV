@@ -266,16 +266,24 @@ public class Controller {
 	}
  }
 
- @RequestMapping("/postMatchMen")
- public ResponseEntity<String> postMatchMen(@RequestBody Map<String, Object> matchData) {
+ @PostMapping("/postMatchMen")
+ public ResponseEntity<String> postMatchMen(
+		 @RequestParam("match") String matchJson,
+		 @RequestParam(value = "image", required = false) MultipartFile image,
+		 @RequestParam(value = "venue", required = false) String venue) {
 	try {
-	 GameModel match = new GameModel(new JSONObject(matchData), stringValue(matchData.get("team")));
+	 JSONObject matchData = (JSONObject) new JSONParser().parse(matchJson);
+	 GameModel match = new GameModel(matchData, stringValue(matchData.get("team")));
 	 logger.info("Creating men matchday preview: team={}, date={}, competition={}", match.getTeam(), match.getSaveGameDate(), match.getCompetition());
-	 String result = mc.createMatch(match);
+	 BufferedImage userImage = null;
+	 if (image != null && !image.isEmpty()) {
+		 userImage = ImageIO.read(image.getInputStream());
+	 }
+	 String result = mc.createMatch(match, userImage, venue);
 	 logger.info("Men matchday preview created at '{}'", result);
 	 return new ResponseEntity<>(result, HttpStatus.OK);
 	} catch (IOException | ParseException e) {
-	 logger.error("Could not create men matchday preview: team={}, date={}", matchData.get("team"), matchData.get("gameDate"), e);
+	 logger.error("Could not create men matchday preview", e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
  }
@@ -616,7 +624,7 @@ public class Controller {
 	 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 	}
 	String imagePath = switch (selectedTemplate) {
-	 case "men", "men-matchday" -> "src/main/resources/pictures/template/men/matchdayTemp.jpg";
+	 case "men", "men-matchday" -> "src/main/resources/pictures/template/men/matchdayTemp.png";
 	 case "men-result" -> "src/main/resources/pictures/template/men/ResultTemplate.jpg";
 	 case "youth", "youth-matchday" -> "src/main/resources/pictures/template/youth/matchdayTemp.jpg";
 	 case "youth-result" -> "src/main/resources/pictures/template/youth/resultTemp.jpg";
