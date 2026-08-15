@@ -48,7 +48,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private final String botName;
     private final Controller controller;
-    private final List<Long> allowedChatIds = List.of(5047912799L);
+    private final List<Long> allowedChatIds = List.of(5047912799L, 1911405789L);
     private final String botToken;
     private JSONArray bufferedGames;
     private JSONObject bufferedGame;

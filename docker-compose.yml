@@ -11,8 +11,8 @@ services:
     environment:
       TZ: ${TZ:-Europe/Berlin}
       JAVA_OPTS: ${JAVA_OPTS:--XX:MaxRAMPercentage=75.0 -Djava.awt.headless=true}
-      BOT_NAME: ${BOT_NAME:-FSVTreuenInstagramHelperBot}
-      BOT_TOKEN: ${BOT_TOKEN:-}
+      BOT_NAME: ${BOT_NAME:-FSVTreuenInstagramHelper2Bot}
+      BOT_TOKEN: ${BOT_TOKEN:-8904828996:AAHSYj8gjPj-MHDTTv6pHPp-ZZjA472gT2Y}
       GOOGLE_CREDENTIALS_FILE: /app/config/googleCred.json
       INSTAGRAM_FONTS_DIR: /app/fonts
     volumes:
@@ -21,7 +21,6 @@ services:
       - ./fonts:/app/fonts:ro
     tmpfs:
       - /tmp
-    read_only: true
     init: true
     restart: unless-stopped
     security_opt:
