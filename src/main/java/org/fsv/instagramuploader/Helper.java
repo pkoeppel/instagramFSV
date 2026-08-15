@@ -1,6 +1,7 @@
 package org.fsv.instagramuploader;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -52,8 +53,12 @@ public class Helper {
  private static void loadCoordinates() throws IOException {
    File file = new File("src/main/resources/templates/coordinates.json");
 	if (file.exists()) {
-	 Map<String, Object> data = OBJECT_MAPPER.readValue(file, new TypeReference<>() {});
-	 coordinates = (Map<String, Map<String, Object>>) data.get("coordinates");
+	 JavaType stringType = OBJECT_MAPPER.constructType(String.class);
+	 JavaType blockType = OBJECT_MAPPER.getTypeFactory().constructMapType(HashMap.class, String.class, Object.class);
+	 JavaType blocksType = OBJECT_MAPPER.getTypeFactory().constructMapType(HashMap.class, stringType, blockType);
+	 JavaType rootType = OBJECT_MAPPER.getTypeFactory().constructMapType(HashMap.class, stringType, blocksType);
+	 Map<String, Map<String, Map<String, Object>>> data = OBJECT_MAPPER.readValue(file, rootType);
+	 coordinates = data.get("coordinates");
 	} else {
 	 logger.warn("Coordinates file not found, using empty coordinates");
 	 coordinates = new HashMap<>();
@@ -64,12 +69,12 @@ public class Helper {
 	loadCoordinates();
  }
 
- public static int getC(JSONObject c, String val) {
+ public static int getC(Map<?, ?> c, String val) {
 	try {
-	 double coord = (double) c.get(val);
+	 double coord = ((Number) c.get(val)).doubleValue();
 	 return Double.valueOf(coord).intValue();
 	} catch (ClassCastException e) {
-	 long coord = (long) c.get(val);
+	 long coord = ((Number) c.get(val)).longValue();
 	 return Long.valueOf(coord).intValue();
 	}
  }

@@ -132,7 +132,7 @@ public final class FontRegistry {
 	try {
 	 Font font = Font.createFont(Font.TRUETYPE_FONT, absolutePath.toFile());
 	 if (GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font)) {
-		logger.info("Registered font '{}' from '{}'", font.getFamily(), absolutePath);
+		logger.debug("Registered font '{}' from '{}'", font.getFamily(), absolutePath);
 	 }
 	} catch (FontFormatException | IOException e) {
 	 logger.warn("Could not register font file '{}'", absolutePath, e);

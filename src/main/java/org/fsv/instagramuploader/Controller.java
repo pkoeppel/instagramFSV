@@ -1,6 +1,7 @@
 package org.fsv.instagramuploader;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.servlet.http.HttpServletResponse;
@@ -493,11 +494,12 @@ public class Controller {
  public ResponseEntity<HttpStatus> sendMenMatchPicure(@RequestParam("coords") String coords, @RequestParam("file") MultipartFile file) {
 	try {
 	 logger.info("Processing men result image upload: size={} bytes, contentType={}", file.getSize(), file.getContentType());
-	 JSONParser jp = new JSONParser();
-	 rc.savePicture((JSONObject) jp.parse(coords), file);
+	 JavaType coordsType = OBJECT_MAPPER.getTypeFactory().constructMapType(HashMap.class, String.class, Object.class);
+	 Map<String, Object> c = OBJECT_MAPPER.readValue(coords, coordsType);
+	 rc.savePicture(c, file);
 	 logger.debug("Men result image upload processed successfully");
 	 return new ResponseEntity<>(HttpStatus.OK);
-	} catch (IOException | ParseException e) {
+	} catch (IOException e) {
 	 logger.error("Could not process men result image upload", e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}

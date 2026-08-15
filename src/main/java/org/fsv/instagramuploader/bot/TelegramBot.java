@@ -1,5 +1,7 @@
 package org.fsv.instagramuploader.bot;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.fsv.instagramuploader.ClubSelector;
@@ -50,8 +52,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final Controller controller;
     private final List<Long> allowedChatIds = List.of(5047912799L, 1911405789L);
     private final String botToken;
-    private JSONArray bufferedGames;
-    private JSONObject bufferedGame;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private List<Map<String, Object>> bufferedGames;
+    private Map<String, Object> bufferedGame;
     private ResultCreator resultCreator;
     private GameModel resultGameModel;
     private String resultHeadline;
@@ -83,32 +86,37 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+        Long chatId = extractChatId(update);
+        if (chatId == null) {
+            return;
+        }
+        if (!allowedChatIds.contains(chatId)) {
+            log.error("Unallowed user: {}", chatId);
+            return;
+        }
+        String chatIdString = chatId.toString();
         try {
             if (update.hasCallbackQuery()) {
-                Long chatId = update.getCallbackQuery().getMessage().getChatId();
-                if (allowedChatIds.contains(chatId)) {
-                    handleCallbackQuery(chatId.toString(), update.getCallbackQuery());
-                } else {
-                    log.error("Unallowed user: {}", chatId);
-                }
+                handleCallbackQuery(chatIdString, update.getCallbackQuery());
             } else if (update.hasMessage() && update.getMessage().hasText()) {
-                Long chatId = update.getMessage().getChatId();
-                if (allowedChatIds.contains(chatId)) {
-                    handleTextMessage(chatId.toString(), update.getMessage().getText());
-                } else {
-                    log.error("Unallowed user: {}", chatId);
-                }
+                handleTextMessage(chatIdString, update.getMessage().getText());
             } else if (update.hasMessage() && update.getMessage().hasPhoto()) {
-                Long chatId = update.getMessage().getChatId();
-                if (allowedChatIds.contains(chatId)) {
-                    handlePhotoMessage(chatId.toString(), update.getMessage().getPhoto());
-                } else {
-                    log.error("Unallowed user: {}", chatId);
-                }
+                handlePhotoMessage(chatIdString, update.getMessage().getPhoto());
             }
-        } catch (ParseException | URISyntaxException | IOException | TelegramApiException e) {
-            throw new RuntimeException(e);
+        } catch (RuntimeException | IOException | ParseException | URISyntaxException | TelegramApiException e) {
+            log.error("Error processing update from chat {}", chatId, e);
+            sendSimpleMsg(chatIdString, "Ein Fehler ist aufgetreten: " + e.getMessage());
         }
+    }
+
+    private Long extractChatId(Update update) {
+        if (update.hasCallbackQuery() && update.getCallbackQuery().getMessage() != null) {
+            return update.getCallbackQuery().getMessage().getChatId();
+        }
+        if (update.hasMessage()) {
+            return update.getMessage().getChatId();
+        }
+        return null;
     }
 
     private void handleCallbackQuery(String chatId, CallbackQuery callbackQuery) throws IOException, ParseException, URISyntaxException {
@@ -150,6 +158,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             handleLineupRoleCallback(chatId, lastCall.substring("lineup_role_".length()));
             return;
         }
+        if (lastCall == null) {
+            return;
+        }
         String[] paths = lastCall.split("_");
         if (paths.length < 2 || (!"createPreview".equals(paths[0]) && !"createResult".equals(paths[0]) && !"createLineup".equals(paths[0]))) {
             return;
@@ -178,7 +189,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         JSONObject teamData = controller.getTeamData().getBody();
         List<ImmutablePair<String, String>> keyboardValues = new ArrayList<>();
         if (teamData != null) {
-            teamData.forEach((key, value) -> keyboardValues.add(new ImmutablePair<>(key.toString(), key.toString())));
+            for (Object key : teamData.keySet()) {
+                keyboardValues.add(new ImmutablePair<>(key.toString(), key.toString()));
+            }
         }
         sendMsg(chatId, "Wähle eine Mannschaft!", createKeyboard(3, mode, keyboardValues));
     }
@@ -192,10 +205,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         String matchDay = keyParts[0];
         String competition = keyParts.length > 1 ? keyParts[1] : null;
         bufferedGame = null;
-        for (Object teamGame : bufferedGames) {
-            JSONObject g = (JSONObject) teamGame;
-            if (matchDay.equals(g.get("matchDay").toString()) &&
-                    (competition == null || competition.equals(g.get("competition").toString()))) {
+        for (Map<String, Object> g : bufferedGames) {
+            Object dayObj = g.get("matchDay");
+            Object compObj = g.get("competition");
+            if (dayObj != null && matchDay.equals(dayObj.toString()) &&
+                    (competition == null || (compObj != null && competition.equals(compObj.toString())))) {
                 bufferedGame = g;
                 break;
             }
@@ -204,8 +218,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendStartMsg(chatId, "Spiel nicht gefunden. Bitte starte den Vorgang erneut.");
             return;
         }
-        GameModel gameModel = new GameModel(bufferedGame, teamQuery);
-        gameModel.setMatchDay(bufferedGame.get("matchDay").toString());
+        GameModel gameModel = new GameModel(new JSONObject(bufferedGame), teamQuery);
+        gameModel.setMatchDay(getString(bufferedGame, "matchDay"));
         generateOrResolveClub(chatId, gameModel, lastCallFor(mode, teamQuery, matchKey), mode);
     }
 
@@ -247,10 +261,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         String matchDay = keyParts[0];
         String competition = keyParts.length > 1 ? keyParts[1] : null;
         bufferedGame = null;
-        for (Object teamGame : bufferedGames) {
-            JSONObject g = (JSONObject) teamGame;
-            if (matchDay.equals(g.get("matchDay").toString()) &&
-                    (competition == null || competition.equals(g.get("competition").toString()))) {
+        for (Map<String, Object> g : bufferedGames) {
+            Object dayObj = g.get("matchDay");
+            Object compObj = g.get("competition");
+            if (dayObj != null && matchDay.equals(dayObj.toString()) &&
+                    (competition == null || (compObj != null && competition.equals(compObj.toString())))) {
                 bufferedGame = g;
                 break;
             }
@@ -259,8 +274,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendStartMsg(chatId, "Spiel nicht gefunden. Bitte starte den Vorgang erneut.");
             return;
         }
-        GameModel gameModel = new GameModel(bufferedGame, teamQuery);
-        gameModel.setMatchDay(bufferedGame.get("matchDay").toString());
+        GameModel gameModel = new GameModel(new JSONObject(bufferedGame), teamQuery);
+        gameModel.setMatchDay(getString(bufferedGame, "matchDay"));
         ClubModel selected = ClubSelector.searchClubDetails(clubKey);
         if (selected == null) {
             sendStartMsg(chatId, "Verein nicht gefunden. Bitte starte den Vorgang erneut.");
@@ -282,21 +297,35 @@ public class TelegramBot extends TelegramLongPollingBot {
         return mode + "_" + teamQuery + "_" + matchKey;
     }
 
+    private String getString(Map<String, Object> map, String key) {
+        Object value = map != null ? map.get(key) : null;
+        return value != null ? value.toString() : "";
+    }
+
+    private String getClubName(Object club) {
+        if (club instanceof Map<?, ?> map) {
+            Object name = map.get("clubName");
+            return name != null ? name.toString() : "?";
+        }
+        return "?";
+    }
+
     private void loadResultMatches(String chatId, String lastCall, String teamQuery) throws IOException, ParseException {
-        InputStreamReader reader = new InputStreamReader(
-                new FileInputStream("src/main/resources/templates/men-games.json"), StandardCharsets.UTF_8);
-        JSONParser parser = new JSONParser();
-        JSONArray result = (JSONArray) parser.parse(reader);
-        bufferedGames = new JSONArray();
-        for (Object entry : result) {
-            JSONObject game = (JSONObject) entry;
+        JavaType stringType = OBJECT_MAPPER.constructType(String.class);
+        JavaType objectType = OBJECT_MAPPER.constructType(Object.class);
+        JavaType gameType = OBJECT_MAPPER.getTypeFactory().constructMapType(HashMap.class, stringType, objectType);
+        JavaType gameListType = OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, gameType);
+        List<Map<String, Object>> result = OBJECT_MAPPER.readValue(new File("src/main/resources/templates/men-games.json"), gameListType);
+        bufferedGames = new ArrayList<>();
+        for (Map<String, Object> game : result) {
             String teamVal = game.containsKey("team") && game.get("team") != null ? game.get("team").toString() : null;
             if (!teamQuery.equals(teamVal)) {
                 continue;
             }
-            JSONObject transformed = new JSONObject();
+            Map<String, Object> transformed = new HashMap<>();
             transformed.put("competition", game.get("competition"));
-            String matchDate = game.get("matchDate").toString();
+            Object matchDateObj = game.get("matchDate");
+            String matchDate = matchDateObj != null ? matchDateObj.toString() : null;
             transformed.put("gameDate", matchDate);
             transformed.put("matchDay", matchDate);
             transformed.put("gameTime", null);
@@ -312,51 +341,50 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
         List<ImmutablePair<String, String>> keyboardValues = new ArrayList<>();
-        for (Object teamGame : bufferedGames) {
-            JSONObject game = (JSONObject) teamGame;
-            JSONObject home = (JSONObject) game.get("homeTeam");
-            JSONObject away = (JSONObject) game.get("awayTeam");
-            String matchDay = game.get("matchDay").toString();
-            String competition = game.get("competition").toString();
+        for (Map<String, Object> game : bufferedGames) {
+            String matchDay = getString(game, "matchDay");
+            String competition = getString(game, "competition");
             String matchKey = matchDay + "~" + competition;
-            String gameInfo = matchDay + " | " + competition + ": " + home.get("clubName") + " - " + away.get("clubName");
+            String homeName = getClubName(game.get("homeTeam"));
+            String awayName = getClubName(game.get("awayTeam"));
+            String gameInfo = matchDay + " | " + competition + ": " + homeName + " - " + awayName;
             keyboardValues.add(new ImmutablePair<>(gameInfo, matchKey));
         }
         sendMsg(chatId, "Wähle ein Spiel aus!", createKeyboard(1, lastCall, keyboardValues));
     }
 
     private void loadMatches(String chatId, String lastCall, String teamQuery) throws IOException, ParseException, URISyntaxException {
-        InputStreamReader reader = new InputStreamReader(
-                new FileInputStream("src/main/resources/templates/allMatches.json"), StandardCharsets.UTF_8);
-        JSONObject result = (JSONObject) new JSONParser().parse(reader);
-        bufferedGames = (JSONArray) result.get(teamQuery);
+        JavaType stringType = OBJECT_MAPPER.constructType(String.class);
+        JavaType objectType = OBJECT_MAPPER.constructType(Object.class);
+        JavaType gameType = OBJECT_MAPPER.getTypeFactory().constructMapType(HashMap.class, stringType, objectType);
+        JavaType gameListType = OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, gameType);
+        JavaType rootType = OBJECT_MAPPER.getTypeFactory().constructMapType(HashMap.class, stringType, gameListType);
+        Map<String, List<Map<String, Object>>> result = OBJECT_MAPPER.readValue(new File("src/main/resources/templates/allMatches.json"), rootType);
+        bufferedGames = result.get(teamQuery);
         if (bufferedGames == null) {
             Helper.updateNextMatchesFromFBDE();
-            reader = new InputStreamReader(
-                    new FileInputStream("src/main/resources/templates/allMatches.json"), StandardCharsets.UTF_8);
-            result = (JSONObject) new JSONParser().parse(reader);
-            bufferedGames = (JSONArray) result.get(teamQuery);
+            result = OBJECT_MAPPER.readValue(new File("src/main/resources/templates/allMatches.json"), rootType);
+            bufferedGames = result.get(teamQuery);
         }
         if (bufferedGames == null) {
             sendStartMsg(chatId, "Keine Spiele für diese Mannschaft gefunden.");
             return;
         }
         List<ImmutablePair<String, String>> keyboardValues = new ArrayList<>();
-        for (Object teamGame : bufferedGames) {
-            JSONObject game = (JSONObject) teamGame;
-            JSONObject home = (JSONObject) game.get("homeTeam");
-            JSONObject away = (JSONObject) game.get("awayTeam");
-            String matchDay = game.get("matchDay").toString();
-            String competition = game.get("competition").toString();
+        for (Map<String, Object> game : bufferedGames) {
+            String matchDay = getString(game, "matchDay");
+            String competition = getString(game, "competition");
             String matchKey = matchDay + "~" + competition;
-            String gameInfo = matchDay + " | " + competition + ": " + home.get("clubName") + " - " + away.get("clubName");
+            String homeName = getClubName(game.get("homeTeam"));
+            String awayName = getClubName(game.get("awayTeam"));
+            String gameInfo = matchDay + " | " + competition + ": " + homeName + " - " + awayName;
             keyboardValues.add(new ImmutablePair<>(gameInfo, matchKey));
         }
         keyboardValues.add(new ImmutablePair<>("Liste aktualisieren", "update"));
         sendMsg(chatId, "Wähle ein Spiel aus!", createKeyboard(1, lastCall, keyboardValues));
     }
 
-    public synchronized void getMatchdayFile(String chatId, GameModel gameModel, BufferedImage photo) throws IOException, ParseException {
+    public synchronized boolean getMatchdayFile(String chatId, GameModel gameModel, BufferedImage photo) throws IOException, ParseException {
         MatchdayCreator mc = new MatchdayCreator();
         String savePath = mc.createMatch(gameModel, photo);
         Path filePath = Paths.get("src/main/resources/save", savePath, "/Matchday.jpeg");
@@ -365,8 +393,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendPhoto.setChatId(chatId);
         try {
             execute(sendPhoto);
+            return true;
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            log.error("Could not send matchday preview", e);
+            sendSimpleMsg(chatId, "Vorschau konnte nicht gesendet werden: " + e.getMessage());
+            return false;
         }
     }
 
@@ -390,9 +421,11 @@ public class TelegramBot extends TelegramLongPollingBot {
             resetMatchdayPreview();
             return;
         }
-        getMatchdayFile(chatId, pendingMatchdayGame, pendingMatchdayPhoto);
+        boolean sent = getMatchdayFile(chatId, pendingMatchdayGame, pendingMatchdayPhoto);
         resetMatchdayPreview();
-        sendStartMsg(chatId, "Vorschau erstellt!");
+        if (sent) {
+            sendStartMsg(chatId, "Vorschau erstellt!");
+        }
     }
     public synchronized void sendMsg(String chatId, String msg, InlineKeyboardMarkup keyboard) {
         SendMessage sendMessage = new SendMessage();
@@ -403,7 +436,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage.setReplyMarkup(keyboard);
             execute(sendMessage);
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            log.error("Could not send message to chat {}", chatId, e);
         }
     }
 
@@ -736,7 +769,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (trimmed.isEmpty()) {
                 continue;
             }
-            if (trimmed.toLowerCase().startsWith("trainer")) {
+            if (trimmed.toLowerCase(Locale.ROOT).startsWith("trainer")) {
                 String[] parts = trimmed.split(";", 2);
                 if (parts.length > 1) {
                     pendingLineupTrainer = parts[1].trim();
@@ -900,19 +933,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         try {
             String playersJson = buildPlayersJson(pendingLineupPlayers);
-            JSONObject matchJson = new JSONObject();
-            matchJson.put("matchDate", pendingLineupGame.getSaveGameDate());
-            matchJson.put("competition", pendingLineupGame.getCompetition());
-            matchJson.put("savePath", pendingLineupGame.getSavePath());
-            matchJson.put("team", pendingLineupGame.getTeam());
+            Map<String, Object> matchMap = new HashMap<>();
+            matchMap.put("matchDate", pendingLineupGame.getSaveGameDate());
+            matchMap.put("competition", pendingLineupGame.getCompetition());
+            matchMap.put("savePath", pendingLineupGame.getSavePath());
+            matchMap.put("team", pendingLineupGame.getTeam());
             ClubModel home = pendingLineupGame.getHomeTeam();
             ClubModel away = pendingLineupGame.getAwayTeam();
             if (home != null) {
-                matchJson.put("homeClub", home.toJSON());
+                matchMap.put("homeClub", home.toJSON());
             }
             if (away != null) {
-                matchJson.put("awayClub", away.toJSON());
+                matchMap.put("awayClub", away.toJSON());
             }
+            JSONObject matchJson = new JSONObject(matchMap);
 
             String savePath = lineupCreator.createLineup(matchJson.toJSONString(), playersJson, trainer);
             if (savePath == null) {
@@ -928,10 +962,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private String buildPlayersJson(List<PlayerModel> players) {
-        JSONArray arr = new JSONArray();
+    private String buildPlayersJson(List<PlayerModel> players) throws IOException {
+        List<Map<String, Object>> arr = new ArrayList<>();
         for (PlayerModel player : players) {
-            JSONObject obj = new JSONObject();
+            Map<String, Object> obj = new HashMap<>();
             obj.put("number", player.getNumber());
             obj.put("name", player.getName());
             obj.put("role", player.getRole());
@@ -939,7 +973,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             obj.put("captain", player.isCaptain());
             arr.add(obj);
         }
-        return arr.toJSONString();
+        return OBJECT_MAPPER.writeValueAsString(arr);
     }
 
     private void sendLineupImage(String chatId, String fileDir) {
@@ -1165,7 +1199,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             execute(sendMessage);
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            log.error("Could not send simple message to chat {}", chatId, e);
         }
     }
 

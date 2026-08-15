@@ -296,13 +296,13 @@ public class ResultCreator {
 	return minute.matches("\\d") ? "0" + minute : minute;
  }
 
- public void savePicture(JSONObject c, MultipartFile file) throws IOException {
+ public void savePicture(Map<String, Object> c, MultipartFile file) throws IOException {
 	 BufferedImage image = ImageIO.read(file.getInputStream());
 	 savePicture(c, image);
  }
 
  public void addImage(BufferedImage image) throws IOException {
-	 JSONObject c = new JSONObject();
+	 Map<String, Object> c = new HashMap<>();
 	 c.put("x", 0.0);
 	 c.put("y", 0.0);
 	 c.put("w", (double) image.getWidth());
@@ -310,7 +310,7 @@ public class ResultCreator {
 	 savePicture(c, image);
  }
 
- public void savePicture(JSONObject c, BufferedImage image) throws IOException {
+ public void savePicture(Map<String, Object> c, BufferedImage image) throws IOException {
 	 targetImg = new BufferedImage(1080, 1350, BufferedImage.TYPE_INT_RGB);
 	 BufferedImage subImg = image.getSubimage(Helper.getC(c, "x"), Helper.getC(c, "y"), Helper.getC(c, "w"), Helper.getC(c, "h"));
 	 Graphics2D g2 = targetImg.createGraphics();
