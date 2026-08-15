@@ -39,12 +39,11 @@ public final class FontRegistry {
  private FontRegistry() {
  }
 
- public static List<String> getAvailableFamilies() {
+ public static void getAvailableFamilies() {
 	List<String> result = availableFamilies;
 	if (result == null) {
-	 result = refreshAvailableFamilies();
-	}
-	return result;
+    refreshAvailableFamilies();
+  }
  }
 
  public static synchronized List<String> refreshAvailableFamilies() {

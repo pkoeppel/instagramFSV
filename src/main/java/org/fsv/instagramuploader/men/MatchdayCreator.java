@@ -29,11 +29,7 @@ public class MatchdayCreator {
 	private static final int CANVAS_WIDTH = 1080;
 	private static final int CANVAS_HEIGHT = 1920;
 	private static final int PHOTO_SIZE = 1080;
-
-	public String createMatch(GameModel match) throws IOException, ParseException {
-		return createMatch(match, null);
-	}
-
+	
 	public String createMatch(GameModel match, BufferedImage userImage) throws IOException, ParseException {
 		return createMatch(match, userImage, null);
 	}

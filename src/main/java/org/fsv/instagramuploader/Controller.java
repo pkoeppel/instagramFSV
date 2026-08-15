@@ -554,7 +554,7 @@ public class Controller {
 	 logger.info("Youth matchday package created: {}", result);
 	 return new ResponseEntity<>(result, HttpStatus.OK);
 	} catch (IOException | ParseException e) {
-	 logger.error("Could not create youth matchday package for {} matches", matchList != null ? matchList.size() : 0, e);
+	 logger.error("Could not create youth matchday package for {} matches", matchList.size(), e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
  }
@@ -589,7 +589,7 @@ public class Controller {
 	 logger.info("Youth result package created: {}", result);
 	 return new ResponseEntity<>(result, HttpStatus.OK);
 	} catch (IOException | ParseException e) {
-	 logger.error("Could not create youth result package for {} games", resultList != null ? resultList.size() : 0, e);
+	 logger.error("Could not create youth result package for {} games", resultList.size(), e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
  }

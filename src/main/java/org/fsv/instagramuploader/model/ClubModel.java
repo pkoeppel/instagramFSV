@@ -1,16 +1,28 @@
 package org.fsv.instagramuploader.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.json.simple.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class ClubModel {
+ @Getter
  String clubName;
+ @Setter
  String clubStats;
+ @Getter
+ @Setter
  String clubPlace;
+ @Getter
+ @Setter
  String clubLogoDir;
+ @Setter
+ @Getter
  String saveName;
+ @Setter
+ @Getter
  String changedName;
  
  public ClubModel(String clubName, String clubStats, String clubPlace, String clubLogoDir, String saveName, String changedName) {
@@ -56,55 +68,15 @@ public class ClubModel {
 	 this.saveName = club.get("saveName").toString();
 	}
  }
- 
- public String getClubName() {
-	return clubName;
- }
- 
- public String getClubStats() {
+  
+  public String getClubStats() {
 	if (clubStats == null) {
 	 return "";
 	}
 	return clubStats;
  }
- 
- public void setClubStats(String clubStats) {
-	this.clubStats = clubStats;
- }
- 
- public void setClubPlace(String clubPlace) {
-	this.clubPlace = clubPlace;
- }
- 
- public String getClubPlace() {
-	return clubPlace;
- }
- 
- public void setClubLogoDir(String clubLogoDir) {
-	this.clubLogoDir = clubLogoDir;
- }
- 
- public String getClubLogoDir() {
-	return clubLogoDir;
- }
- 
- public String getSaveName() {
-	return saveName;
- }
- 
- public void setSaveName(String saveName) {
-	this.saveName = saveName;
- }
- 
- public String getChangedName() {
-	return changedName;
- }
- 
- public void setChangedName(String changedName) {
-	this.changedName = changedName;
- }
- 
- public JSONObject toJSON() {
+  
+  public JSONObject toJSON() {
 	Map<String, String> resultMap = new HashMap<>();
 	resultMap.put("clubName", clubName);
 	resultMap.put("clubStats", clubStats);

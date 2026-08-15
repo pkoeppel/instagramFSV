@@ -230,9 +230,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             gameModel.setHomeTeam(home);
             gameModel.setAwayTeam(away);
             if ("createResult".equals(mode)) {
-                startResultInput(chatId, gameModel, lastCall);
+                startResultInput(chatId, gameModel);
             } else if ("createLineup".equals(mode)) {
-                startLineupInput(chatId, gameModel, lastCall);
+                startLineupInput(chatId, gameModel);
             } else {
                 startMatchdayPhotoRequest(chatId, gameModel);
             }
@@ -310,7 +310,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         return "?";
     }
 
-    private void loadResultMatches(String chatId, String lastCall, String teamQuery) throws IOException, ParseException {
+    private void loadResultMatches(String chatId, String lastCall, String teamQuery) throws IOException {
         JavaType stringType = OBJECT_MAPPER.constructType(String.class);
         JavaType objectType = OBJECT_MAPPER.constructType(Object.class);
         JavaType gameType = OBJECT_MAPPER.getTypeFactory().constructMapType(HashMap.class, stringType, objectType);
@@ -353,7 +353,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMsg(chatId, "Wähle ein Spiel aus!", createKeyboard(1, lastCall, keyboardValues));
     }
 
-    private void loadMatches(String chatId, String lastCall, String teamQuery) throws IOException, ParseException, URISyntaxException {
+    private void loadMatches(String chatId, String lastCall, String teamQuery) throws IOException, URISyntaxException {
         JavaType stringType = OBJECT_MAPPER.constructType(String.class);
         JavaType objectType = OBJECT_MAPPER.constructType(Object.class);
         JavaType gameType = OBJECT_MAPPER.getTypeFactory().constructMapType(HashMap.class, stringType, objectType);
@@ -444,7 +444,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
         List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
-        Integer counter = 0;
+        int counter = 0;
         for (ImmutablePair<String, String> button : allButtons) {
             keyboardRow.add(createInlineButton(button.getKey(), lastCall + "_" + button.getValue()));
             counter++;
@@ -488,7 +488,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMsg(chatId, msg, inlineKeyboardMarkup);
     }
 
-    private void startResultInput(String chatId, GameModel gameModel, String lastCall) {
+    private void startResultInput(String chatId, GameModel gameModel) {
         this.resultCreator = new ResultCreator();
         this.resultGameModel = gameModel;
         this.resultHeadline = null;
@@ -497,7 +497,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendSimpleMsg(chatId, "Schreibe deine Headline!");
     }
 
-    private void startLineupInput(String chatId, GameModel gameModel, String lastCall) {
+    private void startLineupInput(String chatId, GameModel gameModel) {
         resetResultFlow();
         resetMatchdayPreview();
         resetLineupFlow();
@@ -648,7 +648,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleLineupAddInput(String chatId, String input) {
         if (isDone(input)) {
-            if (!hasSelectedPlayers()) {
+            if (hasSelectedPlayers()) {
                 sendSimpleMsg(chatId, "Bitte wähle mindestens einen Spieler für die Aufstellung aus.");
                 return;
             }
@@ -669,7 +669,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private boolean hasSelectedPlayers() {
-        return pendingLineupPlayers != null && pendingLineupPlayers.stream().anyMatch(p -> "start".equalsIgnoreCase(p.getRole()) || "bench".equalsIgnoreCase(p.getRole()));
+        return pendingLineupPlayers == null || pendingLineupPlayers.stream().noneMatch(p -> "start".equalsIgnoreCase(p.getRole()) || "bench".equalsIgnoreCase(p.getRole()));
     }
 
     private PlayerModel parseAddPlayerInput(String input) {
@@ -740,7 +740,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleLineupSummaryInput(String chatId, String input) {
         if (isConfirmation(input)) {
-            if (!hasSelectedPlayers()) {
+            if (hasSelectedPlayers()) {
                 sendSimpleMsg(chatId, "Bitte wähle mindestens einen Spieler aus.");
                 return;
             }

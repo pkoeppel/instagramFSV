@@ -33,12 +33,11 @@ public class ClubSelector {
 	if (rawData == null) {
 	 rawData = findBestClubMatch(clubsData, club.getClubName());
 	}
-	if (!(rawData instanceof JSONObject)) {
+	if (!(rawData instanceof JSONObject clubData)) {
 	 logger.error("Club '{}' not found", club.getClubName());
 	 return null;
 	}
-	JSONObject clubData = (JSONObject) rawData;
-	Object fileName = clubData.get("fileName");
+   Object fileName = clubData.get("fileName");
 	if (fileName == null) {
 	 logger.error("Club '{}' has no fileName", club.getClubName());
 	 return null;

@@ -218,7 +218,7 @@ public class LineupCreator {
 		Graphics2D graphics = background.createGraphics();
 		try {
 			graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-			Color color = decodeColor(block.getOrDefault("textColor", "#ffffff"), Color.WHITE);
+			Color color = decodeColor(block.getOrDefault("textColor", "#ffffff"));
 			graphics.setColor(color);
 
 			int posX = ((Number) block.get("posX")).intValue();
@@ -293,11 +293,11 @@ public class LineupCreator {
 		return lines;
 	}
 
-	private Color decodeColor(Object value, Color fallback) {
+	private Color decodeColor(Object value) {
 		try {
 			return Color.decode(String.valueOf(value));
 		} catch (NumberFormatException e) {
-			return fallback;
+			return Color.WHITE;
 		}
 	}
 
