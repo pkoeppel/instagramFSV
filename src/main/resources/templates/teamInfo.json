@@ -2,12 +2,12 @@
   "1" : {
     "club-id" : "011MIF6RBO000000VTVG0001VTR8C1K7",
     "lastCupMatchday" : "1",
-    "lastLeagueMatchday" : "1",
+    "lastLeagueMatchday" : "2",
     "default-place" : "Treuen"
   },
   "2" : {
     "club-id" : "01OIBGK5T8000000VV0AG80NVUUTMIT0",
-    "lastCupMatchday" : "1",
+    "lastCupMatchday" : "2",
     "lastLeagueMatchday" : "1",
     "default-place" : "Treuen"
   }
