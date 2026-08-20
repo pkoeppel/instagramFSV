@@ -1128,22 +1128,39 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void sendResultImage(String chatId, String fileDir, String caption) {
-        String formatedDate = resultGameModel.getSaveGameDate().replace("-", "");
-        Path filePath = Paths.get("src/main/resources/save", fileDir, "Bilder", formatedDate + "_0.jpeg");
-        java.io.File file = filePath.toFile();
-        if (!file.exists()) {
-            sendSimpleMsg(chatId, "Ergebnis erstellt:\n\n" + caption);
+        sendSimpleMsg(chatId, caption);
+        Path bilderDir = Paths.get("src/main/resources/save", fileDir, "Bilder");
+        java.io.File dir = bilderDir.toFile();
+        
+        if (!dir.exists() || !dir.isDirectory()) {
+            log.error("Bilder-Ordner nicht gefunden unter: {}", bilderDir);
+            sendSimpleMsg(chatId, "Bericht gesendet, aber der Ordner mit den Bildern konnte nicht gefunden werden.");
             return;
         }
-        SendPhoto sendPhoto = new SendPhoto();
-        sendPhoto.setChatId(chatId);
-        sendPhoto.setPhoto(new InputFile(file));
-        sendPhoto.setCaption(caption);
-        try {
-            execute(sendPhoto);
-        } catch (TelegramApiException e) {
-            log.error("Could not send result image", e);
-            sendSimpleMsg(chatId, "Ergebnis erstellt, aber Bild konnte nicht gesendet werden.");
+        
+        java.io.File[] imageFiles = dir.listFiles((d, name) -> {
+            String lower = name.toLowerCase();
+            return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png");
+        });
+        
+        if (imageFiles == null || imageFiles.length == 0) {
+            sendSimpleMsg(chatId, "Bericht gesendet, aber es wurden keine Bilder im Ordner gefunden.");
+            return;
+        }
+        
+        Arrays.sort(imageFiles);
+        
+        for (java.io.File imageFile : imageFiles) {
+            SendPhoto sendPhoto = new SendPhoto();
+            sendPhoto.setChatId(chatId);
+            sendPhoto.setPhoto(new InputFile(imageFile));
+            try {
+                execute(sendPhoto);
+                log.info("Bild erfolgreich gesendet: {}", imageFile.getName());
+            } catch (TelegramApiException e) {
+                log.error("Fehler beim Senden des Bildes: " + imageFile.getName(), e);
+                sendSimpleMsg(chatId, "Fehler beim Senden des Bildes: " + imageFile.getName());
+            }
         }
     }
 

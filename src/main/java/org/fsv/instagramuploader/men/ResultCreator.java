@@ -121,9 +121,16 @@ public class ResultCreator {
 	 Helper.pictureOnPicture(firstImg, awayClubLogo, "awayClubLogoResult-men", Helper.isOwnClub(awayClub));
 	 String[] resultSplit = matchDetails.result().split(":");
 	 int resultShift = Integer.compare(resultSplit[1].length(), resultSplit[0].length()) * 20;
-	 Helper.writeOnPicture(firstImg, matchDetails.result(), "result", FontClass.resultMen, Color.BLACK, resultShift);
-	 Helper.writeOnPicture(firstImg, Helper.wrapString(homeClubName, 23), "homeClubResult-men", FontClass.clubMenResult, Color.BLACK, 0);
-	 Helper.writeOnPicture(firstImg, Helper.wrapString(awayClubName, 23), "awayClubResult-men", FontClass.clubMenResult, Color.BLACK, 0);
+		
+	 String homeGoals = resultSplit.length > 0 ? resultSplit[0] : "?";
+	 String awayGoals = resultSplit.length > 1 ? resultSplit[1] : "?";
+	 
+	 Helper.writeOnPicture(firstImg, homeGoals, "result-home", FontClass.resultMen, Color.BLACK, resultShift);
+	 Helper.writeOnPicture(firstImg, ":", "result-colon", FontClass.resultMen, Color.BLACK, resultShift);
+	 Helper.writeOnPicture(firstImg, awayGoals, "result-away", FontClass.resultMen, Color.BLACK, resultShift);
+	 
+	 Helper.writeOnPicture(firstImg, Helper.wrapString(homeClubName, 50), "homeClubResult-men", FontClass.clubMenResult, Color.BLACK, 0);
+	 Helper.writeOnPicture(firstImg, Helper.wrapString(awayClubName, 50), "awayClubResult-men", FontClass.clubMenResult, Color.BLACK, 0);
 	 for (BufferedImage image : allImg) {
 		File fileToSave = new File(directory + "/" + formatedDate + "_" + imgCount + ".jpeg");
 		ImageIO.write(image, "jpeg", fileToSave);

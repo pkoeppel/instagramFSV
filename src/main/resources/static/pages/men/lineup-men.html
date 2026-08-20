@@ -80,7 +80,7 @@
 
         .add-player-row {
             display: grid;
-            grid-template-columns: auto 1fr auto;
+            grid-template-columns: 100px 1fr auto;
             gap: 10px;
             align-items: end;
             margin-top: 10px;
@@ -211,7 +211,8 @@
             </div>
             <div class="player-tag">
                 <label for="gk-${index}">TW</label>
-                <input type="radio" name="goalkeeper" id="gk-${index}" value="${index}" disabled>
+                <!-- Geändert von type="radio" zu type="checkbox" -->
+                <input type="checkbox" name="goalkeeper" id="gk-${index}" value="${index}" disabled>
             </div>
             <div class="player-tag">
                 <label for="cap-${index}">C</label>
@@ -284,8 +285,11 @@
             alert('Bitte ein Spiel auswählen.');
             return;
         }
-        const gkIndex = document.querySelector('input[name="goalkeeper"]:checked')?.value;
+
+        // Alle aktivierten Torhüter-Checkboxen abrufen
+        const gkIndices = Array.from(document.querySelectorAll('input[name="goalkeeper"]:checked')).map(cb => cb.value);
         const captainIndex = document.querySelector('input[name="captain"]:checked')?.value;
+
         const selectedPlayers = [];
         playersData.forEach((player, index) => {
             const role = document.getElementById(`role-${index}`).value;
@@ -303,7 +307,7 @@
                 number: player.number,
                 name: player.name,
                 role: role,
-                goalkeeper: String(index) === gkIndex,
+                goalkeeper: gkIndices.includes(String(index)), // Prüfen, ob im Array enthalten
                 captain: String(index) === captainIndex
             });
         });
