@@ -1139,7 +1139,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         
         java.io.File[] imageFiles = dir.listFiles((d, name) -> {
-            String lower = name.toLowerCase();
+            String lower = name.toLowerCase(Locale.ROOT);
             return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png");
         });
         
@@ -1158,7 +1158,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 execute(sendPhoto);
                 log.info("Bild erfolgreich gesendet: {}", imageFile.getName());
             } catch (TelegramApiException e) {
-                log.error("Fehler beim Senden des Bildes: " + imageFile.getName(), e);
+              log.error("Fehler beim Senden des Bildes: {}", imageFile.getName(), e);
                 sendSimpleMsg(chatId, "Fehler beim Senden des Bildes: " + imageFile.getName());
             }
         }

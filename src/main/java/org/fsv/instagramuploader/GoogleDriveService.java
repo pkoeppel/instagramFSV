@@ -6,22 +6,18 @@ import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.FileContent;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.FileList;
-import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.GoogleCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +42,7 @@ public class GoogleDriveService {
 			}
 			GoogleClientSecrets clientSecrets;
 			try (InputStream in = Files.newInputStream(credentialsFile.toPath())) {
-				clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+				clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in, StandardCharsets.UTF_8));
 			}
 			
 			// 2. Build flow and trigger user authorization if needed
@@ -70,11 +66,12 @@ public class GoogleDriveService {
 			String teamFolderId = getFolder(spieltageFolderId, "1. Mannschaft");
 			this.targetFolderId = getFolder(teamFolderId, folderName);
 			
-		} catch (Exception e) {
+		} catch (IOException | GeneralSecurityException e) {
 			logger.error("Fehler bei OAuth-Autorisierung", e);
 		}
 	}
 	
+	/*
 	private String createFolder(String folderId, String folderName) throws IOException {
 		com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
 		fileMetadata.setName(folderName);
@@ -92,7 +89,7 @@ public class GoogleDriveService {
 		}
 		return "";
 	}
-	
+	*/
 	private String getFolder(String folderId, String folderName) throws IOException {
 		String setQ = "mimeType='application/vnd.google-apps.folder' and name='" + folderName + "'";
 		if (!Objects.equals(folderId, "")) {
@@ -132,7 +129,7 @@ public class GoogleDriveService {
 			logger.error("Could not upload image '{}' to Google Drive folder '{}'", file.getName(), targetFolderId, e);
 		}
 	}
-	
+	/*
 	private static String getPathToGoogleCredentials() {
 		String configuredPath = System.getenv("GOOGLE_CREDENTIALS_FILE");
 		if (configuredPath != null && !configuredPath.isBlank()) {
@@ -141,4 +138,5 @@ public class GoogleDriveService {
 		String currentDirectory = System.getProperty("user.dir");
 		return Paths.get(currentDirectory, "src/main/resources/templates/googleCred.json").toString();
 	}
+	*/
 }
