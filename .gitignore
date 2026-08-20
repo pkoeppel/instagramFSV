@@ -60,3 +60,4 @@ Thumbs.db
 # Lokale Docker-Secrets und zusaetzliche Schriftdateien
 /config/*
 !/config/.gitkeep
+/tokens/
