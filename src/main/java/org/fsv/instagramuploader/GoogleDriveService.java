@@ -57,7 +57,11 @@ public class GoogleDriveService {
 							.setAccessType("offline")
 							.build();
 			
-			Credential credential = new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
+			Credential credential = flow.loadCredential("user");
+			if (credential == null) {
+				logger.error("Kein gespeichertes Token gefunden! Authentifizierung auf dem Server nicht möglich.");
+				return;
+			}
 			
 			// 3. Build Drive API
 			drive = new Drive.Builder(GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, credential)
