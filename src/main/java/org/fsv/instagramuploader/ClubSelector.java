@@ -1,5 +1,6 @@
 package org.fsv.instagramuploader;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.fsv.instagramuploader.model.ClubModel;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -15,8 +16,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 public class ClubSelector {
  private static final Logger logger = LoggerFactory.getLogger(ClubSelector.class);
  private static final Path CLUBS_FILE = Paths.get("src/main/resources/templates/clubs.json");
@@ -28,6 +27,10 @@ public class ClubSelector {
  }
 
  public static ClubModel getClubDetails(ClubModel club) throws IOException, ParseException {
+   if (club == null) {
+     logger.error("Cannot resolve a missing club");
+     return null;
+   }
 	JSONObject clubsData = loadClubs();
 	Object rawData = clubsData.get(club.getClubName());
 	if (rawData == null) {
