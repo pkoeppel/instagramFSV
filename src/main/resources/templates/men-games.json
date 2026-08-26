@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "homeClub": {
+      "clubName": "TSV Trieb 1887",
+      "changedName": "TSV Trieb 1887 2"
+    },
+    "matchDate": "2026-08-23",
+    "savePath": "2026-08-23_1.Kreisklasse_TSV_Trieb_1887_FSV_Treuen",
+    "awayClub": {
+      "clubName": "FSV Treuen",
+      "changedName": "FSV Treuen 2"
+    },
+    "competition": "1.Kreisklasse",
+    "gameUrl": "https://www.fussball.de/spiel/tsv-trieb-1887-2-fsv-treuen-2/-/spiel/031F06JCO4000000VS5489BTVUS470OH",
+    "team": "2"
+  }
+]

@@ -5,53 +5,57 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.servlet.http.HttpServletResponse;
+import org.fsv.instagramuploader.bot.TelegramBot;
 import org.fsv.instagramuploader.men.LineupCreator;
 import org.fsv.instagramuploader.men.MatchdayCreator;
 import org.fsv.instagramuploader.men.ResultCreator;
+import org.fsv.instagramuploader.men.ScoreCreator;
 import org.fsv.instagramuploader.model.GameModel;
 import org.fsv.instagramuploader.model.ResultModel;
 import org.fsv.instagramuploader.youth.MatchdaysCreator;
 import org.fsv.instagramuploader.youth.ResultsCreator;
-import org.fsv.instagramuploader.bot.TelegramBot;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
-import java.awt.Font;
+import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 
 @RestController
 public class Controller {
  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
  private static final Logger logger = LoggerFactory.getLogger(Controller.class);
+  private static final DateTimeFormatter GAME_TIME_FORMAT = DateTimeFormatter.ofPattern("H:mm");
+  private static final int FIRST_TEAM_KEY = 1;
+  private final Set<String> sentMatchTimeNotifications = new HashSet<>();
 
  @Autowired
  private TelegramBot telegramBot;
@@ -60,6 +64,7 @@ public class Controller {
  ResultsCreator rsc;
  MatchdayCreator mc;
  ResultCreator rc;
+  ScoreCreator sc;
  LineupCreator lineupCreator;
 
  public Controller() {
@@ -67,6 +72,7 @@ public class Controller {
 	this.rsc = new ResultsCreator();
 	this.mc = new MatchdayCreator();
 	this.rc = new ResultCreator();
+   this.sc = new ScoreCreator();
 	this.lineupCreator = new LineupCreator();
  }
 
@@ -155,8 +161,59 @@ public class Controller {
 	 logger.error("Automatic Herren match hint check failed", e);
 	}
  }
-
- @GetMapping("/getNextMatches")
+  
+  @Scheduled(cron = "0 * * * * *", zone = "Europe/Berlin")
+  public void sendMatchTimeNotifications() {
+    try {
+      JSONObject allMatches = (JSONObject) readJsonFile("allMatches.json");
+      Object gamesObject = allMatches.get(String.valueOf(FIRST_TEAM_KEY));
+      if (!(gamesObject instanceof JSONArray games)) {
+        return;
+      }
+      ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Europe/Berlin")).withSecond(0).withNano(0);
+      for (Object gameObject : games) {
+        if (!(gameObject instanceof JSONObject game)) {
+          continue;
+        }
+        notifyForElapsedMatchTime(game, now, 45);
+        notifyForElapsedMatchTime(game, now, 110);
+      }
+    } catch (IOException | ParseException | RuntimeException e) {
+      logger.error("Match time notification check failed", e);
+    }
+  }
+  
+  private void notifyForElapsedMatchTime(JSONObject game, ZonedDateTime now, int elapsedMinutes) {
+    try {
+      LocalDate date = LocalDate.parse(String.valueOf(game.get("gameDate")));
+      LocalTime time = LocalTime.parse(String.valueOf(game.get("gameTime")), GAME_TIME_FORMAT);
+      ZonedDateTime kickoff = ZonedDateTime.of(LocalDateTime.of(date, time), now.getZone());
+      if (!now.isEqual(kickoff.plusMinutes(elapsedMinutes))) {
+        return;
+      }
+      String gameId = String.valueOf(game.getOrDefault("gameUrl", date + "T" + time));
+      String notificationKey = gameId + "-" + elapsedMinutes;
+      if (telegramBot != null) {
+        String message = elapsedMinutes == 45
+                ? "Erinnerung posten des Halbzeitstandes"
+                : "Erinnung posten des Endstands";
+        telegramBot.sendAutomaticMatchHint(message);
+        sentMatchTimeNotifications.add(notificationKey);
+        logger.info("Sent {} minute notification", elapsedMinutes);
+      }
+    } catch (DateTimeParseException | NullPointerException e) {
+      logger.warn("Skipping match time notification for malformed game data: {}", game, e);
+    }
+  }
+  
+  private String getMatchClubName(Object club) {
+    if (club instanceof Map<?, ?> clubMap && clubMap.get("clubName") != null) {
+      return clubMap.get("clubName").toString();
+    }
+    return "?";
+  }
+  
+  @GetMapping("/getNextMatches")
  public ResponseEntity<JSONObject> getNextMatches() {
 	long startedAt = System.currentTimeMillis();
 	try {
@@ -184,8 +241,15 @@ public class Controller {
 	logger.debug("Downloading youth file '{}'", filePath);
 	return Files.readAllBytes(filePath);
  }
-
- @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Directory is known to exist or handled elsewhere")
+  
+  @GetMapping(value = "/download/score/{pathName}/{fileName:.+}", produces = MediaType.IMAGE_PNG_VALUE)
+  public @ResponseBody byte[] downloadScoreFile(@PathVariable String pathName, @PathVariable String fileName) throws IOException {
+    Path filePath = Paths.get("src/main/resources/save", pathName, "Bilder", fileName);
+    logger.debug("Downloading men score file '{}'", filePath);
+    return Files.readAllBytes(filePath);
+  }
+  
+  @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Directory is known to exist or handled elsewhere")
  @GetMapping(value = "/zip-download/{dir}", produces = "application/zip")
  public void zipDownload(@PathVariable String dir, HttpServletResponse res) throws IOException {
 	logger.info("ZIP download requested for result directory '{}'", dir);
@@ -489,8 +553,45 @@ public class Controller {
 	 rc = new ResultCreator();
 	}
  }
-
- @RequestMapping("/sendMenMatchPicture")
+  
+  @PostMapping("/postMenHalftime")
+  public ResponseEntity<?> postMenHalftime(@RequestParam("match") String match,
+                                           @RequestParam("score") String score) {
+    return postMenScore(match, score, true);
+  }
+  
+  @PostMapping("/postMenFinish")
+  public ResponseEntity<?> postMenFinish(@RequestParam("match") String match,
+                                         @RequestParam("score") String score) {
+    return postMenScore(match, score, false);
+  }
+  
+  private ResponseEntity<?> postMenScore(String match, String score, boolean halftime) {
+    try {
+      JSONObject matchJson = (JSONObject) new JSONParser().parse(match);
+      if (matchJson.get("gameDate") == null && matchJson.get("matchDate") != null) {
+        matchJson.put("gameDate", matchJson.get("matchDate"));
+      }
+      if (matchJson.get("homeTeam") == null && matchJson.get("homeClub") != null) {
+        matchJson.put("homeTeam", matchJson.get("homeClub"));
+      }
+      if (matchJson.get("awayTeam") == null && matchJson.get("awayClub") != null) {
+        matchJson.put("awayTeam", matchJson.get("awayClub"));
+      }
+      GameModel game = new GameModel(matchJson, stringValue(matchJson.get("team")));
+      String imagePath = sc.createScore(game, score, halftime);
+      Map<String, String> result = new HashMap<>();
+      result.put("fileDir", game.getSavePath());
+      result.put("fileName", halftime ? "Halbzeit.png" : "Endstand.png");
+      logger.info("Men {} score image created at '{}'", halftime ? "halftime" : "finish", imagePath);
+      return new ResponseEntity<>(result, HttpStatus.OK);
+    } catch (IOException | ParseException e) {
+      logger.error("Could not create men score images", e);
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+  }
+  
+  @RequestMapping("/sendMenMatchPicture")
  public ResponseEntity<HttpStatus> sendMenMatchPicure(@RequestParam("coords") String coords, @RequestParam("file") MultipartFile file) {
 	try {
 	 logger.info("Processing men result image upload: size={} bytes, contentType={}", file.getSize(), file.getContentType());
@@ -700,6 +801,8 @@ public class Controller {
 	String imagePath = switch (selectedTemplate) {
 	 case "men", "men-matchday" -> "src/main/resources/pictures/template/men/matchdayTemp.png";
 	 case "men-result" -> "src/main/resources/pictures/template/men/resultTemp.png";
+    case "men-halftime" -> "src/main/resources/pictures/template/men/halftimeTemp.png";
+    case "men-finish" -> "src/main/resources/pictures/template/men/finishTemp.png";
 	 case "men-lineup" -> "src/main/resources/pictures/template/men/teamTemp.png";
 	 case "youth", "youth-matchday" -> "src/main/resources/pictures/template/youth/matchdayTemp.jpg";
 	 case "youth-result" -> "src/main/resources/pictures/template/youth/resultTemp.jpg";

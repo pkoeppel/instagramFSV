@@ -116,3 +116,28 @@ function postPictures() {
             console.error('Error: ', error);
         });
 }
+
+function postMenScore(type) {
+    const match = document.getElementById('matches').value;
+    const score = document.getElementById('score').value.trim();
+    if (!match || !/^\d{1,2}:\d{1,2}$/.test(score)) {
+        alert('Bitte den Spielstand im Format 0:0 eingeben.');
+        return;
+    }
+    const formData = new FormData();
+    formData.append('match', match);
+    formData.append('score', score);
+    fetch(window.location.origin + (type === 'halftime' ? '/postMenHalftime' : '/postMenFinish'), {
+        method: 'POST',
+        body: formData
+    })
+        .then(async response => {
+            if (!response.ok) throw new Error(await response.text());
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('scoreInfo').textContent = 'Grafik erstellt.';
+            window.open(window.location.origin + '/download/score/' + data.fileDir + '/' + data.fileName);
+        })
+        .catch(error => alert('Fehler beim Erstellen der Grafik: ' + error));
+}

@@ -100,10 +100,10 @@ function ensureTeamReport(team) {
     return textArea;
 }
 
-async function getMenMatches() {
+async function getMenMatches(loadDetails = true) {
     const select = document.getElementById("matches");
     select.replaceChildren();
-    select.onchange = loadMenMatchDetails;
+    select.onchange = loadDetails ? loadMenMatchDetails : null;
     try {
         const response = await fetch(window.location.origin + '/getAllMenMatches');
         if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -116,7 +116,7 @@ async function getMenMatches() {
             fragment.append(option);
         });
         select.append(fragment);
-        if (select.options.length > 0) loadMenMatchDetails();
+        if (select.options.length > 0 && loadDetails) loadMenMatchDetails();
     } catch (error) {
         alert("Es ist ein Fehler beim Laden aufgetreten: " + error);
         console.error('Error: ', error);

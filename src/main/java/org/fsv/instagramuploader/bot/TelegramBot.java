@@ -10,6 +10,7 @@ import org.fsv.instagramuploader.Helper;
 import org.fsv.instagramuploader.men.LineupCreator;
 import org.fsv.instagramuploader.men.MatchdayCreator;
 import org.fsv.instagramuploader.men.ResultCreator;
+import org.fsv.instagramuploader.men.ScoreCreator;
 import org.fsv.instagramuploader.model.ClubModel;
 import org.fsv.instagramuploader.model.GameModel;
 import org.fsv.instagramuploader.model.PlayerModel;
@@ -19,14 +20,12 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
+import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -34,16 +33,14 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.net.URL;
+import java.io.File;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import org.telegram.telegrambots.meta.api.methods.GetFile;
-import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 
 @Slf4j
 public class TelegramBot extends TelegramLongPollingBot {
@@ -60,6 +57,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private String resultHeadline;
     private String resultReport;
     private String pendingAction;
+  private ScoreCreator scoreCreator;
+  private GameModel scoreGameModel;
+  private boolean scoreHalftime;
     private GameModel pendingMatchdayGame;
     private BufferedImage pendingMatchdayPhoto;
     private String pendingMatchdayAction;
@@ -141,6 +141,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             startTeamSelection(chatId, "createResult");
             return;
         }
+      if ("createHalftime".equals(lastCall) || "createFinish".equals(lastCall)) {
+        resetResultFlow();
+        resetMatchdayPreview();
+        startTeamSelection(chatId, lastCall);
+        return;
+        }
         if ("createLineup".equals(lastCall)) {
             resetResultFlow();
             resetMatchdayPreview();
@@ -162,7 +168,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
         String[] paths = lastCall.split("_");
-        if (paths.length < 2 || (!"createPreview".equals(paths[0]) && !"createResult".equals(paths[0]) && !"createLineup".equals(paths[0]))) {
+      if (paths.length < 2 || (!"createPreview".equals(paths[0]) && !"createResult".equals(paths[0]) && !"createLineup".equals(paths[0]) && !"createHalftime".equals(paths[0]) && !"createFinish".equals(paths[0]))) {
             return;
         }
         String mode = paths[0];
@@ -170,6 +176,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (paths.length == 2) {
             if ("createResult".equals(mode)) {
                 loadResultMatches(chatId, lastCall, teamQuery);
+            } else if ("createHalftime".equals(mode) || "createFinish".equals(mode)) {
+              loadResultMatches(chatId, lastCall, teamQuery);
             } else {
                 loadMatches(chatId, lastCall, teamQuery);
             }
@@ -231,6 +239,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             gameModel.setAwayTeam(away);
             if ("createResult".equals(mode)) {
                 startResultInput(chatId, gameModel);
+            } else if ("createHalftime".equals(mode) || "createFinish".equals(mode)) {
+              startScoreInput(chatId, gameModel, "createHalftime".equals(mode));
             } else if ("createLineup".equals(mode)) {
                 startLineupInput(chatId, gameModel);
             } else {
@@ -477,14 +487,22 @@ public class TelegramBot extends TelegramLongPollingBot {
         keyboard.add(row2);
         
         List<InlineKeyboardButton> row3 = new ArrayList<>();
-        row3.add(createInlineButton("Spieltagsergebnis erstellen", "createResult"));
+      row3.add(createInlineButton("Halbzeitstand erstellen", "createHalftime"));
         keyboard.add(row3);
-        
-        List<InlineKeyboardButton> row4 = new ArrayList<>();
-        row4.add(createInlineButton("Abbruch", "cancel"));
-        keyboard.add(row4);
 
-        inlineKeyboardMarkup.setKeyboard(keyboard);
+        List<InlineKeyboardButton> row4 = new ArrayList<>();
+      row4.add(createInlineButton("Endstand erstellen", "createFinish"));
+        keyboard.add(row4);
+      
+      List<InlineKeyboardButton> row5 = new ArrayList<>();
+      row5.add(createInlineButton("Spielbericht erstellen", "createResult"));
+      keyboard.add(row5);
+      
+      List<InlineKeyboardButton> row6 = new ArrayList<>();
+      row6.add(createInlineButton("Abbruch", "cancel"));
+      keyboard.add(row6);
+      
+      inlineKeyboardMarkup.setKeyboard(keyboard);
         sendMsg(chatId, msg, inlineKeyboardMarkup);
     }
 
@@ -496,8 +514,17 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.pendingAction = "headline";
         sendSimpleMsg(chatId, "Schreibe deine Headline!");
     }
-
-    private void startLineupInput(String chatId, GameModel gameModel) {
+  
+  private void startScoreInput(String chatId, GameModel gameModel, boolean halftime) {
+    resetResultFlow();
+    scoreCreator = new ScoreCreator();
+    scoreGameModel = gameModel;
+    scoreHalftime = halftime;
+    pendingAction = "score_halftime";
+    sendSimpleMsg(chatId, "Sende den " + (halftime ? "Halbzeitstand" : "Endstand") + " im Format 0:0.");
+  }
+  
+  private void startLineupInput(String chatId, GameModel gameModel) {
         resetResultFlow();
         resetMatchdayPreview();
         resetLineupFlow();
@@ -1035,6 +1062,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             finalizeResult(chatId);
         } else if ("photos".equals(pendingAction)) {
             sendSimpleMsg(chatId, "Sende weitere Bilder oder 'Fertig', um fortzufahren.");
+        } else if ("score_halftime".equals(pendingAction)) {
+          if (!text.matches("\\d{1,2}:\\d{1,2}")) {
+            sendSimpleMsg(chatId, "Ungültiger Spielstand. Beispiel: 2:1");
+            return;
+          }
+          finalizeScore(chatId, text);
         } else {
             resetResultFlow();
             sendStartMsg(chatId, text);
@@ -1092,6 +1125,32 @@ public class TelegramBot extends TelegramLongPollingBot {
         resultGameModel = null;
         resultHeadline = null;
         resultReport = null;
+      scoreCreator = null;
+      scoreGameModel = null;
+      scoreHalftime = false;
+    }
+  
+  private void finalizeScore(String chatId, String score) throws IOException, ParseException {
+    if (scoreCreator == null || scoreGameModel == null) {
+      sendSimpleMsg(chatId, "Kein Spielstand-Prozess aktiv.");
+      resetResultFlow();
+      return;
+    }
+    String imagePath = scoreCreator.createScore(scoreGameModel, score, scoreHalftime);
+    sendScoreImage(chatId, imagePath);
+    resetResultFlow();
+    sendStartMsg(chatId, "Spielstandgrafik erstellt!");
+  }
+  
+  private void sendScoreImage(String chatId, String imagePath) {
+    SendPhoto sendPhoto = new SendPhoto();
+    sendPhoto.setChatId(chatId);
+    sendPhoto.setPhoto(new InputFile(new java.io.File(imagePath)));
+    try {
+      execute(sendPhoto);
+    } catch (TelegramApiException e) {
+      log.error("Could not send score image", e);
+    }
     }
 
     private void finalizeResult(String chatId) throws IOException, ParseException {

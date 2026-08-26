@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Herren Endstand</title>
+    <script src="../../js/scoreData.js" defer></script>
+    <script src="../../js/postData.js" defer></script>
+    <script src="../../js/navigation.js" defer></script>
+    <link href="../../style.css" rel="stylesheet">
+</head>
+<body>
+<header class="app-header" data-active="men-finish"></header>
+<main class="page-shell">
+    <div class="page-heading">
+        <h1>Herren Endstand</h1>
+        <p>Endstandgrafik für ein ausgewähltes Spiel erstellen.</p>
+    </div>
+    <section class="content-card">
+        <h2>Spiel auswählen</h2>
+        <div class="mobile-field">
+            <label for="matches">Gespeicherte Begegnung</label>
+            <select id="matches" name="matches"></select>
+        </div>
+        <pre class="match-details" id="matchDetails"></pre>
+    </section>
+    <section class="content-card">
+        <h2>Endstand</h2>
+        <div class="mobile-field">
+            <label for="score">Spielstand</label>
+            <input id="score" inputmode="numeric" placeholder="0:0" type="text">
+        </div>
+        <div class="button-stack">
+            <input class="primary-action" id="createScore" type="button" value="Endstandgrafik erstellen">
+        </div>
+        <div class="saved-images-info" id="scoreInfo"></div>
+    </section>
+</main>
+<script>
+    window.addEventListener('load', () => {
+        getStoredMenMatches();
+        document.getElementById('createScore').addEventListener('click', () => postMenScore('finish'));
+    });
+</script>
+</body>
+</html>
