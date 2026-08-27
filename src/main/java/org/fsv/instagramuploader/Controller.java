@@ -43,7 +43,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -126,18 +125,8 @@ public class Controller {
 		 try {
 			LocalDate gameDate = LocalDate.parse(gameDateObj.toString());
 			if (previewDate.equals(gameDate)) {
-			 String home = "?";
-			 Object homeTeamObj = game.get("homeTeam");
-			 if (homeTeamObj instanceof Map<?, ?> homeMap) {
-				Object homeName = homeMap.get("clubName");
-				home = homeName != null ? homeName.toString() : "?";
-			 }
-			 String away = "?";
-			 Object awayTeamObj = game.get("awayTeam");
-			 if (awayTeamObj instanceof Map<?, ?> awayMap) {
-				Object awayName = awayMap.get("clubName");
-				away = awayName != null ? awayName.toString() : "?";
-			 }
+			 String home = getMatchClubName(game.get("homeTeam"));
+			 String away = getMatchClubName(game.get("awayTeam"));
 			 Object timeObj = game.get("gameTime");
 			 String time = timeObj != null ? timeObj.toString() : "";
 			 Object competitionObj = game.get("competition");
@@ -185,23 +174,30 @@ public class Controller {
   
   private void notifyForElapsedMatchTime(JSONObject game, ZonedDateTime now, int elapsedMinutes) {
     try {
-      LocalDate date = LocalDate.parse(String.valueOf(game.get("gameDate")));
-      LocalTime time = LocalTime.parse(String.valueOf(game.get("gameTime")), GAME_TIME_FORMAT);
+      Object dateObj = game.get("gameDate");
+      Object timeObj = game.get("gameTime");
+      if (dateObj == null || timeObj == null) {
+        logger.warn("Skipping match time notification because date/time is missing: {}", game);
+        return;
+      }
+      LocalDate date = LocalDate.parse(dateObj.toString());
+      LocalTime time = LocalTime.parse(timeObj.toString(), GAME_TIME_FORMAT);
       ZonedDateTime kickoff = ZonedDateTime.of(LocalDateTime.of(date, time), now.getZone());
       if (!now.isEqual(kickoff.plusMinutes(elapsedMinutes))) {
         return;
       }
-      String gameId = String.valueOf(game.getOrDefault("gameUrl", date + "T" + time));
+      Object gameUrlObj = game.get("gameUrl");
+      String gameId = gameUrlObj != null ? gameUrlObj.toString() : date + "T" + time;
       String notificationKey = gameId + "-" + elapsedMinutes;
       if (telegramBot != null) {
         String message = elapsedMinutes == 45
                 ? "Erinnerung posten des Halbzeitstandes"
-                : "Erinnung posten des Endstands";
+                : "Erinnerung posten des Endstands";
         telegramBot.sendAutomaticMatchHint(message);
         sentMatchTimeNotifications.add(notificationKey);
         logger.info("Sent {} minute notification", elapsedMinutes);
       }
-    } catch (DateTimeParseException | NullPointerException e) {
+    } catch (DateTimeException e) {
       logger.warn("Skipping match time notification for malformed game data: {}", game, e);
     }
   }
@@ -566,6 +562,7 @@ public class Controller {
     return postMenScore(match, score, false);
   }
   
+  @SuppressWarnings("unchecked")
   private ResponseEntity<?> postMenScore(String match, String score, boolean halftime) {
     try {
       JSONObject matchJson = (JSONObject) new JSONParser().parse(match);
