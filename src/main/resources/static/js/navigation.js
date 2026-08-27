@@ -4,11 +4,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const links = [
         {id: 'home', label: 'Start', href: '/index.html'},
-        {id: 'men-matchday', label: 'Herren Spieltag', href: '/pages/men/matchday-men.html'},
+        {id: 'men-matchday', label: 'Herren Vorschau', href: '/pages/men/matchday-men.html'},
         {id: 'men-lineup', label: 'Herren Aufstellung', href: '/pages/men/lineup-men.html'},
-        {id: 'men-result', label: 'Herren Ergebnis', href: '/pages/men/result-men.html'},
-        {id: 'men-halftime', label: 'Herren Halbzeit', href: '/pages/men/halftime-men.html'},
+        {id: 'men-halftime', label: 'Herren Halbzeitstand', href: '/pages/men/halftime-men.html'},
         {id: 'men-finish', label: 'Herren Endstand', href: '/pages/men/finish-men.html'},
+        {id: 'men-result', label: 'Herren Spielbericht', href: '/pages/men/result-men.html'},
         {id: 'youth-matchday', label: 'Kids Spieltag', href: '/pages/youth/matchday-youth.html'},
         {id: 'youth-result', label: 'Kids Ergebnis', href: '/pages/youth/result-youth.html'},
         {id: 'add-team', label: 'Team anlegen', href: '/pages/addTeam.html'},
