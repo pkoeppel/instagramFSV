@@ -15,6 +15,8 @@ import com.google.api.services.drive.model.FileList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -33,7 +35,7 @@ public class GoogleDriveService {
 	private Drive drive;
 	private String targetFolderId;
 	
-	public GoogleDriveService(String folderName) {
+	public GoogleDriveService(String team, String folderName) {
 		try {
 			// 1. Load Client Secrets
 			File credentialsFile = new File(CREDENTIALS_FILE_PATH);
@@ -64,15 +66,31 @@ public class GoogleDriveService {
 							.setApplicationName(APPLICATION_NAME)
 							.build();
 			
-			// Ordnerstruktur navigieren (wie gehabt)
+			// Ordnerstruktur: Meine Ablage -> Bilder -> Spieltage -> <Team> -> <Gegner>
 			String bilderFolderId = "1mcuySGtiAw6O9bE17xthqeKU_I1jBz6d";
 			String spieltageFolderId = getFolder(bilderFolderId, "Spieltage");
-			String teamFolderId = getFolder(spieltageFolderId, "1. Mannschaft");
+			String teamFolderId = getFolder(spieltageFolderId, resolveTeamFolderName(team));
 			this.targetFolderId = getFolder(teamFolderId, folderName);
 			
 		} catch (IOException | GeneralSecurityException e) {
 			logger.error("Fehler bei OAuth-Autorisierung", e);
 		}
+	}
+	
+	private String resolveTeamFolderName(String team) {
+		if (team == null || team.isBlank()) {
+			logger.warn("Keine Mannschaft angegeben, verwende '1. Mannschaft' als Standard");
+			return "1. Mannschaft";
+		}
+		String normalized = team.trim();
+		if (normalized.matches("\\d+")) {
+			return normalized + ". Mannschaft";
+		}
+		if (normalized.matches("\\d+\\. Mannschaft")) {
+			return normalized;
+		}
+		logger.warn("Unerwarteter Mannschaftswert '{}', verwende '1. Mannschaft' als Standard", team);
+		return "1. Mannschaft";
 	}
 	
 	/*
@@ -114,23 +132,46 @@ public class GoogleDriveService {
 	}
 	
 	public void uploadFileToFolder(File file) {
+		uploadFileToFolder(file, file.getName());
+	}
+	
+	public void uploadFileToFolder(File file, String driveFileName) {
 		if (drive == null || targetFolderId == null || targetFolderId.isBlank()) {
 			logger.debug("Skipping Google Drive upload because the service is unavailable");
 			return;
 		}
 		com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
 		fileMetadata.setParents(Collections.singletonList(targetFolderId));
-		fileMetadata.setName(file.getName());
+		fileMetadata.setName(driveFileName);
 		FileContent mediaContent = new FileContent("image/jpeg", file);
 		try {
 			com.google.api.services.drive.model.File uploadedFile = drive.files().create(fileMetadata, mediaContent)
 							.setFields("id")
 							.setSupportsAllDrives(true)
 							.execute();
-			logger.info("Uploaded image to Google Drive: fileName='{}', id='{}'", file.getName(), uploadedFile.getId());
+			logger.info("Uploaded image to Google Drive: fileName='{}', id='{}'", driveFileName, uploadedFile.getId());
 			
 		} catch (IOException e) {
-			logger.error("Could not upload image '{}' to Google Drive folder '{}'", file.getName(), targetFolderId, e);
+			logger.error("Could not upload image '{}' to Google Drive folder '{}'", driveFileName, targetFolderId, e);
+		}
+	}
+	
+	public void uploadImageToFolder(BufferedImage image, String fileName) {
+		if (drive == null || targetFolderId == null || targetFolderId.isBlank()) {
+			logger.debug("Skipping Google Drive upload because the service is unavailable");
+			return;
+		}
+		File tempFile = null;
+		try {
+			tempFile = File.createTempFile("drive_upload_", "_" + fileName);
+			ImageIO.write(image, "jpeg", tempFile);
+			uploadFileToFolder(tempFile, fileName);
+		} catch (IOException e) {
+			logger.error("Could not write image '{}' to temp file for Google Drive upload", fileName, e);
+		} finally {
+			if (tempFile != null && !tempFile.delete()) {
+				logger.warn("Could not delete temp file '{}'", tempFile.getAbsolutePath());
+			}
 		}
 	}
 	/*
