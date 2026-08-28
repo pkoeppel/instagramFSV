@@ -107,8 +107,12 @@ public class ResultCreator {
 	BufferedImage opponentClubLogo = homeGame ? awayClubLogo : homeClubLogo;
 	BufferedImage ownClubLogo = homeGame ? homeClubLogo : awayClubLogo;
 	String folderName = homeGame ? awayClub.getSaveName() : homeClub.getSaveName();
-	GoogleDriveService googleService = new GoogleDriveService(folderName);
+	GoogleDriveService googleService = new GoogleDriveService(team, folderName);
 	if (!allImg.isEmpty()) {
+	 logger.info("Uploading {} original images to Google Drive for team '{}' against '{}'", allImg.size(), team, folderName);
+	 for (int i = 0; i < allImg.size(); i++) {
+		googleService.uploadImageToFolder(allImg.get(i), formatedDate + "_" + i + ".jpeg");
+	 }
 	 for (int i = 1; i < allImg.size(); i++) {
 		BufferedImage image = allImg.get(i);
 		Helper.pictureOnPicture(image, opponentClubLogo, "smallClubResult-men", 0);
@@ -134,7 +138,6 @@ public class ResultCreator {
 	 for (BufferedImage image : allImg) {
 		File fileToSave = new File(directory + "/" + formatedDate + "_" + imgCount + ".jpeg");
 		ImageIO.write(image, "jpeg", fileToSave);
-		googleService.uploadFileToFolder(fileToSave);
 		imgCount++;
 	 }
 	} else {
