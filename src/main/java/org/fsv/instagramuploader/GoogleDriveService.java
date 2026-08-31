@@ -35,7 +35,7 @@ public class GoogleDriveService {
 	private Drive drive;
 	private String targetFolderId;
 	
-	public GoogleDriveService(String team, String folderName) {
+	public GoogleDriveService(String team, String folderName, String dateFolder) {
 		try {
 			// 1. Load Client Secrets
 			File credentialsFile = new File(CREDENTIALS_FILE_PATH);
@@ -50,7 +50,7 @@ public class GoogleDriveService {
 			// 2. Build flow and trigger user authorization if needed
 			GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
 							GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, clientSecrets,
-							Collections.singletonList(DriveScopes.DRIVE_FILE))
+							Collections.singletonList(DriveScopes.DRIVE))
 							.setDataStoreFactory(new FileDataStoreFactory(new File(TOKENS_DIRECTORY_PATH)))
 							.setAccessType("offline")
 							.build();
@@ -62,11 +62,12 @@ public class GoogleDriveService {
 							.setApplicationName(APPLICATION_NAME)
 							.build();
 			
-			// Ordnerstruktur: Meine Ablage -> Bilder -> Spieltage -> <Team> -> <Gegner>
+			// Ordnerstruktur: Meine Ablage -> Bilder -> Spieltage -> <Team> -> <Gegner> -> <Datum>
 			String bilderFolderId = "1mcuySGtiAw6O9bE17xthqeKU_I1jBz6d";
 			String spieltageFolderId = getFolder(bilderFolderId, "Spieltage");
 			String teamFolderId = getFolder(spieltageFolderId, resolveTeamFolderName(team));
-			this.targetFolderId = getFolder(teamFolderId, folderName);
+			String opponentFolderId = getFolder(teamFolderId, folderName);
+			this.targetFolderId = getFolder(opponentFolderId, dateFolder);
 			
 		} catch (IOException | GeneralSecurityException e) {
 			logger.error("Fehler bei OAuth-Autorisierung", e);
