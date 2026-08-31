@@ -89,12 +89,13 @@ public class GoogleDriveService {
 		return "1. Mannschaft";
 	}
 	
-	/*
-	private String createFolder(String folderId, String folderName) throws IOException {
+	private String createFolder(String folderId, String folderName) {
 		com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
 		fileMetadata.setName(folderName);
-		fileMetadata.setParents(Collections.singletonList(folderId));
 		fileMetadata.setMimeType("application/vnd.google-apps.folder");
+		if (!Objects.equals(folderId, "")) {
+			fileMetadata.setParents(Collections.singletonList(folderId));
+		}
 		try {
 			com.google.api.services.drive.model.File file = drive.files().create(fileMetadata)
 							.setSupportsAllDrives(true)
@@ -102,14 +103,15 @@ public class GoogleDriveService {
 							.execute();
 			logger.info("Created Google Drive folder '{}': id={}", folderName, file.getId());
 			return file.getId();
-		} catch (GoogleJsonResponseException e) {
-			logger.error("Could not create Google Drive folder '{}' under parent '{}': {}", folderName, folderId, e.getDetails(), e);
+		} catch (IOException e) {
+			logger.error("Could not create Google Drive folder '{}' under parent '{}': {}", folderName, folderId, e.getMessage(), e);
 		}
 		return "";
 	}
-	*/
+
 	private String getFolder(String folderId, String folderName) throws IOException {
-		String setQ = "mimeType='application/vnd.google-apps.folder' and name='" + folderName + "'";
+		String escapedName = folderName.replace("'", "\\'");
+		String setQ = "mimeType='application/vnd.google-apps.folder' and trashed=false and name='" + escapedName + "'";
 		if (!Objects.equals(folderId, "")) {
 			setQ += " and '" + folderId + "' in parents";
 		}
@@ -120,11 +122,11 @@ public class GoogleDriveService {
 						.setPageSize(3)
 						.execute();
 		List<com.google.api.services.drive.model.File> files = result.getFiles();
-		if (files == null || files.isEmpty()) {
-			return "";
-		} else {
-			return (String) files.get(0).get("id");
+		if (files != null && !files.isEmpty()) {
+			return files.get(0).getId();
 		}
+		logger.warn("Google Drive folder '{}' not found under '{}', creating it.", folderName, folderId);
+		return createFolder(folderId, folderName);
 	}
 	
 	public void uploadFileToFolder(File file) {
@@ -132,8 +134,12 @@ public class GoogleDriveService {
 	}
 	
 	public void uploadFileToFolder(File file, String driveFileName) {
-		if (drive == null || targetFolderId == null || targetFolderId.isBlank()) {
-			logger.debug("Skipping Google Drive upload because the service is unavailable");
+		if (drive == null) {
+			logger.error("Skipping Google Drive upload for '{}': drive service is not initialized (check credentials/OAuth)", driveFileName);
+			return;
+		}
+		if (targetFolderId == null || targetFolderId.isBlank()) {
+			logger.error("Skipping Google Drive upload for '{}': target folder is not available (folder creation may have failed)", driveFileName);
 			return;
 		}
 		com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
@@ -154,7 +160,7 @@ public class GoogleDriveService {
 	
 	public void uploadImageToFolder(BufferedImage image, String fileName) {
 		if (drive == null || targetFolderId == null || targetFolderId.isBlank()) {
-			logger.debug("Skipping Google Drive upload because the service is unavailable");
+			logger.error("Skipping Google Drive upload for '{}': service is unavailable (drive={}, targetFolderId={})", fileName, drive != null, targetFolderId == null ? "null" : (targetFolderId.isBlank() ? "blank" : targetFolderId));
 			return;
 		}
 		File tempFile = null;
