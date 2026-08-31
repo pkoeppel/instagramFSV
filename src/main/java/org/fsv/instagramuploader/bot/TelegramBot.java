@@ -41,6 +41,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class TelegramBot extends TelegramLongPollingBot {
@@ -71,12 +76,51 @@ public class TelegramBot extends TelegramLongPollingBot {
     private String pendingLineupTrainer;
     private Integer pendingLineupMessageId;
 
+    private static final Duration SESSION_TIMEOUT = Duration.ofMinutes(5);
+    private final ScheduledExecutorService timeoutExecutor;
+    private String activeChatId;
+    private Instant lastActivity;
+
     public TelegramBot(String botName, String botToken) {
         super(botToken);
         this.botName = botName;
         this.botToken = botToken;
         controller = new Controller();
         lineupCreator = new LineupCreator();
+        this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "telegram-session-timeout");
+            t.setDaemon(true);
+            return t;
+        });
+        this.timeoutExecutor.scheduleWithFixedDelay(this::checkSessionTimeout, 1, 1, TimeUnit.MINUTES);
+    }
+
+    private synchronized void updateSession(String chatId) {
+        this.activeChatId = chatId;
+        this.lastActivity = Instant.now();
+    }
+
+    private synchronized boolean isSessionActive() {
+        return pendingAction != null || pendingMatchdayAction != null || pendingLineupAction != null;
+    }
+
+    private synchronized void checkSessionTimeout() {
+        if (activeChatId == null || lastActivity == null || !isSessionActive()) {
+            return;
+        }
+        if (Duration.between(lastActivity, Instant.now()).compareTo(SESSION_TIMEOUT) >= 0) {
+            log.info("Telegram session for chat {} timed out after {} minutes", activeChatId, SESSION_TIMEOUT.toMinutes());
+            sendStartMsg(activeChatId, "Zeit abgelaufen. Der Vorgang wurde abgebrochen.");
+            resetAllFlows();
+            activeChatId = null;
+            lastActivity = null;
+        }
+    }
+
+    private synchronized void resetAllFlows() {
+        resetResultFlow();
+        resetMatchdayPreview();
+        resetLineupFlow();
     }
 
     @Override
@@ -85,7 +129,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     @Override
-    public void onUpdateReceived(Update update) {
+    public synchronized void onUpdateReceived(Update update) {
         Long chatId = extractChatId(update);
         if (chatId == null) {
             return;
@@ -95,6 +139,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
         String chatIdString = chatId.toString();
+        updateSession(chatIdString);
         try {
             if (update.hasCallbackQuery()) {
                 handleCallbackQuery(chatIdString, update.getCallbackQuery());
