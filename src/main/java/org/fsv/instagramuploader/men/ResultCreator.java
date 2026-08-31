@@ -101,13 +101,14 @@ public class ResultCreator {
 	 }
 	}
 	String formatedDate = DateTimeFormatter.ofPattern("yyyyMMdd").format(DateTimeFormatter.ofPattern("yyyy-MM-dd").parse(mDate));
+	String dateFolderName = DateTimeFormatter.ofPattern("yyyy_MM_dd").format(DateTimeFormatter.ofPattern("yyyy-MM-dd").parse(mDate));
 	logger.debug("Applying club logos and result template to {} images", allImg.size());
 	BufferedImage homeClubLogo = ImageIO.read(new File(homeClub.getClubLogoDir()));
 	BufferedImage awayClubLogo = ImageIO.read(new File(awayClub.getClubLogoDir()));
 	BufferedImage opponentClubLogo = homeGame ? awayClubLogo : homeClubLogo;
 	BufferedImage ownClubLogo = homeGame ? homeClubLogo : awayClubLogo;
 	String folderName = homeGame ? awayClub.getSaveName() : homeClub.getSaveName();
-	GoogleDriveService googleService = new GoogleDriveService(team, folderName);
+	GoogleDriveService googleService = new GoogleDriveService(team, folderName, dateFolderName);
 	if (!allImg.isEmpty()) {
 	 logger.info("Uploading {} original images to Google Drive for team '{}' against '{}'", allImg.size(), team, folderName);
 	 for (int i = 0; i < allImg.size(); i++) {
