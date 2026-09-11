@@ -348,8 +348,12 @@ public class Helper {
 	} else if ("y".equals(block.get("offsetAxis"))) {
 	 posY += offset;
 	}
-	String[] lines = text.split("\\n", -1);
-	int textHeight = lines.length * metrics.getHeight();
+	String[] inputLines = text.split("\\n", -1);
+	List<String> lines = new ArrayList<>();
+	for (String inputLine : inputLines) {
+	 lines.addAll(wrapLine(inputLine, metrics, sizeX));
+	}
+	int textHeight = lines.size() * metrics.getHeight();
 	String verticalAlignment = String.valueOf(block.getOrDefault("verticalAlignment", "middle"));
 	int baseline = switch (verticalAlignment) {
 	 case "top" -> posY + metrics.getAscent();
@@ -616,6 +620,30 @@ public class Helper {
 	}
 	OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(new File("src/main/resources/templates/teamInfo.json"), allTeams);
 	logger.info("Updated matchday counters for team '{}' (type='{}')", team, matchType);
+ }
+
+ private static List<String> wrapLine(String line, FontMetrics metrics, int maxWidth) {
+	if (metrics.stringWidth(line) <= maxWidth) {
+	 return List.of(line);
+	}
+	List<String> result = new ArrayList<>();
+	String[] words = line.split(" ");
+	StringBuilder current = new StringBuilder();
+	for (String word : words) {
+	 String candidate = current.isEmpty() ? word : current + " " + word;
+	 if (metrics.stringWidth(candidate) <= maxWidth) {
+		current = new StringBuilder(candidate);
+	 } else {
+		if (!current.isEmpty()) {
+		 result.add(current.toString());
+		}
+		current = new StringBuilder(word);
+	 }
+	}
+	if (!current.isEmpty()) {
+	 result.add(current.toString());
+	}
+	return result;
  }
 
  public static int isOwnClub(ClubModel club) {
