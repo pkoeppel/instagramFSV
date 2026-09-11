@@ -141,7 +141,8 @@
         currentMatchdayGame.team = document.getElementById('teamsSelect').value;
         const formData = new FormData();
         formData.append('match', JSON.stringify(currentMatchdayGame));
-        formData.append('venue', document.getElementById('matchdayVenue').value || '');
+        const venueField = document.getElementById('matchdayVenueField');
+        formData.append('venue', venueField.style.display !== 'none' ? document.getElementById('matchdayVenue').value || '' : '');
         canvas.toBlob(function (blob) {
             formData.append('image', blob, 'matchday.jpg');
             fetch(window.location.origin + '/postMatchMen', {
