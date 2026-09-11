@@ -1,13 +1,13 @@
 {
   "templates" : {
-    "men-finish": {
-      "backgroundHeight": 1920,
-      "backgroundWidth": 1080,
-      "width": 1080,
-      "backgroundX": 0,
-      "backgroundY": 0,
-      "label": "Herren - Endstand",
-      "height": 1920
+    "men-finish" : {
+      "backgroundHeight" : 1920,
+      "backgroundWidth" : 1080,
+      "width" : 1080,
+      "backgroundX" : 0,
+      "backgroundY" : 0,
+      "label" : "Herren - Endstand",
+      "height" : 1920
     },
     "youth-result" : {
       "backgroundHeight" : 1350,
@@ -54,14 +54,14 @@
       "label" : "Herren - Ergebnis",
       "height" : 1350
     },
-    "men-halftime": {
-      "backgroundHeight": 1920,
-      "backgroundWidth": 1080,
-      "width": 1080,
-      "backgroundX": 0,
-      "backgroundY": 0,
-      "label": "Herren - Halbzeit",
-      "height": 1920
+    "men-halftime" : {
+      "backgroundHeight" : 1920,
+      "backgroundWidth" : 1080,
+      "width" : 1080,
+      "backgroundX" : 0,
+      "backgroundY" : 0,
+      "label" : "Herren - Halbzeit",
+      "height" : 1920
     }
   },
   "coordinates" : {
@@ -111,24 +111,21 @@
       "verticalAlignment" : "top",
       "sampleText" : ""
     },
-    "score-home": {
-      "templates": [
-        "men-halftime",
-        "men-finish"
-      ],
-      "label": "Spielstand Heimtore",
-      "type": "text",
-      "fontStyle": "bold",
-      "textColor": "#ffffff",
-      "posX": 90,
-      "posY": 755,
-      "sizeX": 400,
-      "fontFamily": "Edo SZ",
-      "fontSize": 350,
-      "alignment": "right",
-      "sizeY": 350,
-      "verticalAlignment": "middle",
-      "sampleText": "2"
+    "score-home" : {
+      "templates" : [ "men-halftime", "men-finish" ],
+      "label" : "Spielstand Heimtore",
+      "type" : "text",
+      "fontStyle" : "bold",
+      "textColor" : "#ffffff",
+      "posX" : 80,
+      "posY" : 750,
+      "sizeX" : 400,
+      "fontFamily" : "Edo SZ",
+      "fontSize" : 360,
+      "alignment" : "right",
+      "sizeY" : 350,
+      "verticalAlignment" : "middle",
+      "sampleText" : "2"
     },
     "center-point" : {
       "previewColor" : "#d84315",
@@ -425,24 +422,21 @@
       "verticalAlignment" : "middle",
       "sampleText" : "7"
     },
-    "score-colon": {
-      "templates": [
-        "men-halftime",
-        "men-finish"
-      ],
-      "label": "Spielstand Doppelpunkt",
-      "type": "text",
-      "fontStyle": "bold",
-      "textColor": "#ffffff",
-      "posX": 490,
-      "posY": 700,
-      "sizeX": 150,
-      "fontFamily": "Edo SZ",
-      "fontSize": 350,
-      "alignment": "center",
-      "sizeY": 350,
-      "verticalAlignment": "middle",
-      "sampleText": ":"
+    "score-colon" : {
+      "templates" : [ "men-halftime", "men-finish" ],
+      "label" : "Spielstand Doppelpunkt",
+      "type" : "text",
+      "fontStyle" : "bold",
+      "textColor" : "#ffffff",
+      "posX" : 490,
+      "posY" : 700,
+      "sizeX" : 150,
+      "fontFamily" : "Edo SZ",
+      "fontSize" : 350,
+      "alignment" : "center",
+      "sizeY" : 350,
+      "verticalAlignment" : "middle",
+      "sampleText" : ":"
     },
     "template" : {
       "posX" : 0,
@@ -535,17 +529,14 @@
       "verticalAlignment" : "middle",
       "sampleText" : "Friedrich-Ludwig-Jahn Stadion"
     },
-    "score-logo-away": {
-      "posX": 645,
-      "posY": 1185,
-      "sizeX": 300,
-      "templates": [
-        "men-halftime",
-        "men-finish"
-      ],
-      "label": "Spielstand Auswärtslogo",
-      "type": "image",
-      "sizeY": 300
+    "score-logo-away" : {
+      "posX" : 620,
+      "posY" : 1190,
+      "sizeX" : 350,
+      "templates" : [ "men-halftime", "men-finish" ],
+      "label" : "Spielstand Auswärtslogo",
+      "type" : "image",
+      "sizeY" : 350
     },
     "head" : {
       "previewColor" : "#5d4037",
@@ -581,24 +572,21 @@
       "verticalAlignment" : "middle",
       "sampleText" : "Lennox Reinsch (TW)"
     },
-    "score-away": {
-      "templates": [
-        "men-halftime",
-        "men-finish"
-      ],
-      "label": "Spielstand Gasttore",
-      "type": "text",
-      "fontStyle": "bold",
-      "textColor": "#ffffff",
-      "posX": 630,
-      "posY": 665,
-      "sizeX": 400,
-      "fontFamily": "Edo SZ",
-      "fontSize": 350,
-      "alignment": "left",
-      "sizeY": 350,
-      "verticalAlignment": "middle",
-      "sampleText": "1"
+    "score-away" : {
+      "templates" : [ "men-halftime", "men-finish" ],
+      "label" : "Spielstand Gasttore",
+      "type" : "text",
+      "fontStyle" : "bold",
+      "textColor" : "#ffffff",
+      "posX" : 630,
+      "posY" : 665,
+      "sizeX" : 400,
+      "fontFamily" : "Edo SZ",
+      "fontSize" : 360,
+      "alignment" : "left",
+      "sizeY" : 350,
+      "verticalAlignment" : "middle",
+      "sampleText" : "1"
     },
     "center-point-stats" : {
       "previewColor" : "#d84315",
@@ -646,17 +634,14 @@
       "verticalAlignment" : "middle",
       "sampleText" : "Tim Seifert"
     },
-    "score-logo-home": {
-      "posX": 155,
-      "posY": 1185,
-      "sizeX": 300,
-      "templates": [
-        "men-halftime",
-        "men-finish"
-      ],
-      "label": "Spielstand Heimlogo",
-      "type": "image",
-      "sizeY": 300
+    "score-logo-home" : {
+      "posX" : 120,
+      "posY" : 1190,
+      "sizeX" : 350,
+      "templates" : [ "men-halftime", "men-finish" ],
+      "label" : "Spielstand Heimlogo",
+      "type" : "image",
+      "sizeY" : 350
     },
     "lineup-start-8-name" : {
       "previewColor" : "#1976d2",
