@@ -32,7 +32,7 @@ public class ScoreCreator {
             savePath = game.getSaveGameDate() + "_" + game.getCompetition() + "_" + home.getSaveName() + "_" + away.getSaveName();
             game.setSavePath(savePath);
         }
-        Path directory = Path.of(SAVE_PATH, savePath, "Bilder");
+        Path directory = Path.of(SAVE_PATH, savePath);
         Files.createDirectories(directory);
         String template = halftime ? "halftimeTemp.png" : "finishTemp.png";
         String fileName = halftime ? "Halbzeit.png" : "Endstand.png";
