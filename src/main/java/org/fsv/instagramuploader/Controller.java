@@ -240,7 +240,7 @@ public class Controller {
   
   @GetMapping(value = "/download/score/{pathName}/{fileName:.+}", produces = MediaType.IMAGE_PNG_VALUE)
   public @ResponseBody byte[] downloadScoreFile(@PathVariable String pathName, @PathVariable String fileName) throws IOException {
-    Path filePath = Paths.get("src/main/resources/save", pathName, "Bilder", fileName);
+    Path filePath = Paths.get("src/main/resources/save", pathName, fileName);
     logger.debug("Downloading men score file '{}'", filePath);
     return Files.readAllBytes(filePath);
   }
