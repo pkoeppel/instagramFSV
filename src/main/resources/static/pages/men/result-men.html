@@ -104,8 +104,10 @@
         const image = document.createElement('img');
         image.id = 'crop-image';
         image.style.display = 'block';
-        image.style.maxWidth = '600px';
-        image.style.maxHeight = '600px';
+        image.style.width = '100%';
+        image.style.height = 'auto';
+        image.style.maxWidth = '100%';
+        image.style.maxHeight = '70vh';
         cropImageElement = image;
         sp.appendChild(image);
 

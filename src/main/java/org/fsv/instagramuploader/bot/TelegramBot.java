@@ -65,6 +65,10 @@ public class TelegramBot extends TelegramLongPollingBot {
   private ScoreCreator scoreCreator;
   private GameModel scoreGameModel;
   private boolean scoreHalftime;
+    private String pendingClubResolutionMode;
+    private String pendingClubResolutionTeamQuery;
+    private String pendingClubResolutionMatchKey;
+    private List<String> pendingClubList;
     private GameModel pendingMatchdayGame;
     private BufferedImage pendingMatchdayPhoto;
     private String pendingMatchdayAction;
@@ -77,8 +81,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private Integer pendingLineupMessageId;
 
     private static final Duration SESSION_TIMEOUT = Duration.ofMinutes(5);
-    private final ScheduledExecutorService timeoutExecutor;
-    private String activeChatId;
+  private String activeChatId;
     private Instant lastActivity;
 
     public TelegramBot(String botName, String botToken) {
@@ -87,12 +90,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.botToken = botToken;
         controller = new Controller();
         lineupCreator = new LineupCreator();
-        this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "telegram-session-timeout");
-            t.setDaemon(true);
-            return t;
-        });
-        this.timeoutExecutor.scheduleWithFixedDelay(this::checkSessionTimeout, 1, 1, TimeUnit.MINUTES);
+      ScheduledExecutorService timeoutExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "telegram-session-timeout");
+        t.setDaemon(true);
+        return t;
+      });
+        timeoutExecutor.scheduleWithFixedDelay(this::checkSessionTimeout, 1, 1, TimeUnit.MINUTES);
     }
 
     private synchronized void updateSession(String chatId) {
@@ -121,6 +124,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         resetResultFlow();
         resetMatchdayPreview();
         resetLineupFlow();
+        resetClubResolution();
+    }
+
+    private void resetClubResolution() {
+        pendingClubResolutionMode = null;
+        pendingClubResolutionTeamQuery = null;
+        pendingClubResolutionMatchKey = null;
+        pendingClubList = null;
     }
 
     @Override
@@ -189,24 +200,26 @@ public class TelegramBot extends TelegramLongPollingBot {
       if ("createHalftime".equals(lastCall) || "createFinish".equals(lastCall)) {
         resetResultFlow();
         resetMatchdayPreview();
-        startTeamSelection(chatId, lastCall);
+        loadResultMatches(chatId, lastCall + "_1", "1");
         return;
         }
         if ("createLineup".equals(lastCall)) {
             resetResultFlow();
             resetMatchdayPreview();
-            startTeamSelection(chatId, "createLineup");
+            loadMatches(chatId, "createLineup_1", "1");
             return;
         }
         if ("cancel".equals(lastCall)) {
-            resetResultFlow();
-            resetMatchdayPreview();
-            resetLineupFlow();
+            resetAllFlows();
             sendStartMsg(chatId, "Ok!");
             return;
         }
         if (lastCall != null && lastCall.startsWith("lineup_role_") && "lineup_role".equals(pendingLineupAction)) {
             handleLineupRoleCallback(chatId, lastCall.substring("lineup_role_".length()));
+            return;
+        }
+        if (lastCall != null && lastCall.startsWith("clubselect_")) {
+            handleClubSelectCallback(chatId, lastCall.substring("clubselect_".length()));
             return;
         }
         if (lastCall == null) {
@@ -273,10 +286,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         GameModel gameModel = new GameModel(new JSONObject(bufferedGame), teamQuery);
         gameModel.setMatchDay(getString(bufferedGame, "matchDay"));
-        generateOrResolveClub(chatId, gameModel, lastCallFor(mode, teamQuery, matchKey), mode);
+        generateOrResolveClub(chatId, gameModel, mode, teamQuery, matchKey);
     }
 
-    private void generateOrResolveClub(String chatId, GameModel gameModel, String lastCall, String mode) throws IOException, ParseException {
+    private void generateOrResolveClub(String chatId, GameModel gameModel, String mode, String teamQuery, String matchKey) throws IOException, ParseException {
         ClubModel home = ClubSelector.getClubDetails(gameModel.getHomeTeam());
         ClubModel away = ClubSelector.getClubDetails(gameModel.getAwayTeam());
         if (home != null && away != null) {
@@ -293,18 +306,46 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             return;
         }
-        sendClubSelection(chatId, lastCall);
+        sendClubSelection(chatId, mode, teamQuery, matchKey);
     }
 
-    private void sendClubSelection(String chatId, String lastCall) throws IOException, ParseException {
+    private void sendClubSelection(String chatId, String mode, String teamQuery, String matchKey) throws IOException, ParseException {
         JSONObject clubs = (JSONObject) new JSONParser().parse(new InputStreamReader(
                 new FileInputStream("src/main/resources/templates/clubs.json"), StandardCharsets.UTF_8));
+        List<String> clubKeys = (List<String>) clubs.keySet().stream()
+                .map(Object::toString)
+                .sorted()
+                .collect(Collectors.toList());
+        this.pendingClubList = clubKeys;
+        this.pendingClubResolutionMode = mode;
+        this.pendingClubResolutionTeamQuery = teamQuery;
+        this.pendingClubResolutionMatchKey = matchKey;
         List<ImmutablePair<String, String>> keyboardValues = new ArrayList<>();
-        for (Object key : clubs.keySet()) {
-            keyboardValues.add(new ImmutablePair<>(key.toString(), key.toString()));
+        for (int i = 0; i < clubKeys.size(); i++) {
+            keyboardValues.add(new ImmutablePair<>(clubKeys.get(i), String.valueOf(i)));
         }
         sendMsg(chatId, "Unbekanntes Gegnerteam. Bitte wähle das entsprechende Team aus der Datenbank!",
-                createKeyboard(1, lastCall, keyboardValues));
+                createKeyboard(1, "clubselect", keyboardValues));
+    }
+
+    private void handleClubSelectCallback(String chatId, String indexStr) throws IOException, ParseException {
+        if (pendingClubList == null || pendingClubResolutionMode == null) {
+            sendStartMsg(chatId, "Keine ausstehende Vereinsauswahl. Bitte starte den Vorgang erneut.");
+            return;
+        }
+        int index;
+        try {
+            index = Integer.parseInt(indexStr);
+        } catch (NumberFormatException e) {
+            sendStartMsg(chatId, "Ungültige Vereinsauswahl. Bitte starte den Vorgang erneut.");
+            return;
+        }
+        if (index < 0 || index >= pendingClubList.size()) {
+            sendStartMsg(chatId, "Ungültiger Vereinsindex. Bitte starte den Vorgang erneut.");
+            return;
+        }
+        String clubKey = pendingClubList.get(index);
+        handleClubResolution(chatId, pendingClubResolutionTeamQuery, pendingClubResolutionMatchKey, clubKey, pendingClubResolutionMode);
     }
 
     private void handleClubResolution(String chatId, String teamQuery, String matchKey, String clubKey, String mode) throws IOException, ParseException {
@@ -345,14 +386,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             selected.setClubStats(gameModel.getAwayTeam().getClubStats());
             gameModel.setAwayTeam(selected);
         }
-        generateOrResolveClub(chatId, gameModel, lastCallFor(mode, teamQuery, matchKey), mode);
+        generateOrResolveClub(chatId, gameModel, mode, teamQuery, matchKey);
     }
-
-    private String lastCallFor(String mode, String teamQuery, String matchKey) {
-        return mode + "_" + teamQuery + "_" + matchKey;
-    }
-
-    private String getString(Map<String, Object> map, String key) {
+  
+  private String getString(Map<String, Object> map, String key) {
         Object value = map != null ? map.get(key) : null;
         return value != null ? value.toString() : "";
     }
@@ -1080,6 +1117,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             resetResultFlow();
             resetMatchdayPreview();
             resetLineupFlow();
+            resetClubResolution();
             sendStartMsg(chatId, "Abbruch.");
             return;
         }
