@@ -496,10 +496,24 @@ public class Controller {
 	}
  }
 
+ @SuppressWarnings("unchecked")
  @GetMapping("/getAllMenMatches")
- public ResponseEntity<JSONArray> getAllMenMatches() {
+ public ResponseEntity<JSONArray> getAllMenMatches(@RequestParam(value = "team", required = false) String team) {
 	try {
 	 JSONArray arr = (JSONArray) readJsonFile("men-games.json");
+	 if (team != null && !team.isBlank()) {
+		JSONArray filtered = new JSONArray();
+		for (Object obj : arr) {
+		 if (obj instanceof JSONObject game) {
+			Object teamVal = game.get("team");
+			if (teamVal != null && team.equals(teamVal.toString())) {
+			 filtered.add(game);
+			}
+		 }
+		}
+		logger.debug("Loaded {} pending men matches for team '{}'", filtered.size(), team);
+		return new ResponseEntity<>(filtered, HttpStatus.OK);
+	 }
 	 logger.debug("Loaded {} pending men matches", arr.size());
 	 return new ResponseEntity<>(arr, HttpStatus.OK);
 	} catch (IOException | ParseException e) {

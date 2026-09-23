@@ -2,7 +2,7 @@ async function getStoredMenMatches() {
     const select = document.getElementById('matches');
     select.replaceChildren();
     try {
-        const response = await fetch(window.location.origin + '/getAllMenMatches');
+        const response = await fetch(window.location.origin + '/getAllMenMatches?team=1');
         if (!response.ok) throw new Error('HTTP ' + response.status);
         const matches = await response.json();
         const fragment = document.createDocumentFragment();

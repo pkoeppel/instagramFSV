@@ -86,8 +86,10 @@
         const img = document.createElement('img');
         img.id = 'matchday-crop-target';
         img.style.display = 'block';
+        img.style.width = '100%';
+        img.style.height = 'auto';
         img.style.maxWidth = '100%';
-        img.style.maxHeight = '500px';
+        img.style.maxHeight = '60vh';
         container.appendChild(img);
 
         let displayW, displayH;

@@ -129,7 +129,7 @@
             </div>
             <div class="mobile-field">
                 <label for="trainerInput">Trainer</label>
-                <input id="trainerInput" type="text">
+                <input id="trainerInput" type="text" value="Toni Seidel">
             </div>
         </div>
     </section>
@@ -163,7 +163,7 @@
     async function init() {
         try {
             const [matches, playersResponse] = await Promise.all([
-                fetchJson('/getAllMenMatches'),
+                fetchJson('/getAllMenMatches?team=1'),
                 fetchJson('/getPlayers')
             ]);
             matchesData = matches || [];
