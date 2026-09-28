@@ -538,6 +538,10 @@ option {
     margin-top: 12px;
 }
 
+.button-stack[hidden] {
+    display: none;
+}
+
 #showPic,
 #showReport {
     max-width: 100%;
@@ -548,6 +552,27 @@ option {
     margin-top: 10px;
     color: #2e7d32;
     font-weight: bold;
+}
+
+.creation-preview {
+    margin-top: 14px;
+    text-align: center;
+}
+
+.creation-preview p {
+    color: #666;
+    font-size: 13px;
+}
+
+.creation-preview img {
+    display: block;
+    width: min(100%, 430px);
+    max-height: 70vh;
+    margin: 0 auto;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #111;
 }
 
 #crop-image {

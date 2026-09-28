@@ -61,6 +61,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private GameModel resultGameModel;
     private String resultHeadline;
     private String resultReport;
+    private int resultImageCount;
     private String pendingAction;
   private ScoreCreator scoreCreator;
   private GameModel scoreGameModel;
@@ -185,6 +186,18 @@ public class TelegramBot extends TelegramLongPollingBot {
             log.error("Could not answer callback query", e);
         }
         String lastCall = callbackQuery.getData();
+        if ("resultTitleConfirm".equals(lastCall) && "resultTitlePreview".equals(pendingAction)) {
+            pendingAction = "photos";
+            sendSimpleMsg(chatId, "Titelbild bestätigt. Sende weitere Bilder oder 'Fertig'.");
+            return;
+        }
+        if ("resultTitleReset".equals(lastCall) && resultCreator != null) {
+            resultCreator = new ResultCreator();
+            resultImageCount = 0;
+            pendingAction = "photos";
+            sendSimpleMsg(chatId, "Bildauswahl neu gestartet. Sende ein neues Titelbild.");
+            return;
+        }
         if ("createPreview".equals(lastCall)) {
             resetResultFlow();
             resetMatchdayPreview();
@@ -476,6 +489,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMsg(chatId, "Wähle ein Spiel aus!", createKeyboard(1, lastCall, keyboardValues));
     }
 
+    private void sendTemplatePreview(String chatId, BufferedImage preview, String fileName) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        ImageIO.write(preview, "jpeg", output);
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(chatId);
+        sendPhoto.setPhoto(new InputFile(new ByteArrayInputStream(output.toByteArray()), fileName));
+        try {
+            execute(sendPhoto);
+        } catch (TelegramApiException e) {
+            log.error("Could not send creation preview '{}'", fileName, e);
+            sendSimpleMsg(chatId, "Die Beispielvorschau konnte nicht gesendet werden.");
+        }
+    }
+
     public synchronized boolean getMatchdayFile(String chatId, GameModel gameModel, BufferedImage photo) throws IOException, ParseException {
         MatchdayCreator mc = new MatchdayCreator();
         String savePath = mc.createMatch(gameModel, photo);
@@ -530,6 +557,15 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             log.error("Could not send message to chat {}", chatId, e);
         }
+    }
+
+    private void sendResultTitleActions(String chatId) {
+        InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        rows.add(List.of(createInlineButton("Titelbild bestätigen", "resultTitleConfirm")));
+        rows.add(List.of(createInlineButton("Bildauswahl neu starten", "resultTitleReset")));
+        keyboard.setKeyboard(rows);
+        sendMsg(chatId, "Bitte prüfe die Vorschau des Titelbildes.", keyboard);
     }
 
     private InlineKeyboardMarkup createKeyboard(Integer perRow, String lastCall, List<ImmutablePair<String, String>> allButtons) {
@@ -593,6 +629,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.resultGameModel = gameModel;
         this.resultHeadline = null;
         this.resultReport = null;
+        this.resultImageCount = 0;
         this.pendingAction = "headline";
         sendSimpleMsg(chatId, "Schreibe deine Headline!");
     }
@@ -1133,6 +1170,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendSimpleMsg(chatId, "Bitte sende ein Bild oder 'Fertig', um fortzufahren.");
             return;
         }
+        if ("resultTitlePreview".equals(pendingAction)) {
+            sendSimpleMsg(chatId, "Bitte bestätige das Titelbild oder starte die Bildauswahl neu.");
+            return;
+        }
         if ("headline".equals(pendingAction)) {
             resultHeadline = text;
             pendingAction = "report";
@@ -1174,11 +1215,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return;
                 }
                 pendingMatchdayPhoto = image;
-                sendSimpleMsg(chatId, "Bild erhalten. Sende 'Fertig', um die Vorschau zu erstellen, oder ein neues Bild zum Ersetzen.");
+                sendSimpleMsg(chatId, "Bild erhalten. Sende 'Fertig' zum Erstellen oder ein neues Bild zum Ersetzen.");
             }
             return;
         }
 
+        if ("resultTitlePreview".equals(pendingAction)) {
+            sendSimpleMsg(chatId, "Bitte bestätige das Titelbild oder starte die Bildauswahl neu.");
+            return;
+        }
         if (!"photos".equals(pendingAction) || resultCreator == null) {
             sendSimpleMsg(chatId, "Bitte starte zuerst einen Prozess.");
             return;
@@ -1199,7 +1244,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
             resultCreator.addImage(image);
-            sendSimpleMsg(chatId, "Bild erhalten. Nächstes Bild oder 'Fertig'.");
+            resultImageCount++;
+            if (resultImageCount == 1) {
+                sendTemplatePreview(chatId, new ResultCreator().createPreview(image), "spielbericht.jpeg");
+                pendingAction = "resultTitlePreview";
+                sendResultTitleActions(chatId);
+            } else {
+                sendSimpleMsg(chatId, "Bild erhalten. Nächstes Bild oder 'Fertig'.");
+            }
         }
     }
     private void resetResultFlow() {
@@ -1208,6 +1260,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         resultGameModel = null;
         resultHeadline = null;
         resultReport = null;
+        resultImageCount = 0;
       scoreCreator = null;
       scoreGameModel = null;
       scoreHalftime = false;

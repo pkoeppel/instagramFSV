@@ -37,20 +37,30 @@
             <option value="Ausweichplatz Treuen">Ausweichplatz Treuen</option>
         </select>
     </div>
-    <div class="mobile-field">
+    <div class="mobile-field" id="matchdayImageField">
         <label for="matchdayFile">Bild für die obere Hälfte</label>
         <input accept="image/*" id="matchdayFile" onchange="loadMatchdayImage(event)" type="file">
     </div>
     <div id="matchdayCropContainer"></div>
-    <div class="button-stack">
+    <div class="creation-preview" id="matchdayCreationPreview" hidden>
+        <p>Beispiel mit Dummy-Daten und FSV-Treuen-Logos</p>
+        <img id="matchdayPreviewImage" alt="Beispiel der fertigen Spieltagsvorschau">
+    </div>
+    <div class="button-stack" id="matchdayEditActions">
         <button class="primary-action" id="matchdayCreate" onclick="createMatchdayPreview()" disabled>Vorschau erstellen</button>
         <button class="danger-action" onclick="closeMatchdayPreview()" type="button">Abbrechen</button>
+    </div>
+    <div class="button-stack" id="matchdayConfirmActions" hidden>
+        <button class="primary-action" onclick="confirmMatchdayPreview()" type="button">Auswahl bestätigen</button>
+        <button class="secondary-action" onclick="editMatchdayCrop()" type="button">Zurück zum Bildausschnitt</button>
     </div>
 </dialog>
 <script>
     let currentMatchdayGame = null;
     let currentMatchdayImage = null;
     let matchdayCropSelection = null;
+    let matchdayPreviewUrl = null;
+    let pendingMatchdayImage = null;
 
     function openMatchdayPreview(game) {
         currentMatchdayGame = game;
@@ -68,6 +78,17 @@
         document.getElementById('matchdayCropContainer').innerHTML = '';
         currentMatchdayImage = null;
         matchdayCropSelection = null;
+        pendingMatchdayImage = null;
+        document.getElementById('matchdayImageField').hidden = false;
+        document.getElementById('matchdayCropContainer').hidden = false;
+        document.getElementById('matchdayCreationPreview').hidden = true;
+        document.getElementById('matchdayEditActions').hidden = false;
+        document.getElementById('matchdayConfirmActions').hidden = true;
+        document.getElementById('matchdayPreviewImage').removeAttribute('src');
+        if (matchdayPreviewUrl != null) {
+            URL.revokeObjectURL(matchdayPreviewUrl);
+            matchdayPreviewUrl = null;
+        }
         document.getElementById('matchdayPreviewDialog').showModal();
     }
 
@@ -119,6 +140,27 @@
         currentMatchdayImage = img;
     }
 
+    function updateMatchdayCreationPreview(image) {
+        const formData = new FormData();
+        formData.append('image', image, 'matchday.jpg');
+        fetch(window.location.origin + '/preview/men/matchday', {method: 'POST', body: formData})
+            .then(response => {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                return response.blob();
+            })
+            .then(blob => {
+                if (matchdayPreviewUrl != null) URL.revokeObjectURL(matchdayPreviewUrl);
+                matchdayPreviewUrl = URL.createObjectURL(blob);
+                document.getElementById('matchdayPreviewImage').src = matchdayPreviewUrl;
+                document.getElementById('matchdayCreationPreview').hidden = false;
+                document.getElementById('matchdayImageField').hidden = true;
+                document.getElementById('matchdayCropContainer').hidden = true;
+                document.getElementById('matchdayEditActions').hidden = true;
+                document.getElementById('matchdayConfirmActions').hidden = false;
+            })
+            .catch(error => console.error('Vorschau konnte nicht erstellt werden:', error));
+    }
+
     function createMatchdayPreview() {
         if (!currentMatchdayGame || !matchdayCropSelection || !currentMatchdayImage) {
             alert('Bitte wähle zuerst einen quadratischen Bildausschnitt.');
@@ -140,14 +182,24 @@
         ctx.imageSmoothingEnabled = true;
         ctx.drawImage(currentMatchdayImage, sx, sy, sw, sh, 0, 0, 1080, 1080);
 
+        canvas.toBlob(function (blob) {
+            pendingMatchdayImage = blob;
+            updateMatchdayCreationPreview(blob);
+        }, 'image/jpeg', 0.95);
+    }
+
+    function confirmMatchdayPreview() {
+        if (!pendingMatchdayImage || !currentMatchdayGame) {
+            alert('Bitte erstelle zuerst eine Vorschau.');
+            return;
+        }
         currentMatchdayGame.team = document.getElementById('teamsSelect').value;
         const formData = new FormData();
         formData.append('match', JSON.stringify(currentMatchdayGame));
         const venueField = document.getElementById('matchdayVenueField');
         formData.append('venue', venueField.style.display !== 'none' ? document.getElementById('matchdayVenue').value || '' : '');
-        canvas.toBlob(function (blob) {
-            formData.append('image', blob, 'matchday.jpg');
-            fetch(window.location.origin + '/postMatchMen', {
+        formData.append('image', pendingMatchdayImage, 'matchday.jpg');
+        fetch(window.location.origin + '/postMatchMen', {
                 method: 'POST',
                 mode: 'cors',
                 cache: 'no-cache',
@@ -168,7 +220,20 @@
                     alert('Es ist ein Fehler beim Erstellen aufgetreten: ' + error);
                     console.error('Error: ', error);
                 });
-        }, 'image/jpeg', 0.95);
+    }
+
+    function editMatchdayCrop() {
+        pendingMatchdayImage = null;
+        document.getElementById('matchdayCreationPreview').hidden = true;
+        document.getElementById('matchdayImageField').hidden = false;
+        document.getElementById('matchdayCropContainer').hidden = false;
+        document.getElementById('matchdayEditActions').hidden = false;
+        document.getElementById('matchdayConfirmActions').hidden = true;
+        document.getElementById('matchdayPreviewImage').removeAttribute('src');
+        if (matchdayPreviewUrl != null) {
+            URL.revokeObjectURL(matchdayPreviewUrl);
+            matchdayPreviewUrl = null;
+        }
     }
 
     window.addEventListener('load', async () => {

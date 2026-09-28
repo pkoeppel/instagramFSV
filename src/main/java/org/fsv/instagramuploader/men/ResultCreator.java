@@ -60,6 +60,38 @@ public class ResultCreator {
  
  final ArrayList<BufferedImage> allImg = new ArrayList<>();
  BufferedImage targetImg;
+
+ public BufferedImage createPreview(BufferedImage userImage) throws IOException {
+	BufferedImage preview = new BufferedImage(1080, 1350, BufferedImage.TYPE_INT_RGB);
+	Graphics2D graphics = preview.createGraphics();
+	try {
+	 graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+	 double targetRatio = 1080.0 / 1350.0;
+	 int cropWidth = userImage.getWidth();
+	 int cropHeight = userImage.getHeight();
+	 if ((double) cropWidth / cropHeight > targetRatio) {
+		cropWidth = (int) Math.round(cropHeight * targetRatio);
+	 } else {
+		cropHeight = (int) Math.round(cropWidth / targetRatio);
+	 }
+	 int cropX = (userImage.getWidth() - cropWidth) / 2;
+	 int cropY = (userImage.getHeight() - cropHeight) / 2;
+	 graphics.drawImage(userImage, 0, 0, 1080, 1350, cropX, cropY, cropX + cropWidth, cropY + cropHeight, null);
+	} finally {
+	 graphics.dispose();
+	}
+	BufferedImage logo = ImageIO.read(new File("src/main/resources/pictures/teamlogos/FSV_Treuen.png"));
+	BufferedImage template = ImageIO.read(new File("src/main/resources/pictures/template/men/resultTemp.png"));
+	Helper.pictureOnPicture(preview, template, "template", 0);
+	Helper.pictureOnPicture(preview, logo, "homeClubLogoResult-men", 0);
+	Helper.pictureOnPicture(preview, logo, "awayClubLogoResult-men", 0);
+	Helper.writeOnPicture(preview, "2", "result-home", FontClass.resultMen, Color.BLACK, 0);
+	Helper.writeOnPicture(preview, ":", "result-colon", FontClass.resultMen, Color.BLACK, 0);
+	Helper.writeOnPicture(preview, "1", "result-away", FontClass.resultMen, Color.BLACK, 0);
+	Helper.writeOnPicture(preview, "FSV Treuen", "homeClubResult-men", FontClass.clubMenResult, Color.BLACK, 0);
+	Helper.writeOnPicture(preview, "FSV Treuen", "awayClubResult-men", FontClass.clubMenResult, Color.BLACK, 0);
+	return preview;
+ }
 	
  public JSONObject createResult(JSONObject match) throws IOException, ParseException {
 	JSONObject m = Helper.parser(match.get("match").toString());
