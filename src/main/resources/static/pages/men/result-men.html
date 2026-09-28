@@ -57,6 +57,16 @@
         </div>
         <div id="savedImagesInfo" class="saved-images-info"></div>
     </section>
+    <section class="content-card" id="resultPreviewSection" hidden>
+        <h2>Vorschau</h2>
+        <div class="creation-preview">
+            <p>Vorschau des ersten gespeicherten Bildausschnitts</p>
+            <img id="resultPreviewImage" alt="Vorschau des fertigen Spielberichts">
+        </div>
+        <div class="button-stack">
+            <button class="secondary-action" onclick="resetResultTitleImage()" type="button">Titelbild neu auswählen</button>
+        </div>
+    </section>
     <div id="showReport"></div>
 </main>
 <script type="text/javascript">
@@ -70,11 +80,22 @@
     let savedImageCount = 0;
     let cropSelection = null;
     let cropImageElement = null;
+    let resultPreviewUrl = null;
     const savedImagesInfo = document.getElementById('savedImagesInfo');
 
     function resetSavedImages() {
         savedImageCount = 0;
         savedImagesInfo.innerHTML = '';
+        hideResultCreationPreview();
+    }
+
+    function hideResultCreationPreview() {
+        document.getElementById('resultPreviewSection').hidden = true;
+        document.getElementById('resultPreviewImage').removeAttribute('src');
+        if (resultPreviewUrl != null) {
+            URL.revokeObjectURL(resultPreviewUrl);
+            resultPreviewUrl = null;
+        }
     }
 
     function appendSavedImageMessage() {
@@ -82,6 +103,28 @@
         const message = document.createElement('p');
         message.textContent = 'Bild ' + savedImageCount + ' gespeichert';
         savedImagesInfo.appendChild(message);
+    }
+
+    function resetResultTitleImage() {
+        fetch(window.location.origin + '/resetMenMatchPictures', {method: 'POST'})
+            .then(response => {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                resetSavedImages();
+                document.getElementById('inputFile').value = '';
+                document.getElementById('showPic').replaceChildren();
+                document.getElementById('saveResized').disabled = true;
+                cropSelection = null;
+                cropImageElement = null;
+                if (currentImageUrl != null) {
+                    URL.revokeObjectURL(currentImageUrl);
+                    currentImageUrl = null;
+                }
+                document.getElementById('inputFile').focus();
+            })
+            .catch(error => {
+                console.error('Titelbild konnte nicht zurückgesetzt werden:', error);
+                alert('Das Titelbild konnte nicht zurückgesetzt werden.');
+            });
     }
 
     function newPicture(event) {
@@ -136,9 +179,27 @@
             });
         };
 
-        const imageUrl = URL.createObjectURL(event.target.files[0]);
+        const file = event.target.files[0];
+        const imageUrl = URL.createObjectURL(file);
         currentImageUrl = imageUrl;
         image.src = imageUrl;
+    }
+
+    function updateResultCreationPreview(image) {
+        const formData = new FormData();
+        formData.append('image', image, 'crop.jpg');
+        fetch(window.location.origin + '/preview/men/result', {method: 'POST', body: formData})
+            .then(response => {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                return response.blob();
+            })
+            .then(blob => {
+                if (resultPreviewUrl != null) URL.revokeObjectURL(resultPreviewUrl);
+                resultPreviewUrl = URL.createObjectURL(blob);
+                document.getElementById('resultPreviewImage').src = resultPreviewUrl;
+                document.getElementById('resultPreviewSection').hidden = false;
+            })
+            .catch(error => console.error('Vorschau konnte nicht erstellt werden:', error));
     }
 
     function saveCroppedImage() {
@@ -165,6 +226,7 @@
         ctx.drawImage(cropImageElement, sx, sy, sw, sh, 0, 0, 1080, 1350);
 
         canvas.toBlob(function (blob) {
+            const isFirstImage = savedImageCount === 0;
             const formData = new FormData();
             formData.append("coords", JSON.stringify({x: 0, y: 0, w: 1080, h: 1350}));
             formData.append("file", blob, 'crop.jpg');
@@ -177,8 +239,9 @@
                 referrerPolicy: 'no-referrer',
                 body: formData,
             })
-                .then(() => {
-                    console.log('Success!');
+                .then(response => {
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    if (isFirstImage) updateResultCreationPreview(blob);
                     appendSavedImageMessage();
                 })
                 .catch((error) => {

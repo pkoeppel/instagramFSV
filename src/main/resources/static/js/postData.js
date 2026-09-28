@@ -90,6 +90,7 @@ function getData() {
 }
 
 function postPictures() {
+    if (typeof hideResultCreationPreview === 'function') hideResultCreationPreview();
     if (!document.getElementById('matches').value) {
         alert("Bitte ein Spiel auswählen.");
         return;

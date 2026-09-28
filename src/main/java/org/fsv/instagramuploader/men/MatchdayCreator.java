@@ -29,6 +29,7 @@ public class MatchdayCreator {
 	private static final int CANVAS_WIDTH = 1080;
 	private static final int CANVAS_HEIGHT = 1920;
 	private static final int PHOTO_SIZE = 1080;
+	private static final String FSV_LOGO_PATH = "src/main/resources/pictures/teamlogos/FSV_Treuen.png";
 	
 	public String createMatch(GameModel match, BufferedImage userImage) throws IOException, ParseException {
 		return createMatch(match, userImage, null);
@@ -63,6 +64,18 @@ public class MatchdayCreator {
 		}
 		logger.error("Cannot create men matchday image because a club could not be resolved: date={}, competition={}", match.getSaveGameDate(), match.getCompetition());
 		return null;
+	}
+
+	public BufferedImage createPreview(BufferedImage userImage) throws IOException {
+		BufferedImage preview = composeBackground(userImage);
+		BufferedImage logo = ImageIO.read(new File(FSV_LOGO_PATH));
+		Helper.pictureOnPicture(preview, logo, "logo-left-men", 0);
+		Helper.pictureOnPicture(preview, logo, "logo-right-men", 0);
+		Helper.writeOnPicture(preview, "FSV Treuen", "homeclub-men", FontClass.clubMen, Color.WHITE, 0);
+		Helper.writeOnPicture(preview, "FSV Treuen", "awayclub-men", FontClass.clubMen, Color.WHITE, 0);
+		Helper.writeOnPicture(preview, "01.01.2026 | 15:00 Uhr", "dateTime-men", FontClass.dateTimeMen, Color.WHITE, 0);
+		Helper.writeOnPicture(preview, "Friedrich-Ludwig-Jahn Stadion", "location-men", FontClass.dateTimeMen, Color.WHITE, 0);
+		return preview;
 	}
 
 	private BufferedImage composeBackground(BufferedImage userImage) throws IOException {

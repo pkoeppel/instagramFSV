@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -222,6 +223,55 @@ public class Controller {
 	 logger.error("Manual Fussball.de match update failed after {} ms", System.currentTimeMillis() - startedAt, e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
+ }
+
+ @PostMapping(value = "/preview/men/matchday", produces = MediaType.IMAGE_JPEG_VALUE)
+ public ResponseEntity<byte[]> previewMenMatchday(@RequestParam("image") MultipartFile image) {
+	return createUploadedPreviewResponse("matchday", image, mc::createPreview);
+ }
+
+ @PostMapping(value = "/preview/men/result", produces = MediaType.IMAGE_JPEG_VALUE)
+ public ResponseEntity<byte[]> previewMenResult(@RequestParam("image") MultipartFile image) {
+	return createUploadedPreviewResponse("result", image, rc::createPreview);
+ }
+
+ private ResponseEntity<byte[]> createUploadedPreviewResponse(String previewType, MultipartFile image, PreviewRenderer renderer) {
+	if (image.isEmpty()) {
+	 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	}
+	try {
+	 BufferedImage background = ImageIO.read(image.getInputStream());
+	 if (background == null) {
+		return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	 }
+	 return createPreviewResponse(previewType, () -> renderer.render(background));
+	} catch (IOException e) {
+	 logger.error("Could not read men {} preview background", previewType, e);
+	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+	}
+ }
+
+ private ResponseEntity<byte[]> createPreviewResponse(String previewType, PreviewImageSupplier supplier) {
+	try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+	 ImageIO.write(supplier.get(), "jpeg", output);
+	 return ResponseEntity.ok()
+			 .cacheControl(CacheControl.noStore())
+			 .contentType(MediaType.IMAGE_JPEG)
+			 .body(output.toByteArray());
+	} catch (IOException e) {
+	 logger.error("Could not create men {} preview", previewType, e);
+	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+	}
+ }
+
+ @FunctionalInterface
+ private interface PreviewImageSupplier {
+	BufferedImage get() throws IOException;
+ }
+
+ @FunctionalInterface
+ private interface PreviewRenderer {
+	BufferedImage render(BufferedImage background) throws IOException;
  }
 
  @GetMapping(value = "/download/{pathName}/{fileName:.+}", produces = MediaType.IMAGE_JPEG_VALUE)
@@ -602,6 +652,13 @@ public class Controller {
     }
   }
   
+ @PostMapping("/resetMenMatchPictures")
+ public ResponseEntity<HttpStatus> resetMenMatchPictures() {
+	rc = new ResultCreator();
+	logger.info("Reset buffered men result images");
+	return new ResponseEntity<>(HttpStatus.OK);
+ }
+
   @RequestMapping("/sendMenMatchPicture")
  public ResponseEntity<HttpStatus> sendMenMatchPicure(@RequestParam("coords") String coords, @RequestParam("file") MultipartFile file) {
 	try {
