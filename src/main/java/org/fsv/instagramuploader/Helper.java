@@ -449,7 +449,7 @@ public class Helper {
 		 int statusCode = response.getCode();
 		 if (statusCode == 200 && response.getEntity() != null) {
 			String html = EntityUtils.toString(response.getEntity());
-			games = parseGames(html, team, httpClient);
+			games = parseGames(key, html, httpClient);
 		 } else {
 			logger.warn("Fussball.de match list request for team '{}' (id={}) failed with status {}", key, teamId, statusCode);
 		 }
@@ -466,15 +466,7 @@ public class Helper {
 	}
  }
 
- private static List<JSONObject> parseGames(String html, Map<String, String> team, CloseableHttpClient httpClient) throws IOException, ParseException, java.text.ParseException, URISyntaxException {
-	Long leagueMatchday = null, cupMatchday = null;
-	if (team.get("lastLeagueMatchday") != null) {
-	 leagueMatchday = Long.valueOf(team.get("lastLeagueMatchday"));
-	}
-	if (team.get("lastCupMatchday") != null) {
-	 cupMatchday = Long.valueOf(team.get("lastCupMatchday"));
-	}
-
+ private static List<JSONObject> parseGames(String team, String html, CloseableHttpClient httpClient) throws IOException, ParseException, java.text.ParseException, URISyntaxException {
 	List<JSONObject> result = new ArrayList<>();
 	String gamesRegex = "<tr class=\"row-headline visible-small\">.*?</tr>.*?<tr class=\"odd row-competition hidden-small\">.*?</tr>.*?<tr class=\"odd\">.*?</tr>";
 	Matcher gamesMatcher = Pattern.compile(gamesRegex, Pattern.DOTALL).matcher(html);
@@ -491,7 +483,15 @@ public class Helper {
 		String competitionLower = competition.toLowerCase(Locale.ROOT);
 		String homeTeam = StringEscapeUtils.unescapeHtml4(gameMatcher.group(4)).replace("\u200B", "").trim();
 		String awayTeam = StringEscapeUtils.unescapeHtml4(gameMatcher.group(5)).replace("\u200B", "").trim();
-
+		
+		if (team.equals("UE35")) {
+			if (homeTeam.equals("SpG Treuener Land")) {
+				homeTeam = "FSV Treuen";
+			} else if (awayTeam.equals("SpG Treuener Land")) {
+				awayTeam = "FSV Treuen";
+			}
+		}
+		
 		String gameId;
 		if (competition.contains("Kinder")) {
 		 gameId = gameMatcher.group(6).trim().split("/-/staffel/")[1];
@@ -503,8 +503,7 @@ public class Helper {
 		newGame.setGameUrl(createGameUrl(gameMatcher.group(6)));
 		ClubModel homeClub = checkForOwnClub(homeTeam);
 		ClubModel awayClub = checkForOwnClub(awayTeam);
-		if (competitionLower.contains("liga") || competitionLower.contains("klasse")) {
-		 leagueMatchday = setMatchDay(newGame, leagueMatchday);
+		if (competitionLower.contains("liga") || competitionLower.contains("klasse") || competitionLower.contains("pokal")) {
 		 Matcher stats = teamStats(gameId, httpClient);
 
 		 if (stats != null) {
@@ -521,23 +520,12 @@ public class Helper {
 			awayClub.setClubStats("\nPlatz " + awayPlace + " (" + awayPoints + " / " + awayScore + ")\nTrend: " + awayTrend);
 		 }
 		}
-		if (competitionLower.contains("pokal")) {
-		 cupMatchday = setMatchDay(newGame, cupMatchday);
-		}
 		newGame.setHomeTeam(homeClub);
 		newGame.setAwayTeam(awayClub);
 		result.add(newGame.toJSON());
 	 }
 	}
 	return result;
- }
-
- static Long setMatchDay(GameModel game, Long matchDay) {
-	if (matchDay == null) {
-	 return null;
-	}
-	game.setMatchDay(String.valueOf(matchDay));
-	return matchDay + 1;
  }
 
  private static String createGameUrl(String gameUrl) {
