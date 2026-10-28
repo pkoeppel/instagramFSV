@@ -520,6 +520,10 @@ public class Helper {
 			awayClub.setClubStats("\nPlatz " + awayPlace + " (" + awayPoints + " / " + awayScore + ")\nTrend: " + awayTrend);
 		 }
 		}
+		 if (team.equals("UE35")) {
+			 homeClub.setChangedName(homeClub.getClubName() + " UE35");
+			 awayClub.setChangedName(awayClub.getClubName() + " UE35");
+		 }
 		newGame.setHomeTeam(homeClub);
 		newGame.setAwayTeam(awayClub);
 		result.add(newGame.toJSON());
