@@ -182,7 +182,6 @@ public class ResultCreator {
 	logger.debug("Report file written for '{}'", savePath);
 
 	Helper.deleteTempTxt(m, "men-games");
-	Helper.updateMatchdayValue(team, competition);
 	Map<String, String> result = new HashMap<>();
 	result.put("fileDir", savePath);
 	result.put("caption", fullReport);

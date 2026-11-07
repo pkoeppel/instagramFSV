@@ -581,39 +581,6 @@ public class Helper {
 	}
  }
 
- public static void updateMatchdayValue(String team, String matchType) throws IOException {
-	Map<String, Map<String, String>> allTeams = OBJECT_MAPPER.readValue(new File("src/main/resources/templates/teamInfo.json"), new TypeReference<>() {
-	});
-	Map<String, String> teamData = allTeams.get(team);
-	if (teamData == null) {
-		logger.warn("Cannot update matchday because team '{}' does not exist", team);
-		return;
-	}
-
-	String matchTypeLower = matchType.toLowerCase(Locale.ROOT);
-
-	if (matchTypeLower.contains("pokal")) {
-		String cupMatchday = teamData.get("lastCupMatchday");
-		if (cupMatchday == null || cupMatchday.isBlank()) {
-			logger.warn("Cannot increment cup matchday for team '{}'; value is missing", team);
-		} else {
-			teamData.put("lastCupMatchday", String.valueOf(Long.parseLong(cupMatchday) + 1));
-			logger.debug("Incremented cup matchday for team '{}' to {}", team, teamData.get("lastCupMatchday"));
-		}
-	}
-	if (matchTypeLower.contains("liga") || matchTypeLower.contains("klasse")) {
-		String leagueMatchday = teamData.get("lastLeagueMatchday");
-		if (leagueMatchday == null || leagueMatchday.isBlank()) {
-			logger.warn("Cannot increment league matchday for team '{}'; value is missing", team);
-		} else {
-			teamData.put("lastLeagueMatchday", String.valueOf(Long.parseLong(leagueMatchday) + 1));
-			logger.debug("Incremented league matchday for team '{}' to {}", team, teamData.get("lastLeagueMatchday"));
-		}
-	}
-	OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(new File("src/main/resources/templates/teamInfo.json"), allTeams);
-	logger.info("Updated matchday counters for team '{}' (type='{}')", team, matchType);
- }
-
  private static List<String> wrapLine(String line, FontMetrics metrics, int maxWidth) {
 	if (metrics.stringWidth(line) <= maxWidth) {
 	 return List.of(line);

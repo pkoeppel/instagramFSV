@@ -64,14 +64,6 @@
                         <label for="newTeamPlace">Standard-Spielort</label>
                         <input id="newTeamPlace" required>
                     </div>
-                    <div class="settings-field">
-                        <label for="newTeamLeague">Start Liga-Spieltag</label>
-                        <input id="newTeamLeague" type="number" min="1" value="1">
-                    </div>
-                    <div class="settings-field">
-                        <label for="newTeamCup">Start Pokalrunde</label>
-                        <input id="newTeamCup" type="number" min="1" value="1">
-                    </div>
                 </div>
                 <div class="settings-actions">
                     <button class="settings-primary" type="submit">Mannschaft hinzufügen</button>
@@ -82,7 +74,7 @@
             <div class="settings-card-header">
                 <div>
                     <h2>Mannschaften und Import</h2>
-                    <p>Fussball.de-ID, Standard-Spielort und aktuelle Spieltagszähler je Mannschaft.</p>
+                    <p>Fussball.de-ID und Standard-Spielort je Mannschaft.</p>
                 </div>
             </div>
             <div class="settings-import-actions">
@@ -96,14 +88,6 @@
 <script>
     window.addEventListener('load', () => {
         getAllTeamInformation();
-        const type = document.getElementById('newTeamType');
-        const updateMatchdayFields = () => {
-            const disabled = type.value !== 'men';
-            document.getElementById('newTeamLeague').disabled = disabled;
-            document.getElementById('newTeamCup').disabled = disabled;
-        };
-        type.addEventListener('change', updateMatchdayFields);
-        updateMatchdayFields();
     });
 </script>
 </body>

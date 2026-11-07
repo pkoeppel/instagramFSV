@@ -43,6 +43,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -280,19 +282,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendStartMsg(chatId, "Keine Spiele geladen. Bitte starte den Vorgang erneut.");
             return;
         }
-        String[] keyParts = matchKey.split("~", 2);
-        String matchDay = keyParts[0];
-        String competition = keyParts.length > 1 ? keyParts[1] : null;
-        bufferedGame = null;
-        for (Map<String, Object> g : bufferedGames) {
-            Object dayObj = g.get("matchDay");
-            Object compObj = g.get("competition");
-            if (dayObj != null && matchDay.equals(dayObj.toString()) &&
-                    (competition == null || (compObj != null && competition.equals(compObj.toString())))) {
-                bufferedGame = g;
-                break;
-            }
-        }
+        bufferedGame = findBufferedGame(matchKey);
         if (bufferedGame == null) {
             sendStartMsg(chatId, "Spiel nicht gefunden. Bitte starte den Vorgang erneut.");
             return;
@@ -366,19 +356,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendStartMsg(chatId, "Kein Spiel im Zwischenspeicher. Bitte starte den Vorgang erneut.");
             return;
         }
-        String[] keyParts = matchKey.split("~", 2);
-        String matchDay = keyParts[0];
-        String competition = keyParts.length > 1 ? keyParts[1] : null;
-        bufferedGame = null;
-        for (Map<String, Object> g : bufferedGames) {
-            Object dayObj = g.get("matchDay");
-            Object compObj = g.get("competition");
-            if (dayObj != null && matchDay.equals(dayObj.toString()) &&
-                    (competition == null || (compObj != null && competition.equals(compObj.toString())))) {
-                bufferedGame = g;
-                break;
-            }
-        }
+        bufferedGame = findBufferedGame(matchKey);
         if (bufferedGame == null) {
             sendStartMsg(chatId, "Spiel nicht gefunden. Bitte starte den Vorgang erneut.");
             return;
@@ -432,7 +410,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             Object matchDateObj = game.get("matchDate");
             String matchDate = matchDateObj != null ? matchDateObj.toString() : null;
             transformed.put("gameDate", matchDate);
-            transformed.put("matchDay", matchDate);
+            transformed.put("matchDay", null);
             transformed.put("gameTime", null);
             transformed.put("team", teamQuery);
             transformed.put("gameUrl", game.get("gameUrl"));
@@ -446,14 +424,18 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
         List<ImmutablePair<String, String>> keyboardValues = new ArrayList<>();
-        for (Map<String, Object> game : bufferedGames) {
-            String matchDay = getString(game, "matchDay");
+        for (int i = 0; i < bufferedGames.size(); i++) {
+            Map<String, Object> game = bufferedGames.get(i);
             String competition = getString(game, "competition");
-            String matchKey = matchDay + "~" + competition;
             String homeName = getClubName(game.get("homeTeam"));
             String awayName = getClubName(game.get("awayTeam"));
-            String gameInfo = matchDay + " | " + competition + ": " + homeName + " - " + awayName;
-            keyboardValues.add(new ImmutablePair<>(gameInfo, matchKey));
+            String gameDate = getString(game, "gameDate");
+            String datePrefix = "";
+            if (gameDate != null && !gameDate.isBlank()) {
+                datePrefix = formatDateForDisplay(gameDate) + " | ";
+            }
+            String gameInfo = datePrefix + competition + ": " + homeName + " - " + awayName;
+            keyboardValues.add(new ImmutablePair<>(gameInfo, String.valueOf(i)));
         }
         sendMsg(chatId, "Wähle ein Spiel aus!", createKeyboard(1, lastCall, keyboardValues));
     }
@@ -476,17 +458,60 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
         List<ImmutablePair<String, String>> keyboardValues = new ArrayList<>();
-        for (Map<String, Object> game : bufferedGames) {
-            String matchDay = getString(game, "matchDay");
+        for (int i = 0; i < bufferedGames.size(); i++) {
+            Map<String, Object> game = bufferedGames.get(i);
             String competition = getString(game, "competition");
-            String matchKey = matchDay + "~" + competition;
             String homeName = getClubName(game.get("homeTeam"));
             String awayName = getClubName(game.get("awayTeam"));
-            String gameInfo = matchDay + " | " + competition + ": " + homeName + " - " + awayName;
-            keyboardValues.add(new ImmutablePair<>(gameInfo, matchKey));
+            String gameDate = getString(game, "gameDate");
+            String datePrefix = "";
+            if (gameDate != null && !gameDate.isBlank()) {
+                datePrefix = formatDateForDisplay(gameDate) + " | ";
+            }
+            String gameInfo = datePrefix + competition + ": " + homeName + " - " + awayName;
+            keyboardValues.add(new ImmutablePair<>(gameInfo, String.valueOf(i)));
         }
         keyboardValues.add(new ImmutablePair<>("Liste aktualisieren", "update"));
         sendMsg(chatId, "Wähle ein Spiel aus!", createKeyboard(1, lastCall, keyboardValues));
+    }
+
+    private Map<String, Object> findBufferedGame(String matchKey) {
+        if (bufferedGames == null || matchKey == null) {
+            return null;
+        }
+        try {
+            int index = Integer.parseInt(matchKey);
+            if (index >= 0 && index < bufferedGames.size()) {
+                return bufferedGames.get(index);
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        String[] keyParts = matchKey.split("~", 2);
+        String matchDay = keyParts[0];
+        String competition = keyParts.length > 1 ? keyParts[1] : null;
+        for (Map<String, Object> g : bufferedGames) {
+            Object dayObj = g.get("matchDay");
+            Object compObj = g.get("competition");
+            if (dayObj != null && matchDay.equals(dayObj.toString()) &&
+                    (competition == null || (compObj != null && competition.equals(compObj.toString())))) {
+                return g;
+            }
+        }
+        return null;
+    }
+
+    private String formatDateForDisplay(String rawDate) {
+        if (rawDate == null || rawDate.isBlank()) {
+            return "";
+        }
+        try {
+            if (rawDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                LocalDate date = LocalDate.parse(rawDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                return date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+            }
+        } catch (Exception ignored) {
+        }
+        return rawDate;
     }
 
     private void sendTemplatePreview(String chatId, BufferedImage preview, String fileName) throws IOException {
