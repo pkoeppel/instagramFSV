@@ -462,24 +462,11 @@ public class Controller {
 	 if (!entry.getKey().matches("[A-Za-z0-9_-]{1,10}") || team == null
 					 || team.get("club-id") == null || team.get("club-id").isBlank()
 					 || team.get("default-place") == null || team.get("default-place").isBlank()
-					 || team.get("category") != null && !team.get("category").matches("men|youth")
-					 || isPositiveNumberOrMissing(team.get("lastLeagueMatchday"))
-					 || isPositiveNumberOrMissing(team.get("lastCupMatchday"))) {
+					 || team.get("category") != null && !team.get("category").matches("men|youth")) {
 		return false;
 	 }
 	}
 	return true;
- }
-
- private boolean isPositiveNumberOrMissing(String value) {
-	if (value == null) {
-	 return false;
-	}
-	try {
-	 return Long.parseLong(value) <= 0;
-	} catch (NumberFormatException e) {
-	 return true;
-	}
  }
 
  @RequestMapping("/getAllTeams")

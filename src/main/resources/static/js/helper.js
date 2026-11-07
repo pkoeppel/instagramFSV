@@ -57,12 +57,6 @@ async function getAllTeamInformation() {
             card.append(title);
             card.append(createTeamSettingField("Fussball.de-ID", "inputId" + key, value["club-id"]));
             card.append(createTeamSettingField("Standard-Spielort", "inputPlace" + key, value["default-place"]));
-            if (value["lastLeagueMatchday"] != null) {
-                card.append(createTeamSettingField("Nächster Liga-Spieltag", "inputLeague" + key, value["lastLeagueMatchday"], "number"));
-            }
-            if (value["lastCupMatchday"] != null) {
-                card.append(createTeamSettingField("Nächste Pokalrunde", "inputCup" + key, value["lastCupMatchday"], "number"));
-            }
             const deleteButton = document.createElement("button");
             deleteButton.type = "button";
             deleteButton.className = "team-delete-button settings-danger";
@@ -106,10 +100,8 @@ function collectTeamSettings() {
     Object.entries(settingsTeamData).forEach(([key, value]) => {
         value["club-id"] = document.getElementById("inputId" + key).value.trim();
         value["default-place"] = document.getElementById("inputPlace" + key).value.trim();
-        const league = document.getElementById("inputLeague" + key);
-        const cup = document.getElementById("inputCup" + key);
-        if (league != null) value["lastLeagueMatchday"] = league.value;
-        if (cup != null) value["lastCupMatchday"] = cup.value;
+        delete value["lastLeagueMatchday"];
+        delete value["lastCupMatchday"];
     });
 }
 
@@ -135,10 +127,6 @@ async function addTeamInformation() {
     }
     collectTeamSettings();
     const newTeam = {"club-id": clubId, "default-place": place, "category": typeInput.value};
-    if (typeInput.value === "men") {
-        newTeam["lastLeagueMatchday"] = document.getElementById("newTeamLeague").value || "1";
-        newTeam["lastCupMatchday"] = document.getElementById("newTeamCup").value || "1";
-    }
     settingsTeamData[key] = newTeam;
     if (await updateTeamValues(settingsTeamData)) {
         document.getElementById("newTeamForm").reset();
@@ -276,43 +264,11 @@ function createTeamSelection(labelText, game, currentTeam, teamProperty) {
     return container;
 }
 
-function createMatchdayInput(game) {
-    const matchdayContainer = document.createElement("div");
-    matchdayContainer.className = "inline-form-group";
-    const fieldId = "matchday-" + dynamicFieldId++;
-
-    const label = document.createElement("label");
-    label.htmlFor = fieldId;
-    label.textContent = "Spieltag";
-    matchdayContainer.appendChild(label);
-
-    const input = document.createElement("input");
-    input.type = "number";
-    input.min = "1";
-    input.id = fieldId;
-    input.value = game.matchDay;
-    input.addEventListener("change", () => game.matchDay = input.value);
-    matchdayContainer.appendChild(input);
-
-    return matchdayContainer;
-}
-
-function shouldAddMatchdayInput(type, competition) {
-    const lowerComp = competition.toLowerCase();
-    return type === "men" &&
-        (lowerComp.includes("liga") ||
-            lowerComp.includes("klasse") ||
-            lowerComp.includes("pokal"));
-}
-
 function createTeamDetails(type, game, homeTeam, awayTeam, allTeams) {
     const teamsElement = document.createElement("p");
     teamsElement.className = "game-teams";
 
     teamsElement.appendChild(document.createTextNode(`${homeTeam.clubName} vs ${awayTeam.clubName}`));
-    if (shouldAddMatchdayInput(type, game.competition)) {
-        teamsElement.appendChild(createMatchdayInput(game));
-    }
     if (!allTeams.includes(homeTeam.clubName)) {
         teamsElement.appendChild(createTeamSelection("Heimhauptteam", game, homeTeam, "homeTeam"));
     }
