@@ -1,14 +1,17 @@
 {
   "1" : {
     "club-id" : "011MIF6RBO000000VTVG0001VTR8C1K7",
-    "lastCupMatchday" : "1",
-    "lastLeagueMatchday" : "2",
-    "default-place" : "Treuen"
+    "default-place" : "Treuen",
+    "category" : "men"
   },
   "2" : {
     "club-id" : "01OIBGK5T8000000VV0AG80NVUUTMIT0",
-    "lastCupMatchday" : "2",
-    "lastLeagueMatchday" : "1",
-    "default-place" : "Treuen"
+    "default-place" : "Treuen",
+    "category" : "men"
+  },
+  "UE35" : {
+    "club-id" : "02TFHAF3J4000000VS5489BSVTA87VEB",
+    "default-place" : "Treuen",
+    "category" : "men"
   }
 }
