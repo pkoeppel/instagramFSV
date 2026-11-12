@@ -486,14 +486,146 @@ public class Controller {
 	}
  }
 
+ @SuppressWarnings("unchecked")
  @GetMapping("/getPlayers")
- public ResponseEntity<JSONObject> getPlayers() {
+ public ResponseEntity<JSONObject> getPlayers(@RequestParam(value = "firstTeam", required = false) Boolean firstTeam) {
 	try {
 	 JSONObject result = (JSONObject) readJsonFile("players.json");
+	 if (Boolean.TRUE.equals(firstTeam) && result != null && result.get("players") instanceof JSONArray arr) {
+		JSONArray filtered = new JSONArray();
+		for (Object o : arr) {
+		 if (o instanceof JSONObject p) {
+			Object ft = p.get("firstTeam");
+			if (ft == null || Boolean.parseBoolean(ft.toString())) {
+			 filtered.add(p);
+			}
+		 }
+		}
+		JSONObject filteredResult = new JSONObject();
+		filteredResult.put("players", filtered);
+		logger.debug("Loaded {} first team players", filtered.size());
+		return new ResponseEntity<>(filteredResult, HttpStatus.OK);
+	 }
 	 logger.debug("Loaded players list");
 	 return new ResponseEntity<>(result, HttpStatus.OK);
 	} catch (IOException | ParseException e) {
 	 logger.error("Could not load players.json", e);
+	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+	}
+ }
+
+ @SuppressWarnings("unchecked")
+ @PostMapping("/savePlayer")
+ public ResponseEntity<String> savePlayer(@RequestBody Map<String, Object> playerData) {
+	try {
+	 Object numberObj = playerData.get("number");
+	 Object nameObj = playerData.get("name");
+	 if (numberObj == null || !Helper.isNumeric(numberObj.toString()) || nameObj == null || nameObj.toString().isBlank()) {
+		return new ResponseEntity<>("Invalid player data", HttpStatus.BAD_REQUEST);
+	 }
+	 int number = Integer.parseInt(numberObj.toString());
+	 String name = nameObj.toString().trim();
+	 String birthday = playerData.get("birthday") != null ? playerData.get("birthday").toString().trim() : "";
+	 Object firstTeamObj = playerData.get("firstTeam");
+	 boolean firstTeam = firstTeamObj == null || Boolean.parseBoolean(firstTeamObj.toString());
+
+	 JSONObject root = (JSONObject) readJsonFile("players.json");
+	 if (root == null) {
+		root = new JSONObject();
+	 }
+	 JSONArray players = root.get("players") instanceof JSONArray ? (JSONArray) root.get("players") : new JSONArray();
+
+	 Object idObj = playerData.get("id");
+	 Integer id = null;
+	 if (idObj != null && !idObj.toString().isBlank()) {
+		try {
+		 id = Integer.parseInt(idObj.toString());
+		} catch (NumberFormatException ignored) {
+		}
+	 }
+
+	 if (id != null) {
+		boolean updated = false;
+		for (Object o : players) {
+		 if (o instanceof JSONObject p) {
+			Object currentId = p.get("id");
+			if (currentId != null && Integer.parseInt(currentId.toString()) == id) {
+			 p.put("number", number);
+			 p.put("name", name);
+			 p.put("birthday", birthday);
+			 p.put("firstTeam", firstTeam);
+			 updated = true;
+			 break;
+			}
+		 }
+		}
+		if (!updated) {
+		 return new ResponseEntity<>("Player not found", HttpStatus.NOT_FOUND);
+		}
+	 } else {
+		int maxId = 0;
+		for (Object o : players) {
+		 if (o instanceof JSONObject p && p.get("id") != null) {
+			try {
+			 int cur = Integer.parseInt(p.get("id").toString());
+			 if (cur > maxId) {
+				maxId = cur;
+			 }
+			} catch (NumberFormatException ignored) {
+			}
+		 }
+		}
+		JSONObject newPlayer = new JSONObject();
+		newPlayer.put("id", maxId + 1);
+		newPlayer.put("number", number);
+		newPlayer.put("name", name);
+		newPlayer.put("birthday", birthday);
+		newPlayer.put("firstTeam", firstTeam);
+		players.add(newPlayer);
+	 }
+
+	 root.put("players", players);
+	 OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(new File("src/main/resources/templates/players.json"), root);
+	 logger.info("Player saved successfully: id={}, name={}", id, name);
+	 return new ResponseEntity<>("Success", HttpStatus.OK);
+	} catch (IOException | ParseException e) {
+	 logger.error("Could not save player", e);
+	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+	}
+ }
+
+ @SuppressWarnings("unchecked")
+ @DeleteMapping("/deletePlayer/{id}")
+ public ResponseEntity<String> deletePlayer(@PathVariable("id") int id) {
+	try {
+	 JSONObject root = (JSONObject) readJsonFile("players.json");
+	 if (root == null || !(root.get("players") instanceof JSONArray players)) {
+		return new ResponseEntity<>("Player not found", HttpStatus.NOT_FOUND);
+	 }
+	 boolean removed = false;
+	 Iterator<?> iterator = players.iterator();
+	 while (iterator.hasNext()) {
+		Object o = iterator.next();
+		if (o instanceof JSONObject p && p.get("id") != null) {
+		 try {
+			if (Integer.parseInt(p.get("id").toString()) == id) {
+			 iterator.remove();
+			 removed = true;
+			 break;
+			}
+		 } catch (NumberFormatException ignored) {
+		 }
+		}
+	 }
+	 if (!removed) {
+		return new ResponseEntity<>("Player not found", HttpStatus.NOT_FOUND);
+	 }
+	 root.put("players", players);
+	 OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(new File("src/main/resources/templates/players.json"), root);
+	 logger.info("Player {} deleted successfully", id);
+	 return new ResponseEntity<>("Success", HttpStatus.OK);
+	} catch (IOException | ParseException e) {
+	 logger.error("Could not delete player {}", id, e);
 	 return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
 	}
  }
