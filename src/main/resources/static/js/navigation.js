@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
         {id: 'youth-matchday', label: 'Kids Spieltag', href: '/pages/youth/matchday-youth.html'},
         {id: 'youth-result', label: 'Kids Ergebnis', href: '/pages/youth/result-youth.html'},
         {id: 'add-team', label: 'Team anlegen', href: '/pages/addTeam.html'},
+        {id: 'players', label: 'Spieler', href: '/pages/players.html'},
         {id: 'settings', label: 'Einstellungen', href: '/pages/changeTemplates.html'},
         {id: 'designer', label: 'Designer', href: '/pages/coordinates.html'}
     ];

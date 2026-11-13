@@ -1,30 +1,279 @@
 {
-  "players" : [
-    { "number" : 1, "name" : "Kai Gröller" },
-    { "number" : 3, "name" : "Tim Seifert" },
-    { "number" : 4, "name" : "Cedric Groß" },
-    { "number" : 5, "name" : "Toni Götz" },
-    { "number" : 6, "name" : "Lennart Dietrich" },
-    { "number" : 7, "name" : "Marc Wöllner" },
-    { "number" : 8, "name" : "Tim Steglich" },
-    { "number" : 9, "name" : "Jonas Unger" },
-    { "number" : 10, "name" : "Nils Rausch" },
-    { "number" : 11, "name" : "Chris Vogel" },
-    { "number" : 13, "name" : "Louis Schlosser" },
-    { "number" : 15, "name" : "Yannick Linnemann" },
-    { "number" : 16, "name" : "Pascal Köppel" },
-    { "number" : 17, "name" : "Björn Pauleck" },
-    { "number" : 18, "name" : "Jonas Gruschwitz" },
-    { "number" : 19, "name" : "Moritz Mayer" },
-    { "number" : 20, "name" : "Jonas Heyn" },
-    { "number" : 22, "name" : "Jan Süß" },
-    { "number" : 27, "name" : "Liam Kittelmann" },
-    { "number" : 28, "name" : "Luca Jung" },
-    { "number" : 33, "name" : "Marc Zimmermann" },
-    { "number" : 44, "name" : "Moritz Seidel" },
-    { "number" : 47, "name" : "Julian Bauch" },
-    { "number" : 77, "name" : "Andre Herold" },
-    { "number" : 97, "name" : "Luca Bodenbinder" },
-    { "number" : 99, "name" : "Lennox Reinsch" }
-  ]
+  "players" : [ {
+    "birthday" : "1991-08-15",
+    "firstTeam" : true,
+    "number" : 1,
+    "name" : "Kai Gröller",
+    "id" : 1
+  }, {
+    "birthday" : "2006-03-01",
+    "firstTeam" : true,
+    "number" : 3,
+    "name" : "Tim Seifert",
+    "id" : 2
+  }, {
+    "birthday" : "2005-08-18",
+    "firstTeam" : true,
+    "number" : 4,
+    "name" : "Cedric Groß",
+    "id" : 3
+  }, {
+    "birthday" : "1997-05-31",
+    "firstTeam" : true,
+    "number" : 5,
+    "name" : "Toni Götz",
+    "id" : 4
+  }, {
+    "birthday" : "2003-09-13",
+    "firstTeam" : true,
+    "number" : 6,
+    "name" : "Lennart Dietrich",
+    "id" : 5
+  }, {
+    "birthday" : "2004-01-13",
+    "firstTeam" : true,
+    "number" : 7,
+    "name" : "Marc Wöllner",
+    "id" : 6
+  }, {
+    "birthday" : "2001-08-09",
+    "firstTeam" : true,
+    "number" : 8,
+    "name" : "Tim Steglich",
+    "id" : 7
+  }, {
+    "birthday" : "2002-06-05",
+    "firstTeam" : true,
+    "number" : 9,
+    "name" : "Jonas Unger",
+    "id" : 8
+  }, {
+    "birthday" : "1995-01-06",
+    "firstTeam" : true,
+    "number" : 10,
+    "name" : "Nils Rausch",
+    "id" : 9
+  }, {
+    "birthday" : "2002-09-04",
+    "firstTeam" : true,
+    "number" : 11,
+    "name" : "Chris Vogel",
+    "id" : 10
+  }, {
+    "birthday" : "2001-02-04",
+    "firstTeam" : true,
+    "number" : 13,
+    "name" : "Louis Schlosser",
+    "id" : 11
+  }, {
+    "birthday" : "2004-08-26",
+    "firstTeam" : true,
+    "number" : 15,
+    "name" : "Yannick Linnemann",
+    "id" : 12
+  }, {
+    "birthday" : "2002-01-24",
+    "firstTeam" : false,
+    "number" : 16,
+    "name" : "Pascal Köppel",
+    "id" : 13
+  }, {
+    "birthday" : "2001-12-04",
+    "firstTeam" : true,
+    "number" : 17,
+    "name" : "Björn Pauleck",
+    "id" : 14
+  }, {
+    "birthday" : "2004-08-19",
+    "firstTeam" : true,
+    "number" : 18,
+    "name" : "Jonas Gruschwitz",
+    "id" : 15
+  }, {
+    "birthday" : "2006-12-03",
+    "firstTeam" : true,
+    "number" : 19,
+    "name" : "Moritz Mayer",
+    "id" : 16
+  }, {
+    "birthday" : "2003-11-27",
+    "firstTeam" : true,
+    "number" : 20,
+    "name" : "Jonas Heyn",
+    "id" : 17
+  }, {
+    "birthday" : "2007-12-24",
+    "firstTeam" : true,
+    "number" : 22,
+    "name" : "Jan Süß",
+    "id" : 18
+  }, {
+    "birthday" : "2006-08-27",
+    "firstTeam" : true,
+    "number" : 27,
+    "name" : "Liam Kittelmann",
+    "id" : 19
+  }, {
+    "birthday" : "1997-12-28",
+    "firstTeam" : true,
+    "number" : 28,
+    "name" : "Luca Jung",
+    "id" : 20
+  }, {
+    "birthday" : "1990-03-22",
+    "firstTeam" : true,
+    "number" : 33,
+    "name" : "Marc Zimmermann",
+    "id" : 21
+  }, {
+    "birthday" : "2002-11-29",
+    "firstTeam" : true,
+    "number" : 44,
+    "name" : "Moritz Seidel",
+    "id" : 22
+  }, {
+    "birthday" : "2003-01-07",
+    "firstTeam" : true,
+    "number" : 47,
+    "name" : "Julian Bauch",
+    "id" : 23
+  }, {
+    "birthday" : "1995-01-03",
+    "firstTeam" : true,
+    "number" : 77,
+    "name" : "Andre Herold",
+    "id" : 24
+  }, {
+    "birthday" : "2002-02-11",
+    "firstTeam" : true,
+    "number" : 97,
+    "name" : "Luca Bodenbinder",
+    "id" : 25
+  }, {
+    "birthday" : "2006-04-28",
+    "firstTeam" : true,
+    "number" : 99,
+    "name" : "Lennox Reinsch",
+    "id" : 26
+  }, {
+    "birthday" : "2006-12-01",
+    "firstTeam" : false,
+    "number" : 99,
+    "name" : "Ben Bender",
+    "id" : 27
+  }, {
+    "birthday" : "2006-12-01",
+    "firstTeam" : false,
+    "number" : 18,
+    "name" : "Leo Bender",
+    "id" : 28
+  }, {
+    "birthday" : "1989-05-07",
+    "firstTeam" : false,
+    "number" : 19,
+    "name" : "Kenny Borrmann",
+    "id" : 29
+  }, {
+    "birthday" : "2001-05-22",
+    "firstTeam" : false,
+    "number" : 8,
+    "name" : "Niklas Dähne",
+    "id" : 30
+  }, {
+    "birthday" : "1980-02-10",
+    "firstTeam" : false,
+    "number" : 21,
+    "name" : "Daniel Fahrenholz",
+    "id" : 31
+  }, {
+    "birthday" : "1994-04-10",
+    "firstTeam" : false,
+    "number" : 14,
+    "name" : "Tobias Flechsig",
+    "id" : 32
+  }, {
+    "birthday" : "1993-05-31",
+    "firstTeam" : false,
+    "number" : 2,
+    "name" : "Philipp Luppert",
+    "id" : 33
+  }, {
+    "birthday" : "2006-11-16",
+    "firstTeam" : false,
+    "number" : 7,
+    "name" : "Bela Hagen",
+    "id" : 34
+  }, {
+    "birthday" : "2005-09-28",
+    "firstTeam" : false,
+    "number" : 9,
+    "name" : "Max Kießling",
+    "id" : 35
+  }, {
+    "birthday" : "2006-12-29",
+    "firstTeam" : false,
+    "number" : 99,
+    "name" : "Corbinian Kuder",
+    "id" : 36
+  }, {
+    "birthday" : "2005-06-09",
+    "firstTeam" : false,
+    "number" : 15,
+    "name" : "Fabien Kummer",
+    "id" : 37
+  }, {
+    "birthday" : "2007-03-09",
+    "firstTeam" : false,
+    "number" : 4,
+    "name" : "Tim Lange",
+    "id" : 38
+  }, {
+    "birthday" : "2002-07-31",
+    "firstTeam" : false,
+    "number" : 99,
+    "name" : "Jannik Meisel",
+    "id" : 39
+  }, {
+    "birthday" : "2000-10-25",
+    "firstTeam" : false,
+    "number" : 99,
+    "name" : "Sven Möckel",
+    "id" : 40
+  }, {
+    "birthday" : "1990-06-10",
+    "firstTeam" : false,
+    "number" : 22,
+    "name" : "Tom Rausch",
+    "id" : 41
+  }, {
+    "birthday" : "1999-05-10",
+    "firstTeam" : false,
+    "number" : 11,
+    "name" : "Lukas Richter",
+    "id" : 42
+  }, {
+    "birthday" : "1998-05-28",
+    "firstTeam" : false,
+    "number" : 17,
+    "name" : "Max Vogel",
+    "id" : 43
+  }, {
+    "birthday" : "",
+    "firstTeam" : false,
+    "number" : 3,
+    "name" : "Linus Finn Wagner",
+    "id" : 44
+  }, {
+    "birthday" : "1987-05-13",
+    "firstTeam" : false,
+    "number" : 10,
+    "name" : "Martin Weiß",
+    "id" : 45
+  }, {
+    "birthday" : "1997-07-17",
+    "firstTeam" : false,
+    "number" : 5,
+    "name" : "Lorenz Wunderlich",
+    "id" : 46
+  } ]
 }

@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spieler verwalten</title>
+    <link href="../style.css" rel="stylesheet">
+    <script src="../js/navigation.js" defer></script>
+    <style>
+        .player-manager {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .manager-layout {
+            display: grid;
+            grid-template-columns: 300px minmax(0, 1fr);
+            gap: 20px;
+            align-items: start;
+            margin-top: 14px;
+        }
+
+        /* Sidebar styling */
+        .sidebar-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 14px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 140px);
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .sidebar-header h2 {
+            font-size: 17px;
+            margin: 0;
+            color: #333;
+        }
+
+        .btn-new-player {
+            padding: 5px 10px;
+            background: #2e7d32;
+            color: white;
+            border: 0;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-new-player:hover {
+            filter: brightness(1.1);
+        }
+
+        .sidebar-filters {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-filters input[type="text"],
+        .sidebar-filters select {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            font-size: 13px;
+            min-height: 34px;
+        }
+
+        .sidebar-count {
+            font-size: 12px;
+            color: #777;
+            text-align: right;
+            margin-bottom: 6px;
+        }
+
+        .player-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .player-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            gap: 8px;
+            border: 1px solid transparent;
+        }
+
+        .player-list-item:hover {
+            background: #f4f4f4;
+        }
+
+        .player-list-item.active {
+            background: #fbebee;
+            border-color: #d32f2f;
+            font-weight: bold;
+            color: #7f1018;
+        }
+
+        .player-name-text {
+            flex: 1;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0.8;
+        }
+
+        .player-list-item:hover .item-actions,
+        .player-list-item.active .item-actions {
+            opacity: 1;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: 0;
+            padding: 4px;
+            border-radius: 3px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .icon-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .icon-btn-edit:hover {
+            color: #1976d2;
+            background: #e3f2fd;
+        }
+
+        .icon-btn-delete:hover {
+            color: #c62828;
+            background: #ffebee;
+        }
+
+        /* Main editor card styling */
+        .editor-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            min-height: 520px;
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .editor-header h2 {
+            margin: 0 0 4px;
+            font-size: 22px;
+            color: #222;
+        }
+
+        .editor-header p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .id-badge {
+            display: inline-block;
+            background: #eee;
+            color: #555;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .large-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px 24px;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group input[type="date"] {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 14px;
+            font-size: 15px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #7f1018;
+            box-shadow: 0 0 0 2px rgba(127, 16, 24, 0.15);
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            min-height: 44px;
+            box-sizing: border-box;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .checkbox-label-text {
+            font-size: 15px;
+            font-weight: normal;
+            color: #222;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .editor-actions button {
+            min-height: 44px;
+            padding: 10px 22px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 0;
+        }
+
+        .btn-save {
+            background: #2e7d32;
+            color: white;
+        }
+
+        .btn-save:hover {
+            filter: brightness(1.08);
+        }
+
+        .btn-reset {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ccc !important;
+        }
+
+        .btn-reset:hover {
+            background: #e4e4e4;
+        }
+
+        .btn-delete-main {
+            background: #b71c1c;
+            color: white;
+            margin-left: auto;
+        }
+
+        .btn-delete-main:hover {
+            filter: brightness(1.08);
+        }
+
+        .status-banner {
+            display: none;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .status-banner.success {
+            display: block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .status-banner.error {
+            display: block;
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        @media (max-width: 850px) {
+            .manager-layout {
+                grid-template-columns: 1fr;
+            }
+            .sidebar-card {
+                max-height: 380px;
+            }
+            .large-form-grid {
+                grid-template-columns: 1fr;
+            }
+            .editor-actions {
+                flex-wrap: wrap;
+            }
+            .btn-delete-main {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<header class="app-header" data-active="players"></header>
+<main class="player-manager">
+    <div id="statusMessage" class="status-banner"></div>
+
+    <div class="manager-layout">
+        <!-- Kleine Seitenleiste: Spielerliste -->
+        <aside class="sidebar-card">
+            <div class="sidebar-header">
+                <h2>Spieler</h2>
+                <button type="button" class="btn-new-player" onclick="startNewPlayer()">+ Neu</button>
+            </div>
+
+            <div class="sidebar-filters">
+                <input type="text" id="searchInput" placeholder="Suchen..." oninput="filterAndRenderList()">
+                <select id="teamFilter" onchange="filterAndRenderList()">
+                    <option value="all">Alle</option>
+                    <option value="firstTeam">1. Mannschaft</option>
+                    <option value="other">Andere</option>
+                </select>
+            </div>
+
+            <div class="sidebar-count" id="countInfo">0 Spieler</div>
+
+            <ul class="player-list" id="playerList">
+                <li style="padding: 10px; color: #888; text-align: center;">Lade Spieler...</li>
+            </ul>
+        </aside>
+
+        <!-- Großer Hauptbereich: Bearbeiten / Anlegen -->
+        <section class="editor-card">
+            <div class="editor-header">
+                <div>
+                    <h2 id="editorTitle">Neuen Spieler anlegen</h2>
+                    <p id="editorSubtitle">Trage die Spielerinformationen ein und speichere sie ab.</p>
+                </div>
+                <span id="playerBadge" class="id-badge">Neu</span>
+            </div>
+
+            <form id="playerForm" onsubmit="event.preventDefault(); submitPlayerForm();">
+                <input type="hidden" id="playerId" value="">
+
+                <div class="large-form-grid">
+                    <div class="form-group">
+                        <label for="playerNumber">Trikotnummer *</label>
+                        <input id="playerNumber" type="number" min="1" max="999" placeholder="z. B. 10" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="playerName">Name *</label>
+                        <input id="playerName" type="text" placeholder="z. B. Max Mustermann" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="playerBirthday">Geburtstag</label>
+                        <input id="playerBirthday" type="date">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mannschaftszuordnung</label>
+                        <label class="checkbox-container" for="playerFirstTeam">
+                            <input id="playerFirstTeam" type="checkbox" checked>
+                            <span class="checkbox-label-text">Zugehörigkeit zur 1. Mannschaft (für Aufstellung verfügbar)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="editor-actions">
+                    <button class="btn-save" id="saveButton" type="submit">Spieler anlegen</button>
+                    <button class="btn-reset" id="resetButton" type="button" onclick="startNewPlayer()">+ Als neuen Spieler anlegen</button>
+                    <button class="btn-delete-main" id="deleteButton" type="button" style="display: none;" onclick="deleteCurrentPlayer()">Spieler löschen</button>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+
+<script>
+    let allPlayers = [];
+    let selectedPlayerId = null;
+
+    async function loadPlayers(keepSelectedId = null) {
+        try {
+            const response = await fetch(window.location.origin + '/getPlayers');
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const data = await response.json();
+            allPlayers = Array.isArray(data.players) ? data.players : [];
+            allPlayers.sort((a, b) => (Number(a.number) || 0) - (Number(b.number) || 0));
+
+            filterAndRenderList();
+
+            if (keepSelectedId) {
+                selectPlayer(keepSelectedId);
+            } else if (allPlayers.length > 0 && selectedPlayerId === null) {
+                selectPlayer(allPlayers[0].id);
+            } else if (selectedPlayerId !== null) {
+                const stillExists = allPlayers.some(p => p.id === selectedPlayerId);
+                if (stillExists) {
+                    selectPlayer(selectedPlayerId);
+                } else {
+                    startNewPlayer();
+                }
+            }
+        } catch (e) {
+            showStatus('Fehler beim Laden der Spieler: ' + e.message, 'error');
+            document.getElementById('playerList').innerHTML = '<li style="padding: 10px; color: #b71c1c; text-align: center;">Fehler beim Laden.</li>';
+        }
+    }
+
+    function filterAndRenderList() {
+        const query = document.getElementById('searchInput').value.trim().toLowerCase();
+        const teamFilter = document.getElementById('teamFilter').value;
+
+        const filtered = allPlayers.filter(p => {
+            const matchesQuery = !query ||
+                (p.name && p.name.toLowerCase().includes(query)) ||
+                (p.number !== undefined && String(p.number).includes(query));
+
+            const isFirst = p.firstTeam === true || p.firstTeam === 'true' || p.firstTeam === 1;
+            let matchesTeam = true;
+            if (teamFilter === 'firstTeam') {
+                matchesTeam = isFirst;
+            } else if (teamFilter === 'other') {
+                matchesTeam = !isFirst;
+            }
+
+            return matchesQuery && matchesTeam;
+        });
+
+        document.getElementById('countInfo').textContent = `${filtered.length} von ${allPlayers.length} Spielern`;
+        renderList(filtered);
+    }
+
+    function renderList(players) {
+        const list = document.getElementById('playerList');
+        list.replaceChildren();
+
+        if (players.length === 0) {
+            const li = document.createElement('li');
+            li.style.padding = '12px 8px';
+            li.style.color = '#888';
+            li.style.textAlign = 'center';
+            li.textContent = 'Keine Spieler gefunden';
+            list.appendChild(li);
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        players.forEach(p => {
+            const li = document.createElement('li');
+            li.className = 'player-list-item' + (p.id === selectedPlayerId ? ' active' : '');
+            li.dataset.id = p.id;
+
+            // Name
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'player-name-text';
+            nameSpan.textContent = p.name;
+            nameSpan.title = p.name;
+            nameSpan.addEventListener('click', () => selectPlayer(p.id));
+
+            // Small Action Icons
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'item-actions';
+
+            // Edit Icon
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.className = 'icon-btn icon-btn-edit';
+            editBtn.title = 'Bearbeiten';
+            editBtn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+            `;
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectPlayer(p.id);
+            });
+
+            // Delete Icon
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'icon-btn icon-btn-delete';
+            deleteBtn.title = 'Löschen';
+            deleteBtn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+            `;
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                confirmDeletePlayer(p.id, p.name);
+            });
+
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(deleteBtn);
+
+            li.appendChild(nameSpan);
+            li.appendChild(actionsDiv);
+            fragment.appendChild(li);
+        });
+
+        list.appendChild(fragment);
+    }
+
+    function selectPlayer(id) {
+        selectedPlayerId = id;
+        const player = allPlayers.find(p => p.id === id);
+        if (!player) return;
+
+        document.querySelectorAll('.player-list-item').forEach(el => {
+            el.classList.toggle('active', Number(el.dataset.id) === id);
+        });
+
+        document.getElementById('playerId').value = player.id;
+        document.getElementById('playerNumber').value = player.number;
+        document.getElementById('playerName').value = player.name;
+        document.getElementById('playerBirthday').value = player.birthday || '';
+        document.getElementById('playerFirstTeam').checked = player.firstTeam === true || player.firstTeam === 'true' || player.firstTeam === 1;
+
+        document.getElementById('editorTitle').textContent = `Spieler bearbeiten: ${player.name}`;
+        document.getElementById('editorSubtitle').textContent = `Trikotnummer #${player.number} · Zugehörigkeit und Daten anpassen.`;
+        document.getElementById('playerBadge').textContent = `ID #${player.id}`;
+        document.getElementById('saveButton').textContent = 'Änderungen speichern';
+        document.getElementById('deleteButton').style.display = 'inline-block';
+    }
+
+    function startNewPlayer() {
+        selectedPlayerId = null;
+        document.querySelectorAll('.player-list-item').forEach(el => el.classList.remove('active'));
+
+        document.getElementById('playerForm').reset();
+        document.getElementById('playerId').value = '';
+        document.getElementById('playerFirstTeam').checked = true;
+
+        document.getElementById('editorTitle').textContent = 'Neuen Spieler anlegen';
+        document.getElementById('editorSubtitle').textContent = 'Trage die Spielerinformationen ein und speichere sie ab.';
+        document.getElementById('playerBadge').textContent = 'Neu';
+        document.getElementById('saveButton').textContent = 'Spieler anlegen';
+        document.getElementById('deleteButton').style.display = 'none';
+
+        document.getElementById('playerNumber').focus();
+    }
+
+    async function submitPlayerForm() {
+        const idVal = document.getElementById('playerId').value.trim();
+        const numberVal = parseInt(document.getElementById('playerNumber').value, 10);
+        const nameVal = document.getElementById('playerName').value.trim();
+        const birthdayVal = document.getElementById('playerBirthday').value.trim();
+        const firstTeamVal = document.getElementById('playerFirstTeam').checked;
+
+        if (!nameVal || isNaN(numberVal) || numberVal < 1) {
+            showStatus('Bitte eine gültige Trikotnummer und einen Namen eingeben.', 'error');
+            return;
+        }
+
+        const payload = {
+            id: idVal ? parseInt(idVal, 10) : null,
+            number: numberVal,
+            name: nameVal,
+            birthday: birthdayVal,
+            firstTeam: firstTeamVal
+        };
+
+        try {
+            const response = await fetch(window.location.origin + '/savePlayer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || 'HTTP ' + response.status);
+            }
+
+            const isEdit = Boolean(idVal);
+            showStatus(`Spieler "${nameVal}" wurde erfolgreich ${isEdit ? 'aktualisiert' : 'angelegt'}.`, 'success');
+            await loadPlayers(payload.id);
+        } catch (e) {
+            showStatus('Fehler beim Speichern: ' + e.message, 'error');
+        }
+    }
+
+    async function deleteCurrentPlayer() {
+        const id = selectedPlayerId;
+        const player = allPlayers.find(p => p.id === id);
+        if (!player) return;
+        await confirmDeletePlayer(id, player.name);
+    }
+
+    async function confirmDeletePlayer(id, name) {
+        if (!confirm(`Möchtest du den Spieler "${name}" wirklich löschen?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(window.location.origin + `/deletePlayer/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || 'HTTP ' + response.status);
+            }
+
+            showStatus(`Spieler "${name}" wurde gelöscht.`, 'success');
+            if (selectedPlayerId === id) {
+                selectedPlayerId = null;
+            }
+            await loadPlayers();
+        } catch (e) {
+            showStatus('Fehler beim Löschen: ' + e.message, 'error');
+        }
+    }
+
+    function showStatus(message, type) {
+        const box = document.getElementById('statusMessage');
+        box.textContent = message;
+        box.className = 'status-banner ' + type;
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        setTimeout(() => {
+            if (box.textContent === message) {
+                box.className = 'status-banner';
+            }
+        }, 5000);
+    }
+
+    window.addEventListener('load', () => loadPlayers());
+</script>
+</body>
+</html>

@@ -164,10 +164,12 @@
         try {
             const [matches, playersResponse] = await Promise.all([
                 fetchJson('/getAllMenMatches?team=1'),
-                fetchJson('/getPlayers')
+                fetchJson('/getPlayers?firstTeam=true')
             ]);
             matchesData = matches || [];
-            playersData = (playersResponse && playersResponse.players) ? playersResponse.players : [];
+            playersData = (playersResponse && playersResponse.players)
+                ? playersResponse.players.filter(p => p.firstTeam === true || p.firstTeam === 'true' || p.firstTeam === 1)
+                : [];
             renderMatches();
             renderPlayers();
         } catch (error) {

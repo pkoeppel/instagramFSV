@@ -687,7 +687,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private List<PlayerModel> loadPlayersFromJson() throws IOException, ParseException {
-        JSONObject data = (JSONObject) new JSONParser().parse(new InputStreamReader(new FileInputStream("src/main/resources/templates/players.json"), StandardCharsets.UTF_8));
+        File file = new File("src/main/resources/templates/players.json");
+        if (!file.exists()) {
+            return new ArrayList<>();
+        }
+        JSONObject data = (JSONObject) new JSONParser().parse(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
         JSONArray arr = (JSONArray) data.get("players");
         List<PlayerModel> players = new ArrayList<>();
         if (arr == null) {
@@ -695,9 +699,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         for (Object o : arr) {
             JSONObject p = (JSONObject) o;
+            Object firstTeamObj = p.get("firstTeam");
+            boolean isFirstTeam = firstTeamObj == null || Boolean.parseBoolean(firstTeamObj.toString());
+            if (!isFirstTeam) {
+                continue;
+            }
             PlayerModel player = new PlayerModel();
+            Object idObj = p.get("id");
+            if (idObj instanceof Number numId) {
+                player.setId(numId.intValue());
+            }
             player.setNumber(((Number) p.get("number")).intValue());
             player.setName(p.get("name") != null ? p.get("name").toString() : "");
+            player.setBirthday(p.get("birthday") != null ? p.get("birthday").toString() : "");
+            player.setFirstTeam(true);
             player.setRole("absent");
             player.setGoalkeeper(false);
             player.setCaptain(false);
